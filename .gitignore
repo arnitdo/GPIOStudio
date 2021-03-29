@@ -1,3 +1,11 @@
 .vscode/
 
 ignore/
+
+debug/
+
+release/
+
+.qmake*
+
+Makefile*
