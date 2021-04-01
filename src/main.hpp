@@ -12,16 +12,37 @@
 #include <QObject>
 #include <QGridLayout>
 #include <QTextEdit>
-#include <QGridLayout>
 #include <QPainter>
 #include <QStyle>
 #include <QStyleOption>
 #include <QScrollArea>
 #include <QPushButton>
+#include <QLabel>
+
+#include <vector>
+#include <cstdlib>
 
 class MainWindow;
 class DrawArea;
 class GPIODevice;
+class MenuBar;
+class GPIOButton;
+class GPIOToolBar;
+class ProgramStart;
+
+/*  
+  ____ ____ ___ ___ _____ ___   ___  _     ____    _    ____
+ / ___|  _ |_ _/ _ |_   _/ _ \ / _ \| |   | __ )  / \  |  _ \
+| |  _| |_) | | | | || || | | | | | | |   |  _ \ / _ \ | |_) |
+| |_| |  __/| | |_| || || |_| | |_| | |___| |_) / ___ \|  _ <
+ \____|_|  |___\___/ |_| \___/ \___/|_____|____/_/   \_|_| \_\ */
+class GPIOToolBar : public QWidget{
+	Q_OBJECT;
+	public:
+		GPIOToolBar(QWidget* parent, MainWindow* parentMainWindow);
+		MainWindow *ParentMainWindow;
+		DrawArea* MainWindowDrawArea;
+};
 
 /* 
  ____  ____     ___        _    _    ____  _____    _
@@ -37,8 +58,20 @@ class DrawArea: public QWidget{
 		DrawArea(MainWindow* parent = nullptr);
 		virtual void mousePressEvent(QMouseEvent *event);
 		virtual void paintEvent(QPaintEvent* event);
+		void LinkGPIO();
 		// Members
-		MainWindow* MainWindowParent;
+		ProgramStart* ProgStart;
+		QPoint LastPoint;
+		QPoint CurrentPoint;
+		MainWindow* ParentMainWindow;
+		std::vector<std::pair<QPoint, QPoint>> Lines;
+		std::vector<GPIODevice*> GPIOCodeVector;
+		int activeGPIO;
+		bool isNew = true;
+		bool NWMode = false;
+	public slots:
+		void OnGPIODeviceSignal(int GPIOID);
+		void resetSelf();
 };
 
 /* 
@@ -52,13 +85,23 @@ class MainWindow : public QWidget{
 	public:
 		// Functions
 		MainWindow();
+		~MainWindow();
 		void log(std::string value);
 		void warn(std::string value);
+		void debug(std::string value);
+		void err(std::string value);
 		//Members
 		DrawArea MainWindowDrawArea;
 		QTextEdit MainWindowConsole;
 		QScrollArea MainWindowScrollArea;
+		QScrollArea MainWindowGPIOScrollArea;
+		GPIOToolBar MainWindowGPIOToolBar;
 		QPushButton MainWindowClearButton;
+		QPushButton MainWindowBuildButton;
+		QPushButton MainWindowBRComboButton;
+	public slots:
+		void resetDrawArea();
+		void buildAndRun();
 };
 
 /* 
@@ -72,16 +115,62 @@ class GPIODevice : public QWidget{
 	Q_OBJECT;
 	public:
 		// Functions
-		std::string build(); // IMPORTANT
+		virtual std::string build(); // IMPORTANT
 		virtual void paintEvent(QPaintEvent* event);
-		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow);
+		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
-		GPIODevice* Next;
-		GPIODevice* Prev;
 		DrawArea* ParentDrawArea;
 		MainWindow* ParentMainWindow;
+		QLabel DisplayText;
+		int XCoord, YCoord;
+		std::string GPIOName;
+		std::string Color = "#ffff66";
 	public slots:
-		void deleteSelf();
-	private:
-		std::string Color = "#ffff11";
+		virtual void deleteSelf();
+};
+
+/* 
+ ____  ____   ___   ____ ____     _    __  __ ____ _____  _    ____ _____
+|  _ \|  _ \ / _ \ / ___|  _ \   / \  |  \/  / ___|_   _|/ \  |  _ |_   _|
+| |_) | |_) | | | | |  _| |_) | / _ \ | |\/| \___ \ | | / _ \ | |_) || |
+|  __/|  _ <| |_| | |_| |  _ < / ___ \| |  | |___) || |/ ___ \|  _ < | |
+|_|   |_| \_\\___/ \____|_| \_/_/   \_|_|  |_|____/ |_/_/   \_|_| \_\|_|
+ */
+
+class ProgramStart : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		virtual std::string build(); // IMPORTANT
+		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow);
+		// Members
+		QLabel DisplayText;
+		MainWindow* ParentMainWindow;
+		DrawArea* ParentDrawArea;
+		GPIODevice* Next = nullptr;
+		std::string Color = "#aaaaaa";
+	public slots:
+		void TriggerBuild();
+	public slots:
+		virtual void deleteSelf(){}; // Cannot be deleted.
+};
+
+/*  
+  ____ ____ ___ ___  ____  _   _ _____ _____ ___  _   _
+ / ___|  _ |_ _/ _ \| __ )| | | |_   _|_   _/ _ \| \ | |
+| |  _| |_) | | | | |  _ \| | | | | |   | || | | |  \| |
+| |_| |  __/| | |_| | |_) | |_| | | |   | || |_| | |\  |
+ \____|_|  |___\___/|____/ \___/  |_|   |_| \___/|_| \_| */
+
+class GPIOButton : public QPushButton{
+	Q_OBJECT;
+	public:
+		GPIOButton(QString label,int GPIOID, GPIOToolBar* mainWindowGPIOToolBar, MainWindow* parentMainWindow);
+		MainWindow* ParentMainWindow;
+		GPIOToolBar* ParentGPIOToolBar;
+		int GPIOID;
+	signals:
+		void GPIOButtonPressed(int GPIOID);
+	public slots:
+		void SelfPressed();
 };

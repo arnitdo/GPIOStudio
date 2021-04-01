@@ -9,3 +9,7 @@ release/
 .qmake*
 
 Makefile*
+
+script.py
+
+debug.log
