@@ -150,7 +150,13 @@ void MainWindow::resetDrawArea(){
 
 void MainWindow::buildAndRun(){
 	this->MainWindowBuildButton.click();
-	system("python.exe script.py");
+#ifndef __linux__
+	this->err("The device you are currently using is not a Raspberry Pi.");
+	this->err("The project has been built, but will not execute. Transfer the generated script.py file to your Raspberry Pi.");
+#endif
+#ifdef __linux__
+	system("python3 script.py");
+#endif
 }
 
 /*  
@@ -202,12 +208,14 @@ void DrawArea::paintEvent(QPaintEvent* event)
 	p->setCompositionMode(QPainter::CompositionMode_Source);
     opt->init(this);
 	this->style()->drawPrimitive(QStyle::PE_Widget, opt, p, this);
-	p->setRenderHint(QPainter::Antialiasing);
+	// p->setRenderHint(QPainter::Antialiasing);
 	if(!this->isNew){
 		for (std::pair<QPoint, QPoint> PointPair : this->Lines){
+			p->setPen(QPen(Qt::black, 2));
 			p->drawLine(std::get<0>(PointPair), std::get<1>(PointPair));
 		};
 	}
+	p->end();
 }
 
 void DrawArea::OnGPIODeviceSignal(int GPIOID){
@@ -238,8 +246,9 @@ void GPIODevice::paintEvent(QPaintEvent *)
 {
     QStyleOption opt;
     opt.init(this);
-    QPainter p(this);
-    this->style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+    QPainter* p = new QPainter(this);
+    this->style()->drawPrimitive(QStyle::PE_Widget, &opt, p, this);
+	p->end();
 }
 
 GPIODevice::GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) : QWidget(parent), DisplayText(this){
@@ -315,7 +324,6 @@ void GPIOButton::SelfPressed(){
 
 void ProgramStart::TriggerBuild(){
 	std::ofstream outfile ("script.py");
-	this->ParentMainWindow->debug(std::to_string(this->ParentDrawArea->GPIOCodeVector.size()));
 	for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
 	{
 		outfile << GPD->build();
