@@ -12,4 +12,10 @@ Makefile*
 
 script.py
 
-debug.log
+debug.lo
+
+*.o
+
+moc*
+
+GPIOStudio
