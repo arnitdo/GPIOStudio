@@ -17,3 +17,10 @@ Alternatively, you could visit the following links for more information -
 * [Qt Legal ,Terms and Conditions](https://www.qt.io/terms-conditions/)
 
 ---
+
+The following content in this repository or program has been sourced from the respective sources. Licenses for each file can be found at the respective linked URL.
+
+static - 
+* clear.svg - [Iconduck](https://iconduck.com/icons/31176/clear)
+* hammer.svg - [Iconduck](https://iconduck.com/icons/98126/hammer)
+* run-build.svg - [Iconduck](https://iconduck.com/icons/60348/run-build)

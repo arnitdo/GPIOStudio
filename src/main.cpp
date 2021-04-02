@@ -90,6 +90,7 @@ MainWindow::MainWindow() :
 	// MainWindowConsole
 	MainWindowConsole.setReadOnly(true);
 	MainWindowConsole.setFixedSize(1280, 72);
+	MainWindowConsole.setFontPointSize(12);
 	MainWindowConsole.setStyleSheet("background-color : #dddddd;");
 	this->log("Welcome to " + convertToStdString(getVersionInfo()));
 	MainWindowLayout->addWidget(&MainWindowConsole, 9, 0, 1, 10);
@@ -104,14 +105,20 @@ MainWindow::MainWindow() :
 	this->setFixedSize(1280, 720);
 	MainWindowClearButton.setFixedHeight(36);
 	MainWindowClearButton.setText("Clear All!");
+	MainWindowClearButton.setIcon(QIcon("static/clear.svg"));
+	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
 	MainWindowLayout->addWidget(&MainWindowClearButton, 0, 0, 1, 2);
 
 	MainWindowBuildButton.setFixedHeight(36);
-	MainWindowBuildButton.setText("Build!");
+	MainWindowBuildButton.setText(" Build!");
+	MainWindowBuildButton.setIcon(QIcon("static/hammer.svg"));
+	MainWindowBuildButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
 	MainWindowLayout->addWidget(&MainWindowBuildButton, 0, 2, 1, 2);
 
 	MainWindowBRComboButton.setFixedHeight(36);
 	MainWindowBRComboButton.setText("Build and Run!");
+	MainWindowBRComboButton.setIcon(QIcon("static/run-build.svg"));
+	MainWindowBRComboButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
 	MainWindowLayout->addWidget(&MainWindowBRComboButton, 0, 4, 1 ,2);
 
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
@@ -126,12 +133,12 @@ MainWindow::~MainWindow(){
 
 void MainWindow::log(std::string value){
 	this->MainWindowConsole.setTextColor(QColor("black"));
-	this->MainWindowConsole.append(convertToQString(value));
+	this->MainWindowConsole.append("LOG : " + convertToQString(value));
 }
 
 void MainWindow::warn(std::string value){
-	this->MainWindowConsole.setTextColor(QColor("orange"));
-	this->MainWindowConsole.append(convertToQString(value));
+	this->MainWindowConsole.setTextColor(QColor("#E34234"));
+	this->MainWindowConsole.append("WARNING : " + convertToQString(value));
 }
 
 void MainWindow::debug(std::string value){
@@ -151,8 +158,8 @@ void MainWindow::resetDrawArea(){
 void MainWindow::buildAndRun(){
 	this->MainWindowBuildButton.click();
 #ifndef __linux__
-	this->err("The device you are currently using is not a Raspberry Pi.");
-	this->err("The project has been built, but will not execute. Transfer the generated script.py file to your Raspberry Pi.");
+	this->warn("The device you are currently using is not a Raspberry Pi.");
+	this->warn("The project has been built, but will not execute. Transfer the generated script.py file to your Raspberry Pi.");
 #endif
 #ifdef __linux__
 	system("python3 script.py");
@@ -191,7 +198,7 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 		}
 		this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
 		QRect GPIOBoundBox = QRect(QPoint(event->x(), event->y()), QPoint(event->x() + 200, event->y() + 100));
-		GPIODevice* GPIOD = new GPIODevice(this, ParentMainWindow, event->x(), event->y(), ("GPIO Device " + std::to_string(GPIODCount)));
+		GPIODevice* GPIOD = new GPIODevice(this, ParentMainWindow, event->x(), event->y(), ("GPIO Device " + std::to_string(GPIODCount)), true);
 		GPIOD->setGeometry(GPIOBoundBox);
 		GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 		this->setStyleSheet("background-color : #ffffff;");
@@ -208,7 +215,7 @@ void DrawArea::paintEvent(QPaintEvent* event)
 	p->setCompositionMode(QPainter::CompositionMode_Source);
     opt->init(this);
 	this->style()->drawPrimitive(QStyle::PE_Widget, opt, p, this);
-	// p->setRenderHint(QPainter::Antialiasing);
+	p->setRenderHint(QPainter::Antialiasing);
 	if(!this->isNew){
 		for (std::pair<QPoint, QPoint> PointPair : this->Lines){
 			p->setPen(QPen(Qt::black, 2));
@@ -229,7 +236,6 @@ void DrawArea::resetSelf(){
 	this->isNew = true;
 	this->ParentMainWindow->log("--------------------");	
 	this->ParentMainWindow->log("Resetting Project!");	
-	this->ParentMainWindow->log("--------------------");
 	GPIODCount = 0;
 	GPIOCodeVector.clear();
 }
@@ -251,20 +257,21 @@ void GPIODevice::paintEvent(QPaintEvent *)
 	p->end();
 }
 
-GPIODevice::GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) : QWidget(parent), DisplayText(this){
+GPIODevice::GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name, bool log) : QWidget(parent), DisplayText(this){
 	this->ParentMainWindow = parentMainWindow;
 	this->XCoord = X;
 	this->YCoord = Y;
 	DisplayText.setText(convertToQString(name));
 	DisplayText.setFixedWidth(200);
 	this->GPIOName = name;
-	this->ParentMainWindow->log("Created new GPIO Device at " + std::to_string(this->XCoord) + ", " + std::to_string(this->YCoord));
+	if (log){
+		this->ParentMainWindow->log("Created new GPIO Device at " + std::to_string(this->XCoord) + ", " + std::to_string(this->YCoord));
+	}
 	QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
 	GPIODCount++;
 }
 
 void GPIODevice::deleteSelf(){
-	this->ParentMainWindow->MainWindowConsole.setTextColor(QColor("red"));
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
 }
@@ -323,6 +330,8 @@ void GPIOButton::SelfPressed(){
  */
 
 void ProgramStart::TriggerBuild(){
+	this->ParentMainWindow->log("--------------------");
+	this->ParentMainWindow->log("Building Project!");
 	std::ofstream outfile ("script.py");
 	for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
 	{
@@ -331,11 +340,10 @@ void ProgramStart::TriggerBuild(){
 	outfile << "\n_ = input(\"Press ENTER or RETURN to continue...\")"; 
 	outfile.close();
 	this->ParentMainWindow->log("Finished Building!");
-	this->ParentMainWindow->log("--------------------");	
 }
 
 ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow) :
-	GPIODevice(parent, parentMainWindow, 0, 0, ""),
+	GPIODevice(parent, parentMainWindow, 0, 0, "", false),
 	DisplayText(this){
 		DisplayText.setText("Program Start!");
 		DisplayText.setFixedWidth(200);
@@ -346,8 +354,6 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow) :
 
 
 std::string ProgramStart::build(){
-	this->ParentMainWindow->log("--------------------");
-	this->ParentMainWindow->log("Building Project!");
 	return  "# import gpiozero\n"
 			"import time\n"
 			;

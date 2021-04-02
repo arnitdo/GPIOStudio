@@ -117,7 +117,7 @@ class GPIODevice : public QWidget{
 		// Functions
 		virtual std::string build(); // IMPORTANT
 		virtual void paintEvent(QPaintEvent* event);
-		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name, bool log);
 		// Members
 		DrawArea* ParentDrawArea;
 		MainWindow* ParentMainWindow;
