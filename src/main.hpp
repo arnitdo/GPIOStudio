@@ -18,13 +18,21 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QLabel>
+#include <QFormLayout>
+#include <QLineEdit>
 
 #include <vector>
 #include <cstdlib>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <map>
 
 class MainWindow;
 class DrawArea;
 class GPIODevice;
+class Buzzer;
+class LED;
 class MenuBar;
 class GPIOButton;
 class GPIOToolBar;
@@ -66,6 +74,9 @@ class DrawArea: public QWidget{
 		MainWindow* ParentMainWindow;
 		std::vector<std::pair<QPoint, QPoint>> Lines;
 		std::vector<GPIODevice*> GPIOCodeVector;
+		std::vector<LED*> LEDVec;
+		std::vector<Buzzer*> BUZVec;
+		std::map<int, std::string> ButtonLabelMap;
 		int activeGPIO;
 		bool isNew = true;
 		bool NWMode = false;
@@ -84,13 +95,14 @@ class MainWindow : public QWidget{
 	Q_OBJECT;
 	public:
 		// Functions
-		MainWindow();
+		MainWindow(QApplication* parentApplication);
 		~MainWindow();
 		void log(std::string value);
 		void warn(std::string value);
 		void debug(std::string value);
 		void err(std::string value);
 		//Members
+		QApplication* ParentApp;
 		DrawArea MainWindowDrawArea;
 		QTextEdit MainWindowConsole;
 		QScrollArea MainWindowScrollArea;
@@ -99,9 +111,11 @@ class MainWindow : public QWidget{
 		QPushButton MainWindowClearButton;
 		QPushButton MainWindowBuildButton;
 		QPushButton MainWindowBRComboButton;
+		QPushButton MainWindowQuitButton;
 	public slots:
 		void resetDrawArea();
 		void buildAndRun();
+		void QuitApp();
 };
 
 /* 
@@ -117,14 +131,53 @@ class GPIODevice : public QWidget{
 		// Functions
 		virtual std::string build(); // IMPORTANT
 		virtual void paintEvent(QPaintEvent* event);
-		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name, bool log);
+		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		DrawArea* ParentDrawArea;
 		MainWindow* ParentMainWindow;
-		QLabel DisplayText;
 		int XCoord, YCoord;
 		std::string GPIOName;
 		std::string Color = "#ffff66";
+	public slots:
+		virtual void deleteSelf();
+};
+
+class LED : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		virtual std::string build(); // IMPORTANT
+		// virtual void paintEvent(QPaintEvent* event);
+		LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		// Members
+		QGridLayout SelfLayout;
+		QLineEdit PinEdit;
+		QLineEdit VarnameEdit;
+		DrawArea* ParentDrawArea;
+		MainWindow* ParentMainWindow;
+		int XCoord, YCoord;
+		std::string GPIOName;
+		std::string Color = "#00ffff";
+	public slots:
+		virtual void deleteSelf();
+};
+
+class Buzzer : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		virtual std::string build(); // IMPORTANT
+		// virtual void paintEvent(QPaintEvent* event);
+		std::string Color = "#98fb98";
+		Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		// Members
+		QGridLayout SelfLayout;
+		QLineEdit PinEdit;
+		QLineEdit VarnameEdit;
+		DrawArea* ParentDrawArea;
+		MainWindow* ParentMainWindow;
+		int XCoord, YCoord;
+		std::string GPIOName;
 	public slots:
 		virtual void deleteSelf();
 };
@@ -145,9 +198,9 @@ class ProgramStart : public GPIODevice{
 		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow);
 		// Members
 		QLabel DisplayText;
+		QGridLayout SelfLayout;
 		MainWindow* ParentMainWindow;
 		DrawArea* ParentDrawArea;
-		GPIODevice* Next = nullptr;
 		std::string Color = "#aaaaaa";
 	public slots:
 		void TriggerBuild();
