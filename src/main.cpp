@@ -336,8 +336,7 @@ void ProgramStart::TriggerBuild(){
 	for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
 	{
 		outfile << GPD->build();
-	}
-	outfile << "\n_ = input(\"Press ENTER or RETURN to continue...\")"; 
+	} 
 	outfile.close();
 	this->ParentMainWindow->log("Finished Building!");
 }
