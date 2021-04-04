@@ -22,6 +22,7 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QLabel>
+#include <QComboBox>
 
 //end Qt imports
 //begin system imports
@@ -41,6 +42,8 @@
 
 int BUZZERCount = 1;
 int LEDCount = 1;
+int LEDCTRLCount = 1;
+int BUZZERCTRLCount = 1;
 
 /*
   ____ _____ _   _ _____ ____  ___ ____
@@ -79,7 +82,8 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowClearButton(this),
 	MainWindowBuildButton(this),
 	MainWindowBRComboButton(this),
-	MainWindowQuitButton(this)
+	MainWindowQuitButton(this),
+	MainWindowRefreshButton(this)
 {
 	this->ParentApp = parentApplication;
 	// Base layout for MainWindow
@@ -88,7 +92,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowLayout->setMargin(0);
 	
 	// MainWindowDrawArea, MainWindowScrollArea
-	MainWindowDrawArea.setFixedSize(2560, 1440);
+	MainWindowDrawArea.setFixedSize(5120, 2880);
 	MainWindowScrollArea.setWidget(&MainWindowDrawArea);
 	MainWindowScrollArea.setFixedSize(1024, 612);
 	MainWindowLayout->addWidget(&MainWindowScrollArea, 1, 2, 8, 8);
@@ -109,7 +113,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	this->setWindowTitle(getVersionInfo());
 	this->setFixedSize(1280, 720);
 	MainWindowClearButton.setFixedHeight(36);
-	MainWindowClearButton.setText("Clear All!");
+	MainWindowClearButton.setText(" Clear All!");
 	MainWindowClearButton.setIcon(QIcon("static/clear.svg"));
 	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
 	MainWindowLayout->addWidget(&MainWindowClearButton, 0, 0, 1, 2);
@@ -121,24 +125,31 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowLayout->addWidget(&MainWindowBuildButton, 0, 2, 1, 2);
 
 	MainWindowBRComboButton.setFixedHeight(36);
-	MainWindowBRComboButton.setText("Build and Run!");
+	MainWindowBRComboButton.setText(" Build and Run!");
 	MainWindowBRComboButton.setIcon(QIcon("static/run-build.svg"));
 	MainWindowBRComboButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
 	MainWindowLayout->addWidget(&MainWindowBRComboButton, 0, 4, 1 ,2);
 
 	MainWindowQuitButton.setFixedHeight(36);
-	MainWindowQuitButton.setText("Quit Application!");
+	MainWindowQuitButton.setText(" Quit Application!");
 	MainWindowQuitButton.setIcon(QIcon("static/logout.svg"));
 	MainWindowQuitButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
-	MainWindowLayout->addWidget(&MainWindowQuitButton, 0, 6, 1 ,2);
+	MainWindowLayout->addWidget(&MainWindowQuitButton, 0, 8, 1 ,2);
+
+	MainWindowRefreshButton.setFixedHeight(36);
+	MainWindowRefreshButton.setText(" Refresh!");
+	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
+	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
+	MainWindowLayout->addWidget(&MainWindowRefreshButton, 0, 6, 1 ,2);
 
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
 	QObject::connect(&MainWindowBRComboButton, SIGNAL (clicked()), this, SLOT (buildAndRun()));
 	QObject::connect(&MainWindowQuitButton, SIGNAL (clicked()), this, SLOT (QuitApp()));
+	QObject::connect(&MainWindowRefreshButton, SIGNAL (clicked()), this, SLOT (RefreshDrawSelects()));
 }
 
 MainWindow::~MainWindow(){
-	std::ofstream logFile ("debug.log");
+	std::ofstream logFile ("GPIOStudio.log");
 	this->log("Qutting Application!");
 	logFile << convertToStdString(this->MainWindowConsole.toPlainText());
 	logFile.close();
@@ -183,6 +194,10 @@ void MainWindow::QuitApp(){
 	this->ParentApp->quit();
 }
 
+void MainWindow::RefreshDrawSelects(){
+	this->MainWindowDrawArea.RefreshSelects();
+}
+
 /*  
 ____  ____     ___        _    _    ____  _____    _
 |  _ \|  _ \   / \ \      /    / \  |  _ \| ____|  / \
@@ -196,6 +211,8 @@ DrawArea::DrawArea(MainWindow *parent) :
 	this->setStyleSheet("background-color : white;");
 	ButtonLabelMap.insert({1, "Simple LED"});
 	ButtonLabelMap.insert({2, "Simple Buzzer"});
+	ButtonLabelMap.insert({3, "LED Controls"});
+	ButtonLabelMap.insert({4, "Buzzer Controls"});
 }
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
@@ -223,7 +240,8 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 				GPIOD->show();
-				GPIOCodeVector.push_back(GPIOD);
+				this->GPIOCodeVector.push_back(GPIOD);
+				this->LEDVec.push_back(GPIOD);
 				break;
 			}
 			case 2:{
@@ -231,9 +249,29 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 				GPIOD->show();
-				GPIOCodeVector.push_back(GPIOD);
+				this->GPIOCodeVector.push_back(GPIOD);
+				this->BUZVec.push_back(GPIOD);
 				break;
-			}	
+			}
+			case 3:{
+				LEDCtrl* GPIOD = new LEDCtrl(this, ParentMainWindow, event->x(), event->y(), ("LED Controls " + std::to_string(LEDCTRLCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+				GPIOD->show();
+				this->GPIOCodeVector.push_back(GPIOD);
+				this->LEDCTRLVec.push_back(GPIOD);
+				this->RefreshSelects();
+				break;
+			}
+			case 4:
+				BuzzerCtrl* GPIOD = new BuzzerCtrl(this, ParentMainWindow, event->x(), event->y(), ("Buzzer Controls " + std::to_string(BUZZERCTRLCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+				GPIOD->show();
+				this->GPIOCodeVector.push_back(GPIOD);
+				this->BUZCTRLVec.push_back(GPIOD);
+				this->RefreshSelects();
+				break;
 		}
 		this->setStyleSheet("background-color : #ffffff;");
 		this->NWMode = false;
@@ -265,12 +303,44 @@ void DrawArea::OnGPIODeviceSignal(int GPIOID){
 void DrawArea::resetSelf(){
 	this->Lines.clear();
 	this->setStyleSheet("background-color : #ffffff;");
-	this->isNew = true;
-	this->ParentMainWindow->log("--------------------");	
+	this->isNew = true;	
 	this->ParentMainWindow->log("Resetting Project!");	
 	GPIOCodeVector.clear();
+	BUZVec.clear();
+	LEDVec.clear();
+	LEDCTRLVec.clear();
+	BUZCTRLVec.clear();
 	LEDCount = 1;
 	BUZZERCount = 1;
+	LEDCTRLCount = 1;
+	BUZZERCTRLCount = 1;
+}
+
+void DrawArea::RefreshSelects(){
+	QStringList LEDNames;
+	QStringList BuzzerNames;
+	this->ParentMainWindow->log("Refreshing!");
+	// LEDCtrl Refresh
+
+	for (LED* Led : this->LEDVec){
+		LEDNames << Led->VarnameEdit.text();
+	}
+	for (LEDCtrl* LedControl : this->LEDCTRLVec){
+		LedControl->LEDSelect.clear();
+		LedControl->LEDSelect.insertItems(0, LEDNames);
+		LedControl->LEDSelect.insertItems(0, BuzzerNames);
+		LedControl->LEDSelect.setMaxCount(LedControl->LEDSelect.count());
+	}
+
+	// BuzzerCtrl Refresh
+	for (Buzzer* Buzzer : this->BUZVec){
+		BuzzerNames << Buzzer->VarnameEdit.text();
+	}
+	for (BuzzerCtrl* BuzControl : this->BUZCTRLVec){
+		BuzControl->BuzzerSelect.clear();
+		BuzControl->BuzzerSelect.insertItems(0, BuzzerNames);
+		BuzControl->BuzzerSelect.setMaxCount(BuzControl->BuzzerSelect.count());
+	}	
 }
 
 /* 
@@ -311,23 +381,27 @@ std::string GPIODevice::build(){
 LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
-	PinEdit(this),
+	PinSelect(this),
 	VarnameEdit(this){
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
+		for (int i = 1; i < 41; i++){
+			PinSelect.addItem(convertToQString(std::to_string(i)));
+		}
 		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
 		DisplayLabel->setFixedSize(180, 20);
 		QLabel* PinLabel = new QLabel("Pin : ");
 		PinLabel->setStyleSheet("border : 0px;");
-		this->PinEdit.setStyleSheet("background-color : #cceecc;");
+		this->PinSelect.setStyleSheet("background-color : #cceecc;");
 		QLabel* NameLabel = new QLabel("Name : ");
 		NameLabel->setStyleSheet("border : 0px;");
+		VarnameEdit.setText("MyLED" + convertToQString(std::to_string(LEDCount)));
 		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
 		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(PinLabel, 1, 1);
-		this->SelfLayout.addWidget(&this->PinEdit, 1, 2);
+		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
 		this->SelfLayout.addWidget(NameLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
 		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
@@ -340,9 +414,10 @@ void LED::deleteSelf(){
 }
 
 std::string LED::build(){
-	if (!(this->PinEdit.text() == "" || this->VarnameEdit.text() == "")){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
 		return convertToStdString(this->VarnameEdit.text()) +
-		" = gpiozero.LED(" + convertToStdString(this->PinEdit.text()) +
+		" = gpiozero.LED(" + convertToStdString(this->PinSelect.currentText()) +
 		")\n";
 	} else {
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
@@ -353,28 +428,32 @@ std::string LED::build(){
 Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) : 
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
-	PinEdit(this),
+	PinSelect(this),
 	VarnameEdit(this)
 	{
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
+		for (int i = 1; i < 41; i++){
+			PinSelect.addItem(convertToQString(std::to_string(i)));
+		}
 		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
 		DisplayLabel->setFixedSize(180, 20);
 		QLabel* PinLabel = new QLabel("Pin : ");
 		PinLabel->setStyleSheet("border : 0px;");
-		this->PinEdit.setStyleSheet("background-color : #cceecc;");
-		QLabel* NameLabel = new QLabel("Name : ");
+		this->PinSelect.setStyleSheet("background-color : #cceecc;");
+		QLabel* NameLabel = new QLabel("State : ");
 		NameLabel->setStyleSheet("border : 0px;");
+		VarnameEdit.setText("MyBuzzer" + convertToQString(std::to_string(BUZZERCount)));
 		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
 		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(PinLabel, 1, 1);
-		this->SelfLayout.addWidget(&this->PinEdit, 1, 2);
+		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
 		this->SelfLayout.addWidget(NameLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
 		BUZZERCount++;
+		QObject::connect(&this->ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT(deleteSelf()));
 }
 
 void Buzzer::deleteSelf(){
@@ -383,15 +462,100 @@ void Buzzer::deleteSelf(){
 }
 
 std::string Buzzer::build(){
-	if (!(this->PinEdit.text() == "" || this->VarnameEdit.text() == "")){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
 		return convertToStdString(this->VarnameEdit.text()) +
-		" = gpiozero.Buzzer(" + convertToStdString(this->PinEdit.text()) +
+		" = gpiozero.Buzzer(" + convertToStdString(this->PinSelect.currentText()) +
 		")\n";
 	} else {
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
 	}
 }
+
+LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	LEDSelect(this),
+	StateSelect(this)	
+	{
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
+		DisplayLabel->setFixedSize(180, 20);
+		QLabel* LEDLabel = new QLabel("LED : ");
+		LEDLabel->setStyleSheet("border : 0px;");
+		QLabel* NameLabel = new QLabel("Pin State : ");
+		StateSelect.addItem("on");
+		StateSelect.addItem("off");
+		NameLabel->setStyleSheet("border : 0px;");
+		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(LEDLabel, 1, 1);
+		this->SelfLayout.addWidget(&this->LEDSelect, 1, 2);
+		this->SelfLayout.addWidget(NameLabel, 2, 1);
+		this->SelfLayout.addWidget(&this->StateSelect, 2, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		LEDCTRLCount++;
+	}
+
+void LEDCtrl::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string LEDCtrl::build(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	if (this->LEDSelect.currentText() == ""){
+		this->ParentMainWindow->err("No LED Selected for " + this->GPIOName);
+		return "# GPIOStudio - " + this->GPIOName + " : No LED Selected";
+	} else {
+		return convertToStdString(this->LEDSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
+	}
+}
+BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	BuzzerSelect(this),
+	StateSelect(this)	
+	{
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
+		DisplayLabel->setFixedSize(180, 20);
+		QLabel* LEDLabel = new QLabel("Buzzer : ");
+		LEDLabel->setStyleSheet("border : 0px;");
+		QLabel* NameLabel = new QLabel("Pin State : ");
+		StateSelect.addItem("on");
+		StateSelect.addItem("off");
+		NameLabel->setStyleSheet("border : 0px;");
+		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(LEDLabel, 1, 1);
+		this->SelfLayout.addWidget(&this->BuzzerSelect, 1, 2);
+		this->SelfLayout.addWidget(NameLabel, 2, 1);
+		this->SelfLayout.addWidget(&this->StateSelect, 2, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		BUZZERCTRLCount++;
+	}
+
+void BuzzerCtrl::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string BuzzerCtrl::build(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	if (this->BuzzerSelect.currentText() == ""){
+		this->ParentMainWindow->err("No Buzzer Selected for " + this->GPIOName);
+		return "# GPIOStudio - " + this->GPIOName + " : No Buzzer Selected";
+	} else {
+		return convertToStdString(this->BuzzerSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
+	}
+}
+
 
 /*  
   ____ ____ ___ ___ _____ ___   ___  _     ____    _    ____
@@ -407,11 +571,11 @@ std::string Buzzer::build(){
 	GPIOToolBarLayout->setSpacing(0);
 	GPIOToolBarLayout->setMargin(0);
 	QMap<int, QString> GPIOSignalMap;
-	for (int i = 1; i < 3; i++){
-		GPIOButton* LEDButton = new GPIOButton(convertToQString(this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.at(i)), i,  this, this->ParentMainWindow);
-		LEDButton->setFixedSize(232, 36);
-		GPIOToolBarLayout->addWidget(LEDButton);
-		QObject::connect(LEDButton, SIGNAL (GPIOButtonPressed(int)), &this->ParentMainWindow->MainWindowDrawArea, SLOT(OnGPIODeviceSignal(int)));
+	for (int i = 1; i < (int)this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.size() + 1; i++){
+		GPIOButton* GPIOSelectButton = new GPIOButton(convertToQString(this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.at(i)), i,  this, this->ParentMainWindow);
+		GPIOSelectButton->setFixedSize(234, 36);
+		GPIOToolBarLayout->addWidget(GPIOSelectButton);
+		QObject::connect(GPIOSelectButton, SIGNAL (GPIOButtonPressed(int)), &this->ParentMainWindow->MainWindowDrawArea, SLOT(OnGPIODeviceSignal(int)));
 	}
 	this->setFixedSize(232, 720);
  };
@@ -442,7 +606,6 @@ void GPIOButton::SelfPressed(){
  */
 
 void ProgramStart::TriggerBuild(){
-	this->ParentMainWindow->log("--------------------");
 	this->ParentMainWindow->log("Building Project!");
 	std::ofstream outfile ("script.py");
 	for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
@@ -466,7 +629,8 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow) :
 
 
 std::string ProgramStart::build(){
-	return  "import gpiozero\n"
+	return  "# script.py generated by " + convertToStdString(getVersionInfo()) + "\n"
+			"import gpiozero\n"
 			"import time\n";
 }
 /*

@@ -25,3 +25,4 @@ static -
 * hammer.svg - [Iconduck](https://iconduck.com/icons/98126/hammer)
 * run-build.svg - [Iconduck](https://iconduck.com/icons/60348/run-build)
 * logout.svg - [Iconduck](https://iconduck.com/icons/9455/logout)
+* refresh.svg - [Iconduck](https://iconduck.com/icons/55985/refresh)

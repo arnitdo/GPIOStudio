@@ -20,6 +20,7 @@
 #include <QLabel>
 #include <QFormLayout>
 #include <QLineEdit>
+#include <QComboBox>
 
 #include <vector>
 #include <cstdlib>
@@ -33,6 +34,8 @@ class DrawArea;
 class GPIODevice;
 class Buzzer;
 class LED;
+class LEDCtrl;
+class BuzzerCtrl;
 class MenuBar;
 class GPIOButton;
 class GPIOToolBar;
@@ -66,7 +69,6 @@ class DrawArea: public QWidget{
 		DrawArea(MainWindow* parent = nullptr);
 		virtual void mousePressEvent(QMouseEvent *event);
 		virtual void paintEvent(QPaintEvent* event);
-		void LinkGPIO();
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;
@@ -76,6 +78,8 @@ class DrawArea: public QWidget{
 		std::vector<GPIODevice*> GPIOCodeVector;
 		std::vector<LED*> LEDVec;
 		std::vector<Buzzer*> BUZVec;
+		std::vector<LEDCtrl*> LEDCTRLVec;
+		std::vector<BuzzerCtrl*> BUZCTRLVec;
 		std::map<int, std::string> ButtonLabelMap;
 		int activeGPIO;
 		bool isNew = true;
@@ -83,6 +87,7 @@ class DrawArea: public QWidget{
 	public slots:
 		void OnGPIODeviceSignal(int GPIOID);
 		void resetSelf();
+		void RefreshSelects();
 };
 
 /* 
@@ -112,10 +117,12 @@ class MainWindow : public QWidget{
 		QPushButton MainWindowBuildButton;
 		QPushButton MainWindowBRComboButton;
 		QPushButton MainWindowQuitButton;
+		QPushButton MainWindowRefreshButton;
 	public slots:
 		void resetDrawArea();
 		void buildAndRun();
 		void QuitApp();
+		void RefreshDrawSelects();
 };
 
 /* 
@@ -151,7 +158,7 @@ class LED : public GPIODevice{
 		LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QGridLayout SelfLayout;
-		QLineEdit PinEdit;
+		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
 		DrawArea* ParentDrawArea;
 		MainWindow* ParentMainWindow;
@@ -168,16 +175,56 @@ class Buzzer : public GPIODevice{
 		// Functions
 		virtual std::string build(); // IMPORTANT
 		// virtual void paintEvent(QPaintEvent* event);
-		std::string Color = "#98fb98";
 		Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
+		std::string Color = "#98fb98";
 		QGridLayout SelfLayout;
-		QLineEdit PinEdit;
+		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
 		DrawArea* ParentDrawArea;
 		MainWindow* ParentMainWindow;
 		int XCoord, YCoord;
 		std::string GPIOName;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class LEDCtrl : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string build();
+		// Members
+		std::string Color = "#FFB473";
+		QGridLayout SelfLayout;
+		QComboBox LEDSelect;
+		QComboBox StateSelect;
+		DrawArea* ParentDrawArea;
+		MainWindow* ParentMainWindow;
+		int XCoord, YCoord;
+		std::string GPIOName;
+
+	public slots:
+		virtual void deleteSelf();
+};
+
+class BuzzerCtrl : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string build();
+		// Members
+		std::string Color = "#CACDFF";
+		QGridLayout SelfLayout;
+		QComboBox BuzzerSelect;
+		QComboBox StateSelect;
+		DrawArea* ParentDrawArea;
+		MainWindow* ParentMainWindow;
+		int XCoord, YCoord;
+		std::string GPIOName;
+
 	public slots:
 		virtual void deleteSelf();
 };
@@ -204,7 +251,6 @@ class ProgramStart : public GPIODevice{
 		std::string Color = "#aaaaaa";
 	public slots:
 		void TriggerBuild();
-	public slots:
 		virtual void deleteSelf(){}; // Cannot be deleted.
 };
 
