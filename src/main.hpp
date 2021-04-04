@@ -36,6 +36,7 @@ class Buzzer;
 class LED;
 class LEDCtrl;
 class BuzzerCtrl;
+class Sleep;
 class MenuBar;
 class GPIOButton;
 class GPIOToolBar;
@@ -225,6 +226,24 @@ class BuzzerCtrl : public GPIODevice{
 		int XCoord, YCoord;
 		std::string GPIOName;
 
+	public slots:
+		virtual void deleteSelf();
+};
+
+class Sleep : public GPIODevice{
+		Q_OBJECT;
+	public:
+		// Functions
+		Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string build();
+		// Members
+		std::string Color = "#FEDF00";
+		QGridLayout SelfLayout;
+		QLineEdit DurationEdit;
+		DrawArea* ParentDrawArea;
+		MainWindow* ParentMainWindow;
+		int XCoord, YCoord;
+		std::string GPIOName;
 	public slots:
 		virtual void deleteSelf();
 };

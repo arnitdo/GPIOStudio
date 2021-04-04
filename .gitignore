@@ -20,4 +20,4 @@ moc*
 
 GPIOStudio
 
-debug.log
+*.log
