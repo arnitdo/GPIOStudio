@@ -312,6 +312,7 @@ void DrawArea::paintEvent(QPaintEvent* event)
 		};
 	}
 	p->end();
+	delete p;
 }
 
 void DrawArea::OnGPIODeviceSignal(int GPIOID){
@@ -373,6 +374,7 @@ void GPIODevice::paintEvent(QPaintEvent *)
     QPainter* p = new QPainter(this);
     this->style()->drawPrimitive(QStyle::PE_Widget, &opt, p, this);
 	p->end();
+	delete p;
 }
 
 GPIODevice::GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) : QWidget(parent){
