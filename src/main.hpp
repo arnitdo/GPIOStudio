@@ -54,6 +54,7 @@ class GPIOToolBar : public QWidget{
 		GPIOToolBar(QWidget* parent, MainWindow* parentMainWindow);
 		MainWindow *ParentMainWindow;
 		DrawArea* MainWindowDrawArea;
+		QVBoxLayout GPIOToolBarLayout;
 };
 
 /* 
@@ -119,6 +120,7 @@ class MainWindow : public QWidget{
 		QPushButton MainWindowBRComboButton;
 		QPushButton MainWindowQuitButton;
 		QPushButton MainWindowRefreshButton;
+		QGridLayout MainWindowLayout;
 	public slots:
 		void resetDrawArea();
 		void buildAndRun();

@@ -92,31 +92,31 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowBuildButton(this),
 	MainWindowBRComboButton(this),
 	MainWindowQuitButton(this),
-	MainWindowRefreshButton(this)
+	MainWindowRefreshButton(this),
+	MainWindowLayout(this)
 {
 	this->ParentApp = parentApplication;
 	// Base layout for MainWindow
-	QGridLayout* MainWindowLayout = new QGridLayout(this);
-	MainWindowLayout->setSpacing(0);
-	MainWindowLayout->setMargin(0);
+	MainWindowLayout.setSpacing(0);
+	MainWindowLayout.setMargin(0);
 	
 	// MainWindowDrawArea, MainWindowScrollArea
 	MainWindowDrawArea.setFixedSize(5120, 2880);
 	MainWindowScrollArea.setWidget(&MainWindowDrawArea);
 	MainWindowScrollArea.setFixedSize(1024, 612);
-	MainWindowLayout->addWidget(&MainWindowScrollArea, 1, 2, 8, 8);
+	MainWindowLayout.addWidget(&MainWindowScrollArea, 1, 2, 8, 8);
 	
 	// MainWindowConsole
 	MainWindowConsole.setReadOnly(true);
 	MainWindowConsole.setFixedSize(1280, 72);
 	MainWindowConsole.setStyleSheet("background-color : #dddddd;");
 	this->log("Welcome to " + convertToStdString(getVersionInfo()));
-	MainWindowLayout->addWidget(&MainWindowConsole, 9, 0, 1, 10);
+	MainWindowLayout.addWidget(&MainWindowConsole, 9, 0, 1, 10);
 
 	// MainWindowGPIOScrollArea;
 	MainWindowGPIOScrollArea.setFixedSize(256, 612);
 	MainWindowGPIOScrollArea.setWidget(&MainWindowGPIOToolBar);
-	MainWindowLayout->addWidget(&MainWindowGPIOScrollArea, 1, 0, 2, 8);
+	MainWindowLayout.addWidget(&MainWindowGPIOScrollArea, 1, 0, 2, 8);
 
 	// Finishing up
 	this->setWindowTitle(getVersionInfo());
@@ -125,31 +125,31 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowClearButton.setText(" Clear All!");
 	MainWindowClearButton.setIcon(QIcon("static/clear.svg"));
 	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
-	MainWindowLayout->addWidget(&MainWindowClearButton, 0, 0, 1, 2);
+	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 0, 1, 2);
 
 	MainWindowBuildButton.setFixedHeight(36);
 	MainWindowBuildButton.setText(" Build!");
 	MainWindowBuildButton.setIcon(QIcon("static/hammer.svg"));
 	MainWindowBuildButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
-	MainWindowLayout->addWidget(&MainWindowBuildButton, 0, 2, 1, 2);
+	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 2, 1, 2);
 
 	MainWindowBRComboButton.setFixedHeight(36);
 	MainWindowBRComboButton.setText(" Build and Run!");
 	MainWindowBRComboButton.setIcon(QIcon("static/run-build.svg"));
 	MainWindowBRComboButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
-	MainWindowLayout->addWidget(&MainWindowBRComboButton, 0, 4, 1 ,2);
+	MainWindowLayout.addWidget(&MainWindowBRComboButton, 0, 4, 1 ,2);
 
 	MainWindowQuitButton.setFixedHeight(36);
 	MainWindowQuitButton.setText(" Quit Application!");
 	MainWindowQuitButton.setIcon(QIcon("static/logout.svg"));
 	MainWindowQuitButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
-	MainWindowLayout->addWidget(&MainWindowQuitButton, 0, 8, 1 ,2);
+	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 8, 1 ,2);
 
 	MainWindowRefreshButton.setFixedHeight(36);
 	MainWindowRefreshButton.setText(" Refresh!");
 	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
 	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
-	MainWindowLayout->addWidget(&MainWindowRefreshButton, 0, 6, 1 ,2);
+	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 6, 1 ,2);
 
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
 	QObject::connect(&MainWindowBRComboButton, SIGNAL (clicked()), this, SLOT (buildAndRun()));
@@ -312,7 +312,7 @@ void DrawArea::paintEvent(QPaintEvent* event)
 		};
 	}
 	p->end();
-	delete p;
+	delete p, opt;
 }
 
 void DrawArea::OnGPIODeviceSignal(int GPIOID){
@@ -615,20 +615,21 @@ std::string Sleep::build(){
 | |_| |  __/| | |_| || || |_| | |_| | |___| |_) / ___ \|  _ <
  \____|_|  |___\___/ |_| \___/ \___/|_____|____/_/   \_|_| \_\ */
 
- GPIOToolBar::GPIOToolBar(QWidget* parent, MainWindow* parentMainWindow) : QWidget(parent){
+ GPIOToolBar::GPIOToolBar(QWidget* parent, MainWindow* parentMainWindow) : 
+ 	QWidget(parent),
+	GPIOToolBarLayout(this){
 	this->ParentMainWindow = parentMainWindow;
 	this->MainWindowDrawArea = &this->ParentMainWindow->MainWindowDrawArea;
-	QVBoxLayout* GPIOToolBarLayout = new QVBoxLayout(this);
-	GPIOToolBarLayout->setSpacing(0);
-	GPIOToolBarLayout->setMargin(0);
+	GPIOToolBarLayout.setSpacing(0);
+	GPIOToolBarLayout.setMargin(0);
 	QMap<int, QString> GPIOSignalMap;
 	for (int i = 1; i < (int)this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.size() + 1; i++){
 		GPIOButton* GPIOSelectButton = new GPIOButton(convertToQString(this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.at(i)), i,  this, this->ParentMainWindow);
 		GPIOSelectButton->setFixedSize(233, 36);
-		GPIOToolBarLayout->addWidget(GPIOSelectButton);
+		GPIOToolBarLayout.addWidget(GPIOSelectButton);
 		QObject::connect(GPIOSelectButton, SIGNAL (GPIOButtonPressed(int)), &this->ParentMainWindow->MainWindowDrawArea, SLOT(OnGPIODeviceSignal(int)));
 	}
-	GPIOToolBarLayout->setAlignment((Qt::AlignTop | Qt::AlignHCenter));
+	GPIOToolBarLayout.setAlignment((Qt::AlignTop | Qt::AlignHCenter));
 	this->setFixedSize(232, 720);
  };
 /* 
