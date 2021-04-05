@@ -155,17 +155,15 @@ class LED : public GPIODevice{
 	public:
 		// Functions
 		virtual std::string build(); // IMPORTANT
-		// virtual void paintEvent(QPaintEvent* event);
 		LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
+		std::string Color = "#00ffff";
 		QGridLayout SelfLayout;
 		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
-		DrawArea* ParentDrawArea;
-		MainWindow* ParentMainWindow;
-		int XCoord, YCoord;
-		std::string GPIOName;
-		std::string Color = "#00ffff";
+		QLabel DisplayLabel;
+		QLabel PinLabel;
+		QLabel NameLabel;
 	public slots:
 		virtual void deleteSelf();
 };
@@ -175,17 +173,15 @@ class Buzzer : public GPIODevice{
 	public:
 		// Functions
 		virtual std::string build(); // IMPORTANT
-		// virtual void paintEvent(QPaintEvent* event);
 		Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		std::string Color = "#98fb98";
 		QGridLayout SelfLayout;
 		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
-		DrawArea* ParentDrawArea;
-		MainWindow* ParentMainWindow;
-		int XCoord, YCoord;
-		std::string GPIOName;
+		QLabel DisplayLabel;
+		QLabel PinLabel;
+		QLabel NameLabel;
 	public slots:
 		virtual void deleteSelf();
 };
@@ -201,11 +197,9 @@ class LEDCtrl : public GPIODevice{
 		QGridLayout SelfLayout;
 		QComboBox LEDSelect;
 		QComboBox StateSelect;
-		DrawArea* ParentDrawArea;
-		MainWindow* ParentMainWindow;
-		int XCoord, YCoord;
-		std::string GPIOName;
-
+		QLabel DisplayLabel;
+		QLabel LEDLabel;
+		QLabel StateLabel;
 	public slots:
 		virtual void deleteSelf();
 };
@@ -221,11 +215,9 @@ class BuzzerCtrl : public GPIODevice{
 		QGridLayout SelfLayout;
 		QComboBox BuzzerSelect;
 		QComboBox StateSelect;
-		DrawArea* ParentDrawArea;
-		MainWindow* ParentMainWindow;
-		int XCoord, YCoord;
-		std::string GPIOName;
-
+		QLabel DisplayLabel;
+		QLabel BuzzerLabel;
+		QLabel StateLabel;
 	public slots:
 		virtual void deleteSelf();
 };
@@ -240,10 +232,8 @@ class Sleep : public GPIODevice{
 		std::string Color = "#FEDF00";
 		QGridLayout SelfLayout;
 		QLineEdit DurationEdit;
-		DrawArea* ParentDrawArea;
-		MainWindow* ParentMainWindow;
-		int XCoord, YCoord;
-		std::string GPIOName;
+		QLabel DisplayLabel;
+		QLabel DurationLabel;
 	public slots:
 		virtual void deleteSelf();
 };

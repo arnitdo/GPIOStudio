@@ -344,7 +344,6 @@ void DrawArea::RefreshSelects(){
 	for (LEDCtrl* LedControl : this->LEDCTRLVec){
 		LedControl->LEDSelect.clear();
 		LedControl->LEDSelect.insertItems(0, LEDNames);
-		LedControl->LEDSelect.insertItems(0, BuzzerNames);
 		LedControl->LEDSelect.setMaxCount(LedControl->LEDSelect.count());
 	}
 
@@ -399,7 +398,10 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
 	PinSelect(this),
-	VarnameEdit(this){
+	VarnameEdit(this),
+	DisplayLabel(convertToQString(name), this),
+	PinLabel("Pin : ", this),
+	NameLabel("Name : ", this){
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -407,19 +409,16 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 		for (int i = 2; i < 27; i++){
 			PinSelect.addItem(convertToQString(std::to_string(i)));
 		}
-		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
-		DisplayLabel->setFixedSize(180, 20);
-		QLabel* PinLabel = new QLabel("Pin : ");
-		PinLabel->setStyleSheet("border : 0px;");
+		DisplayLabel.setFixedSize(180, 20);
+		PinLabel.setStyleSheet("border : 0px;");
 		this->PinSelect.setStyleSheet("background-color : #cceecc;");
-		QLabel* NameLabel = new QLabel("Name : ");
-		NameLabel->setStyleSheet("border : 0px;");
+		NameLabel.setStyleSheet("border : 0px;");
 		VarnameEdit.setText("MyLED" + convertToQString(std::to_string(Counters::LEDCount)));
 		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
-		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
-		this->SelfLayout.addWidget(PinLabel, 1, 1);
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&PinLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
-		this->SelfLayout.addWidget(NameLabel, 2, 1);
+		this->SelfLayout.addWidget(&NameLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
 		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
 		Counters::LEDCount++;
@@ -446,7 +445,10 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
 	PinSelect(this),
-	VarnameEdit(this)
+	VarnameEdit(this),
+	DisplayLabel(convertToQString(name), this),
+	PinLabel("Pin : ", this),
+	NameLabel("State : ", this)
 	{
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -455,19 +457,16 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		for (int i = 2; i < 27; i++){
 			PinSelect.addItem(convertToQString(std::to_string(i)));
 		}
-		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
-		DisplayLabel->setFixedSize(180, 20);
-		QLabel* PinLabel = new QLabel("Pin : ");
-		PinLabel->setStyleSheet("border : 0px;");
+		DisplayLabel.setFixedSize(180, 20);
+		PinLabel.setStyleSheet("border : 0px;");
 		this->PinSelect.setStyleSheet("background-color : #cceecc;");
-		QLabel* NameLabel = new QLabel("State : ");
-		NameLabel->setStyleSheet("border : 0px;");
+		NameLabel.setStyleSheet("border : 0px;");
 		VarnameEdit.setText("MyBuzzer" + convertToQString(std::to_string(Counters::BUZZERCount)));
 		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
-		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
-		this->SelfLayout.addWidget(PinLabel, 1, 1);
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&PinLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
-		this->SelfLayout.addWidget(NameLabel, 2, 1);
+		this->SelfLayout.addWidget(&NameLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
 		Counters::BUZZERCount++;
 		QObject::connect(&this->ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT(deleteSelf()));
@@ -494,24 +493,24 @@ LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, s
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
 	LEDSelect(this),
-	StateSelect(this)	
+	StateSelect(this),
+	DisplayLabel(convertToQString(name), this),
+	LEDLabel("LED : ", this),
+	StateLabel("Pin State : ", this)
 	{
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
-		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
-		DisplayLabel->setFixedSize(180, 20);
-		QLabel* LEDLabel = new QLabel("LED : ");
-		LEDLabel->setStyleSheet("border : 0px;");
-		QLabel* NameLabel = new QLabel("Pin State : ");
+		DisplayLabel.setFixedSize(180, 20);
+		LEDLabel.setStyleSheet("border : 0px;");
 		StateSelect.addItem("on");
 		StateSelect.addItem("off");
-		NameLabel->setStyleSheet("border : 0px;");
-		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
-		this->SelfLayout.addWidget(LEDLabel, 1, 1);
+		StateLabel.setStyleSheet("border : 0px;");
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&LEDLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->LEDSelect, 1, 2);
-		this->SelfLayout.addWidget(NameLabel, 2, 1);
+		this->SelfLayout.addWidget(&StateLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->StateSelect, 2, 2);
 		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
 		Counters::LEDCTRLCount++;
@@ -526,7 +525,7 @@ std::string LEDCtrl::build(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	if (this->LEDSelect.currentText() == ""){
 		this->ParentMainWindow->err("No LED Selected for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No LED Selected";
+		return "# GPIOStudio - " + this->GPIOName + " : No LED Selected\n";
 	} else {
 		return convertToStdString(this->LEDSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
 	}
@@ -535,24 +534,24 @@ BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
 	BuzzerSelect(this),
-	StateSelect(this)	
+	StateSelect(this),
+	DisplayLabel(convertToQString(this->GPIOName), this),
+	BuzzerLabel("Buzzer : ", this),
+	StateLabel("Pin State : ", this)
 	{
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
-		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
-		DisplayLabel->setFixedSize(180, 20);
-		QLabel* LEDLabel = new QLabel("Buzzer : ");
-		LEDLabel->setStyleSheet("border : 0px;");
-		QLabel* NameLabel = new QLabel("Pin State : ");
+		DisplayLabel.setFixedSize(180, 20);
+		BuzzerLabel.setStyleSheet("border : 0px;");
 		StateSelect.addItem("on");
 		StateSelect.addItem("off");
-		NameLabel->setStyleSheet("border : 0px;");
-		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
-		this->SelfLayout.addWidget(LEDLabel, 1, 1);
+		StateLabel.setStyleSheet("border : 0px;");
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&BuzzerLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->BuzzerSelect, 1, 2);
-		this->SelfLayout.addWidget(NameLabel, 2, 1);
+		this->SelfLayout.addWidget(&StateLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->StateSelect, 2, 2);
 		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
 		Counters::BUZZERCTRLCount++;
@@ -576,19 +575,19 @@ std::string BuzzerCtrl::build(){
 Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
-	DurationEdit(this){
+	DurationEdit(this),
+	DisplayLabel(convertToQString(name), this),
+	DurationLabel("Duration : ", this){
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
-		QLabel* DisplayLabel = new QLabel(convertToQString(this->GPIOName));
-		DisplayLabel->setFixedSize(180, 20);
-		QLabel* DurationLabel = new QLabel("Duration : ");
-		DurationLabel->setStyleSheet("border : 0px;");
+		DisplayLabel.setFixedSize(180, 20);
+		DurationLabel.setStyleSheet("border : 0px;");
 		// DisplayLabel->setText("MyLED" + convertToQString(std::to_string(LEDCount)));
 		this->DurationEdit.setStyleSheet("background-color : #FFFFE0;");
-		this->SelfLayout.addWidget(DisplayLabel, 0, 1, 1, 2);
-		this->SelfLayout.addWidget(DurationLabel, 1, 1);
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&DurationLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->DurationEdit, 1, 2);
 		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
 		Counters::SLEEPCount++;
