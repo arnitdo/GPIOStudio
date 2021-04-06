@@ -4,4 +4,4 @@ SOURCES += src/main.cpp
 
 HEADERS += src/main.hpp
 
-CONFIG += release
+CONFIG += release c++11
