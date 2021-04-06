@@ -312,7 +312,8 @@ void DrawArea::paintEvent(QPaintEvent* event)
 		};
 	}
 	p->end();
-	delete p, opt;
+	delete p;
+	delete opt;
 }
 
 void DrawArea::OnGPIODeviceSignal(int GPIOID){
@@ -406,7 +407,7 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
-		for (int i = 2; i < 27; i++){
+		for (int i = 2; i < 28; i++){
 			PinSelect.addItem(convertToQString(std::to_string(i)));
 		}
 		DisplayLabel.setFixedSize(180, 20);
@@ -454,7 +455,7 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
-		for (int i = 2; i < 27; i++){
+		for (int i = 2; i < 28; i++){
 			PinSelect.addItem(convertToQString(std::to_string(i)));
 		}
 		DisplayLabel.setFixedSize(180, 20);
