@@ -1,4 +1,4 @@
-#ROADMAP
+# ROADMAP
 
 v0.0.1
 
@@ -26,7 +26,7 @@ v0.0.6
 
 ---
 
-#GOALS
+# GOALS
 
 For Public Release v1.0.0
 
@@ -37,6 +37,6 @@ For Public Release v1.0.0
 
 ---
 
-#Extras in Consideration
+# Extras in Consideration
 
-### User Createable 
+### User Createable GPIO Objects?
