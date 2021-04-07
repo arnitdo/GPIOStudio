@@ -46,12 +46,14 @@ namespace Counters{
 	int LEDCTRLCount = 1;
 	int BUZZERCTRLCount = 1;
 	int SLEEPCount = 1;
+	int BUTTONCount = 1;
 	void reset(){
 		BUZZERCount = 1;
 		LEDCount = 1;
 		LEDCTRLCount = 1;
 		BUZZERCTRLCount = 1;
 		SLEEPCount = 1;
+		BUTTONCount = 1;
 	}
 }
 /*
@@ -223,6 +225,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({3, "LED Controls"});
 	ButtonLabelMap.insert({4, "Buzzer Controls"});
 	ButtonLabelMap.insert({5, "Sleep Timer"});
+	ButtonLabelMap.insert({6, "Simple Button"});
 }
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
@@ -285,6 +288,14 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 			}
 			case 5:{
 				Sleep* GPIOD = new Sleep(this, ParentMainWindow, event->x(), event->y(), ("Sleep Timer " + std::to_string(Counters::SLEEPCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+				GPIOD->show();
+				this->GPIOCodeVector.push_back(GPIOD);
+				break;
+			}
+			case 6:{
+				Button* GPIOD = new Button(this, ParentMainWindow, event->x(), event->y(), ("Button " + std::to_string(Counters::BUTTONCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 				GPIOD->show();
@@ -608,7 +619,52 @@ std::string Sleep::build(){
 		return "time.sleep(" + convertToStdString(this->DurationEdit.text()) + ")\n";
 	}
 }
+Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	PinSelect(this),
+	VarnameEdit(this),
+	DisplayLabel(convertToQString(name), this),
+	PinLabel("Pin : ", this),
+	NameLabel("Name : ", this){
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		for (int i = 2; i < 28; i++){
+			PinSelect.addItem(convertToQString(std::to_string(i)));
+		}
+		DisplayLabel.setFixedSize(180, 20);
+		PinLabel.setStyleSheet("border : 0px;");
+		this->PinSelect.setStyleSheet("background-color : #cceecc;");
+		NameLabel.setStyleSheet("border : 0px;");
+		VarnameEdit.setText("MyButton" + convertToQString(std::to_string(Counters::BUTTONCount)));
+		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&PinLabel, 1, 1);
+		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
+		this->SelfLayout.addWidget(&NameLabel, 2, 1);
+		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::BUTTONCount++;
+}
 
+void Button::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string Button::build(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
+		return convertToStdString(this->VarnameEdit.text()) +
+		" = gpiozero.Button(" + convertToStdString(this->PinSelect.currentText()) +
+		")\n";
+	} else {
+		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
+		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
+	}
+}
 /*  
   ____ ____ ___ ___ _____ ___   ___  _     ____    _    ____
  / ___|  _ |_ _/ _ |_   _/ _ \ / _ \| |   | __ )  / \  |  _ \

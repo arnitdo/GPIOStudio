@@ -37,6 +37,7 @@ class LED;
 class LEDCtrl;
 class BuzzerCtrl;
 class Sleep;
+class Button;
 class MenuBar;
 class GPIOButton;
 class GPIOToolBar;
@@ -236,6 +237,24 @@ class Sleep : public GPIODevice{
 		QLineEdit DurationEdit;
 		QLabel DisplayLabel;
 		QLabel DurationLabel;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class Button : public GPIODevice{
+		Q_OBJECT;
+	public:
+		// Functions
+		Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string build();
+		// Members
+		std::string Color = "#aadf0a";
+		QGridLayout SelfLayout;
+		QComboBox PinSelect;
+		QLineEdit VarnameEdit;
+		QLabel DisplayLabel;
+		QLabel PinLabel;
+		QLabel NameLabel;
 	public slots:
 		virtual void deleteSelf();
 };
