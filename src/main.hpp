@@ -72,6 +72,7 @@ class DrawArea: public QWidget{
 		DrawArea(MainWindow* parent = nullptr);
 		virtual void mousePressEvent(QMouseEvent *event);
 		virtual void paintEvent(QPaintEvent* event);
+		void createGPIODevice(int active, int X, int Y);
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;

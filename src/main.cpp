@@ -1,4 +1,7 @@
 #include "main.hpp"
+#include "thirdparty/nlohmann/json.hpp"
+
+using json = nlohmann::json;
 
 //begin Qt imports
 
@@ -231,10 +234,10 @@ DrawArea::DrawArea(MainWindow *parent) :
 void DrawArea::mousePressEvent(QMouseEvent *event){
 	if (this->NWMode){
 		if (this->isNew){
-			QRect* StartBox = new QRect(0, 0, 200, 100);
+			QRect StartBox = QRect(0, 0, 200, 100);
 			ProgramStart* PStart = new ProgramStart(this, this->ParentMainWindow);
 			this->ProgStart = PStart;
-			PStart->setGeometry(*StartBox);
+			PStart->setGeometry(StartBox);
 			PStart->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(PStart->Color) + ";");
 			this->isNew = false;
 			PStart->show();
@@ -246,70 +249,80 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 			this->CurrentPoint = QPoint(event->x(), event->y() + 50);
 		}
 		this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-		QRect GPIOBoundBox = QRect(QPoint(event->x(), event->y()), QPoint(event->x() + 200, event->y() + 100));
-		switch(this->activeGPIO){
-			case 1:{
-				LED* GPIOD = new LED(this, ParentMainWindow, event->x(), event->y(), ("LED " + std::to_string(Counters::LEDCount)));
-				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
-				GPIOD->show();
-				this->GPIOCodeVector.push_back(GPIOD);
-				this->LEDVec.push_back(GPIOD);
-				break;
-			}
-			case 2:{
-				Buzzer* GPIOD = new Buzzer(this, ParentMainWindow, event->x(), event->y(), ("Buzzer " + std::to_string(Counters::BUZZERCount)));
-				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
-				GPIOD->show();
-				this->GPIOCodeVector.push_back(GPIOD);
-				this->BUZVec.push_back(GPIOD);
-				break;
-			}
-			case 3:{
-				LEDCtrl* GPIOD = new LEDCtrl(this, ParentMainWindow, event->x(), event->y(), ("LED Controls " + std::to_string(Counters::LEDCTRLCount)));
-				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
-				GPIOD->show();
-				this->GPIOCodeVector.push_back(GPIOD);
-				this->LEDCTRLVec.push_back(GPIOD);
-				this->RefreshSelects();
-				break;
-			}
-			case 4:{
-				BuzzerCtrl* GPIOD = new BuzzerCtrl(this, ParentMainWindow, event->x(), event->y(), ("Buzzer Controls " + std::to_string(Counters::BUZZERCTRLCount)));
-				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
-				GPIOD->show();
-				this->GPIOCodeVector.push_back(GPIOD);
-				this->BUZCTRLVec.push_back(GPIOD);
-				this->RefreshSelects();
-				break;
-			}
-			case 5:{
-				Sleep* GPIOD = new Sleep(this, ParentMainWindow, event->x(), event->y(), ("Sleep Timer " + std::to_string(Counters::SLEEPCount)));
-				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
-				GPIOD->show();
-				this->GPIOCodeVector.push_back(GPIOD);
-				break;
-			}
-			case 6:{
-				Button* GPIOD = new Button(this, ParentMainWindow, event->x(), event->y(), ("Button " + std::to_string(Counters::BUTTONCount)));
-				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
-				GPIOD->show();
-				this->GPIOCodeVector.push_back(GPIOD);
-				break;
-			}
-		}
+		this->createGPIODevice(this->activeGPIO, event->x(), event->y());
 		this->setStyleSheet("background-color : #ffffff;");
 		this->NWMode = false;
 	}
 }
 
-void DrawArea::paintEvent(QPaintEvent* event)
-{
+void DrawArea::createGPIODevice(int active, int X, int Y){
+	// Constructs a GPIO Device at the given coordinates;
+	this->activeGPIO = active;
+	switch(this->activeGPIO){
+		case 1:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			LED* GPIOD = new LED(this, ParentMainWindow, X, Y, ("LED " + std::to_string(Counters::LEDCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->GPIOCodeVector.push_back(GPIOD);
+			this->LEDVec.push_back(GPIOD);
+			break;
+		}
+		case 2:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			Buzzer* GPIOD = new Buzzer(this, ParentMainWindow, X, Y, ("Buzzer " + std::to_string(Counters::BUZZERCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->GPIOCodeVector.push_back(GPIOD);
+			this->BUZVec.push_back(GPIOD);
+			break;
+		}
+		case 3:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			LEDCtrl* GPIOD = new LEDCtrl(this, ParentMainWindow, X, Y, ("LED Controls " + std::to_string(Counters::LEDCTRLCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->GPIOCodeVector.push_back(GPIOD);
+			this->LEDCTRLVec.push_back(GPIOD);
+			this->RefreshSelects();
+			break;
+		}
+		case 4:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			BuzzerCtrl* GPIOD = new BuzzerCtrl(this, ParentMainWindow, X, Y, ("Buzzer Controls " + std::to_string(Counters::BUZZERCTRLCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->GPIOCodeVector.push_back(GPIOD);
+			this->BUZCTRLVec.push_back(GPIOD);
+			this->RefreshSelects();
+			break;
+		}
+		case 5:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			Sleep* GPIOD = new Sleep(this, ParentMainWindow, X, Y, ("Sleep Timer " + std::to_string(Counters::SLEEPCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->GPIOCodeVector.push_back(GPIOD);
+			break;
+		}
+		case 6:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			Button* GPIOD = new Button(this, ParentMainWindow, X, Y, ("Button " + std::to_string(Counters::BUTTONCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->GPIOCodeVector.push_back(GPIOD);
+			break;
+		}
+	}	
+}
+
+void DrawArea::paintEvent(QPaintEvent* event){
 	QStyleOption* opt = new QStyleOption;
 	QPainter* p = new QPainter(this);
 	p->setCompositionMode(QPainter::CompositionMode_Source);
