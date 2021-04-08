@@ -26,3 +26,7 @@ static -
 * run-build.svg - [Iconduck](https://iconduck.com/icons/60348/run-build)
 * logout.svg - [Iconduck](https://iconduck.com/icons/9455/logout)
 * refresh.svg - [Iconduck](https://iconduck.com/icons/55985/refresh)
+
+src/thirdparty - 
+* nlohmann/json - [GitHub - nlohmann/json](https://github.com/nlohmann/json/)
+	Note : The file used is the single_include/nlohmann/json.hpp file
