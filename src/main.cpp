@@ -50,6 +50,7 @@ namespace Counters{
 	int BUZZERCTRLCount = 1;
 	int SLEEPCount = 1;
 	int BUTTONCount = 1;
+	int FUNCTIONCount = 1;
 	void reset(){
 		BUZZERCount = 1;
 		LEDCount = 1;
@@ -57,6 +58,7 @@ namespace Counters{
 		BUZZERCTRLCount = 1;
 		SLEEPCount = 1;
 		BUTTONCount = 1;
+		FUNCTIONCount = 1;
 	}
 }
 /*
@@ -68,7 +70,7 @@ namespace Counters{
 
 
 QString getVersionInfo(){
-	std::string VInfo = "GPIO Studio v" + std::to_string(MAJOR_VERSION) + "." + std::to_string(MINOR_VERSION) + "." + std::to_string(REVISION);
+	std::string VInfo = std::to_string(MAJOR_VERSION) + "." + std::to_string(MINOR_VERSION) + "." + std::to_string(REVISION);
 	return QString(VInfo.c_str());
 }
 
@@ -115,7 +117,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowConsole.setReadOnly(true);
 	MainWindowConsole.setFixedSize(1280, 72);
 	MainWindowConsole.setStyleSheet("background-color : #dddddd;");
-	this->log("Welcome to " + convertToStdString(getVersionInfo()));
+	this->log("Welcome to " + convertToStdString("GPIO Studio v" + getVersionInfo()));
 	MainWindowLayout.addWidget(&MainWindowConsole, 9, 0, 1, 10);
 
 	// MainWindowGPIOScrollArea;
@@ -124,7 +126,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowLayout.addWidget(&MainWindowGPIOScrollArea, 1, 0, 2, 8);
 
 	// Finishing up
-	this->setWindowTitle(getVersionInfo());
+	this->setWindowTitle("GPIO Studio v" + getVersionInfo());
 	this->setFixedSize(1280, 720);
 	MainWindowClearButton.setFixedHeight(36);
 	MainWindowClearButton.setText(" Clear All!");
@@ -229,6 +231,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({4, "Buzzer Controls"});
 	ButtonLabelMap.insert({5, "Sleep Timer"});
 	ButtonLabelMap.insert({6, "Simple Button"});
+	ButtonLabelMap.insert({7, "Custom Function"});
 }
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
@@ -319,6 +322,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
 		}
+		case 7:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			Function* GPIOD = new Function(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTIONCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->FUNCVec.push_back(GPIOD);
+			this->GPIOCodeVector.push_back(GPIOD);
+			break;
+		}
 	}	
 }
 
@@ -336,6 +349,7 @@ void DrawArea::paintEvent(QPaintEvent* event){
 		};
 	}
 	p->end();
+	event = event;
 	delete p;
 	delete opt;
 }
@@ -350,17 +364,19 @@ void DrawArea::resetSelf(){
 	this->setStyleSheet("background-color : #ffffff;");
 	this->isNew = true;	
 	this->ParentMainWindow->log("Resetting Project!");	
-	GPIOCodeVector.clear();
-	BUZVec.clear();
-	LEDVec.clear();
-	LEDCTRLVec.clear();
-	BUZCTRLVec.clear();
+	this->GPIOCodeVector.clear();
+	this->BUZVec.clear();
+	this->LEDVec.clear();
+	this->LEDCTRLVec.clear();
+	this->BUZCTRLVec.clear();
+	this->FUNCVec.clear();
 	Counters::reset();
 }
 
 void DrawArea::RefreshSelects(){
 	QStringList LEDNames;
 	QStringList BuzzerNames;
+	QStringList FuncNames;
 	// LEDCtrl Refresh
 
 	for (LED* Led : this->LEDVec){
@@ -380,7 +396,12 @@ void DrawArea::RefreshSelects(){
 		BuzControl->BuzzerSelect.clear();
 		BuzControl->BuzzerSelect.insertItems(0, BuzzerNames);
 		BuzControl->BuzzerSelect.setMaxCount(BuzControl->BuzzerSelect.count());
-	}	
+	}
+
+	// Function Refresh
+	for (Function* F : this->FUNCVec){
+		FuncNames << F->NameEdit.text();
+	}
 }
 
 /* 
@@ -678,6 +699,72 @@ std::string Button::build(){
 		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
 	}
 }
+
+Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	DisplayLabel(convertToQString(name), this),
+	NameLabel("Name : ", this),
+	NameEdit(this),
+	BodyLabel("Body : ", this),
+	BodyButton("Edit Function Body", this){
+		QWidget* BodyWindow = new QWidget;
+		QTextEdit* FunctionBodyEdit = new QTextEdit(BodyWindow);
+		QPushButton* CBody = new QPushButton("Close Window", BodyWindow);
+		BodyWindow->setWindowFlags(Qt::WindowMaximizeButtonHint);
+		BodyWindow->setFixedSize(640, 480);
+		FunctionBodyEdit->setGeometry(50, 20, 540, 380);
+		FunctionBodyEdit->show();
+		this->FunctionBodyWindow = BodyWindow;
+		this->FunctionBody = FunctionBodyEdit;
+		this->CloseBodyButton = CBody;
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		DisplayLabel.setFixedSize(180, 20);
+		NameLabel.setStyleSheet("border : 0px;");
+		BodyLabel.setStyleSheet("border : 0px;");
+		BodyLabel.setFixedHeight(20);
+		BodyButton.setFixedHeight(20);
+		NameEdit.setStyleSheet("background-color : #CCFFD3;");
+		NameEdit.setText(convertToQString("MyFunction" + std::to_string(Counters::FUNCTIONCount)));
+		BodyButton.setStyleSheet("background-color : #CCFFD3;");
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&NameLabel, 1, 1);
+		this->SelfLayout.addWidget(&NameEdit, 1, 2);
+		this->SelfLayout.addWidget(&BodyLabel, 2, 1);
+		this->SelfLayout.addWidget(&BodyButton, 2, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT(deleteSelf()));
+		QObject::connect(&BodyButton, SIGNAL (clicked()), this, SLOT (showBodyWindow()));
+		QObject::connect(CBody, SIGNAL (clicked()), this, SLOT (hideBodyWindow()));
+		Counters::FUNCTIONCount++;
+}
+
+void Function::showBodyWindow(){
+	this->FunctionBodyWindow->show();
+};
+
+void Function::hideBodyWindow(){
+	this->FunctionBodyWindow->hide();
+};
+
+void Function::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string Function::build(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string out, templine;
+	this->FunctionText << convertToStdString(this->FunctionBody->toPlainText());
+	out = "def " + convertToStdString(this->NameEdit.text()) + "():\n";
+	while (std::getline(this->FunctionText, templine)){
+		out += "\t" + templine + "\n";
+	}
+	return out;
+}
+
 /*  
   ____ ____ ___ ___ _____ ___   ___  _     ____    _    ____
  / ___|  _ |_ _/ _ |_   _/ _ \ / _ \| |   | __ )  / \  |  _ \
@@ -752,7 +839,7 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow) :
 
 
 std::string ProgramStart::build(){
-	return  "# script.py generated by " + convertToStdString(getVersionInfo()) + "\n"
+	return  "# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
 			"import gpiozero\n"
 			"import time\n";
 }

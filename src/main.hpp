@@ -28,6 +28,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <sstream>
 
 class MainWindow;
 class DrawArea;
@@ -38,6 +39,8 @@ class LEDCtrl;
 class BuzzerCtrl;
 class Sleep;
 class Button;
+class Function;
+class FunctionCtrl;
 class MenuBar;
 class GPIOButton;
 class GPIOToolBar;
@@ -84,6 +87,8 @@ class DrawArea: public QWidget{
 		std::vector<Buzzer*> BUZVec;
 		std::vector<LEDCtrl*> LEDCTRLVec;
 		std::vector<BuzzerCtrl*> BUZCTRLVec;
+		std::vector<Function*> FUNCVec;
+		std::vector<FunctionCtrl*> FUNCTRLVec;
 		std::map<int, std::string> ButtonLabelMap;
 		int activeGPIO;
 		bool isNew = true;
@@ -133,6 +138,7 @@ class MainWindow : public QWidget{
 /* 
   ____ ____ ___ ___
  / ___|  _ |_ _/ _ \
+ std::vector<Function*> FUNC
 | |  _| |_) | | | | |
 | |_| |  __/| | |_| |
  \____|_|  |___\___/ */
@@ -249,7 +255,7 @@ class Button : public GPIODevice{
 		Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		virtual std::string build();
 		// Members
-		std::string Color = "#aadf0a";
+		std::string Color = "#AADF0A";
 		QGridLayout SelfLayout;
 		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
@@ -258,6 +264,31 @@ class Button : public GPIODevice{
 		QLabel NameLabel;
 	public slots:
 		virtual void deleteSelf();
+};
+
+class Function : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string build();
+		// Members
+		std::string Color = "#98FB98";
+		QWidget* FunctionBodyWindow;
+		QTextEdit* FunctionBody;
+		QPushButton* CloseBodyButton;
+		QGridLayout SelfLayout;
+		QLabel DisplayLabel;
+		QLabel NameLabel;
+		QLineEdit NameEdit;
+		QLabel BodyLabel;
+		QPushButton BodyButton;
+		std::stringstream FunctionText;
+	public slots:
+		void showBodyWindow();
+		void hideBodyWindow();
+		virtual void deleteSelf();
+		
 };
 
 /* 
