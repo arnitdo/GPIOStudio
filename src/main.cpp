@@ -51,6 +51,7 @@ namespace Counters{
 	int SLEEPCount = 1;
 	int BUTTONCount = 1;
 	int FUNCTIONCount = 1;
+	int FUNCTRLCount = 1;
 	void reset(){
 		BUZZERCount = 1;
 		LEDCount = 1;
@@ -59,6 +60,7 @@ namespace Counters{
 		SLEEPCount = 1;
 		BUTTONCount = 1;
 		FUNCTIONCount = 1;
+		FUNCTRLCount = 1;
 	}
 }
 /*
@@ -232,6 +234,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({5, "Sleep Timer"});
 	ButtonLabelMap.insert({6, "Simple Button"});
 	ButtonLabelMap.insert({7, "Custom Function"});
+	ButtonLabelMap.insert({8, "Function Controls"});
 }
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
@@ -332,6 +335,17 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
 		}
+		case 8:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			FunctionControl* GPIOD = new FunctionControl(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTRLCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->GPIOCodeVector.push_back(GPIOD);
+			this->FUNCTRLVec.push_back(GPIOD);
+			this->RefreshSelects();
+			break;
+		}
 	}	
 }
 
@@ -401,6 +415,12 @@ void DrawArea::RefreshSelects(){
 	// Function Refresh
 	for (Function* F : this->FUNCVec){
 		FuncNames << F->NameEdit.text();
+	}
+
+	for (FunctionControl* FCTRL : this->FUNCTRLVec){
+		FCTRL->FunctionSelect.clear();
+		FCTRL->FunctionSelect.insertItems(0, FuncNames);
+		FCTRL->FunctionSelect.setMaxCount(FCTRL->FunctionSelect.count());
 	}
 }
 
@@ -714,7 +734,9 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 		BodyWindow->setWindowFlags(Qt::WindowMaximizeButtonHint);
 		BodyWindow->setFixedSize(640, 480);
 		FunctionBodyEdit->setGeometry(50, 20, 540, 380);
-		FunctionBodyEdit->show();
+		CBody->setGeometry(270, 425, 100, 25);
+		FunctionBodyEdit->setFontPointSize(14);
+		FunctionBodyEdit->append("# Write your function code here\n# You do not need to indent the code body\nprint(\"Hello, World!\")\n");
 		this->FunctionBodyWindow = BodyWindow;
 		this->FunctionBody = FunctionBodyEdit;
 		this->CloseBodyButton = CBody;
@@ -742,6 +764,7 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 }
 
 void Function::showBodyWindow(){
+	this->FunctionBodyWindow->setWindowTitle("Edit Function " + this->NameEdit.text());
 	this->FunctionBodyWindow->show();
 };
 
@@ -763,6 +786,41 @@ std::string Function::build(){
 		out += "\t" + templine + "\n";
 	}
 	return out;
+}
+
+FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	FunctionSelect(this),
+	DisplayLabel(convertToQString(name), this),
+	ExecuteLabel("Select Function to execute : ", this)
+	{
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		DisplayLabel.setFixedSize(180, 20);
+		ExecuteLabel.setStyleSheet("border : 0px;");
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&ExecuteLabel, 1, 1, 1, 2);
+		this->SelfLayout.addWidget(&FunctionSelect, 2, 1, 1, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::FUNCTRLCount++;
+	}
+
+void FunctionControl::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string FunctionControl::build(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	if (this->FunctionSelect.currentText() == ""){
+		this->ParentMainWindow->err("No Function Selected for " + this->GPIOName);
+		return "# GPIOStudio - " + this->GPIOName + " : No Function Selected\n";
+	} else {
+		return convertToStdString(this->FunctionSelect.currentText()) + "()\n";
+	}
 }
 
 /*  
