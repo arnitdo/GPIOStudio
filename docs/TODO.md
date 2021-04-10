@@ -10,11 +10,11 @@ v0.0.2
 
 v0.0.3
 
-- [ ] Basic Input Devices
+- [x] Basic Input Devices
 
 v0.0.4
 
-- [ ] User Functions
+- [x] User Functions
 
 v0.0.5
 
