@@ -41,7 +41,7 @@ using json = nlohmann::json;
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
-#define REVISION 3
+#define REVISION 4
 
 namespace Counters{
 	int BUZZERCount = 1;
@@ -52,6 +52,7 @@ namespace Counters{
 	int BUTTONCount = 1;
 	int FUNCTIONCount = 1;
 	int FUNCTRLCount = 1;
+	int BTNCTRLCount = 1;
 	void reset(){
 		BUZZERCount = 1;
 		LEDCount = 1;
@@ -61,6 +62,7 @@ namespace Counters{
 		BUTTONCount = 1;
 		FUNCTIONCount = 1;
 		FUNCTRLCount = 1;
+		BTNCTRLCount = 1;
 	}
 }
 /*
@@ -235,6 +237,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({6, "Simple Button"});
 	ButtonLabelMap.insert({7, "Custom Function"});
 	ButtonLabelMap.insert({8, "Function Controls"});
+	ButtonLabelMap.insert({9, "Button Controls"});
 }
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
@@ -322,6 +325,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->BTNVec.push_back(GPIOD);
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
 		}
@@ -337,7 +341,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 		}
 		case 8:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
-			FunctionControl* GPIOD = new FunctionControl(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTRLCount)));
+			FunctionControl* GPIOD = new FunctionControl(this, ParentMainWindow, X, Y, ("Function Controls " + std::to_string(Counters::FUNCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
@@ -346,6 +350,18 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			this->RefreshSelects();
 			break;
 		}
+		case 9:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
+			ButtonControl* GPIOD = new ButtonControl(this, ParentMainWindow, X, Y, ("Button Controls " + std::to_string(Counters::BTNCTRLCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->GPIOCodeVector.push_back(GPIOD);
+			this->BTNCTRLVec.push_back(GPIOD);
+			this->RefreshSelects();
+			break;
+		}
+
 	}	
 }
 
@@ -384,6 +400,7 @@ void DrawArea::resetSelf(){
 	this->LEDCTRLVec.clear();
 	this->BUZCTRLVec.clear();
 	this->FUNCVec.clear();
+	this->BTNCTRLVec.clear();
 	Counters::reset();
 }
 
@@ -391,6 +408,7 @@ void DrawArea::RefreshSelects(){
 	QStringList LEDNames;
 	QStringList BuzzerNames;
 	QStringList FuncNames;
+	QStringList ButtonNames;
 	// LEDCtrl Refresh
 
 	for (LED* Led : this->LEDVec){
@@ -421,6 +439,19 @@ void DrawArea::RefreshSelects(){
 		FCTRL->FunctionSelect.clear();
 		FCTRL->FunctionSelect.insertItems(0, FuncNames);
 		FCTRL->FunctionSelect.setMaxCount(FCTRL->FunctionSelect.count());
+	}
+
+	// ButtonControl Refresh
+	for (Button* BTN : this->BTNVec){
+		ButtonNames << BTN->VarnameEdit.text();
+	}
+
+	for (ButtonControl* BCTRL : this->BTNCTRLVec){
+		BCTRL->FunctionSelect.clear();
+		BCTRL->ButtonSelect.clear();
+		BCTRL->ButtonSelect.insertItems(0, ButtonNames);
+		BCTRL->FunctionSelect.insertItems(0, FuncNames);
+		BCTRL->FunctionSelect.setMaxCount(BCTRL->FunctionSelect.count());
 	}
 }
 
@@ -820,6 +851,59 @@ std::string FunctionControl::build(){
 		return "# GPIOStudio - " + this->GPIOName + " : No Function Selected\n";
 	} else {
 		return convertToStdString(this->FunctionSelect.currentText()) + "()\n";
+	}
+}
+
+ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	ButtonSelect(this),
+	StateSelect(this),
+	FunctionSelect(this),
+	DisplayLabel(convertToQString(name), this),
+	ButtonLabel("Select Button to target : ", this),
+	StateLabel("Select Button Trigger State : ", this),
+	ExecuteLabel("Select Function to execute : ", this)
+	{
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		StateSelect.addItem("when_held");
+		StateSelect.addItem("when_pressed");
+		StateSelect.addItem("when_released");
+		DisplayLabel.setFixedSize(180, 20);
+		ButtonLabel.setStyleSheet("border : 0px;");
+		StateLabel.setStyleSheet("border : 0px;");
+		ExecuteLabel.setStyleSheet("border : 0px;");
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&ButtonLabel, 1, 1, 1, 2);
+		this->SelfLayout.addWidget(&ButtonSelect, 2, 1, 1, 2);
+		this->SelfLayout.addWidget(&StateLabel, 3, 1, 1 ,2);
+		this->SelfLayout.addWidget(&StateSelect, 4, 1, 1, 2);
+		this->SelfLayout.addWidget(&ExecuteLabel, 5, 1, 1, 2);
+		this->SelfLayout.addWidget(&FunctionSelect, 6, 1, 1, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::FUNCTRLCount++;
+	}
+
+void ButtonControl::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string ButtonControl::build(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	if (this->FunctionSelect.currentText() == ""){
+		this->ParentMainWindow->err("No Function Selected for " + this->GPIOName);
+		return "# GPIOStudio - " + this->GPIOName + " : No Function Selected\n";
+	} else {
+		if (this->ButtonSelect.currentText() == ""){
+			this->ParentMainWindow->err("No Button Selected for " + this->GPIOName);
+			return "# GPIOStudio - " + this->GPIOName + " : No Function Selected\n";
+		} else {
+			return convertToStdString(this->ButtonSelect.currentText() + "." + this->StateSelect.currentText() + " = " + this->FunctionSelect.currentText() + "\n");
+		 }
 	}
 }
 

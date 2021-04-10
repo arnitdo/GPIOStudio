@@ -41,6 +41,7 @@ class Sleep;
 class Button;
 class Function;
 class FunctionControl;
+class ButtonControl;
 class MenuBar;
 class GPIOButton;
 class GPIOToolBar;
@@ -87,8 +88,10 @@ class DrawArea: public QWidget{
 		std::vector<Buzzer*> BUZVec;
 		std::vector<LEDCtrl*> LEDCTRLVec;
 		std::vector<BuzzerCtrl*> BUZCTRLVec;
+		std::vector<Button*> BTNVec;
 		std::vector<Function*> FUNCVec;
 		std::vector<FunctionControl*> FUNCTRLVec;
+		std::vector<ButtonControl*>BTNCTRLVec;
 		std::map<int, std::string> ButtonLabelMap;
 		int activeGPIO;
 		bool isNew = true;
@@ -302,6 +305,26 @@ class FunctionControl : public GPIODevice{
 		QGridLayout SelfLayout;
 		QComboBox FunctionSelect;
 		QLabel DisplayLabel;
+		QLabel ExecuteLabel;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class ButtonControl : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string build();
+		// Members
+		std::string Color = "#8DA3F3";
+		QGridLayout SelfLayout;
+		QComboBox ButtonSelect;
+		QComboBox StateSelect;
+		QComboBox FunctionSelect;
+		QLabel DisplayLabel;
+		QLabel ButtonLabel;
+		QLabel StateLabel;
 		QLabel ExecuteLabel;
 	public slots:
 		virtual void deleteSelf();
