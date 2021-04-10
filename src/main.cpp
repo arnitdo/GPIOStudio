@@ -41,7 +41,7 @@ using json = nlohmann::json;
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
-#define REVISION 2
+#define REVISION 3
 
 namespace Counters{
 	int BUZZERCount = 1;
