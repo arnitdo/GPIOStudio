@@ -884,7 +884,7 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 		this->SelfLayout.addWidget(&ExecuteLabel, 5, 1, 1, 2);
 		this->SelfLayout.addWidget(&FunctionSelect, 6, 1, 1, 2);
 		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
-		Counters::FUNCTRLCount++;
+		Counters::BTNCTRLCount++;
 	}
 
 void ButtonControl::deleteSelf(){
