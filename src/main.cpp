@@ -74,16 +74,19 @@ namespace Counters{
 
 
 QString getVersionInfo(){
+	// Returns "MAJOR_VERSION.MINOR_VERSION.REVISION"
 	std::string VInfo = std::to_string(MAJOR_VERSION) + "." + std::to_string(MINOR_VERSION) + "." + std::to_string(REVISION);
 	return QString(VInfo.c_str());
 }
 
 QString convertToQString(std::string in){
+	// Converts std::string to QString
 	return QString(in.c_str());
 }
 
 std::string convertToStdString(QString in){
-	return in.toUtf8().constData();
+	// Vice Versa, converts QString to std::string
+	return std::to_string(in.toUtf8().constData());
 }
 
 /*
@@ -169,6 +172,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 }
 
 MainWindow::~MainWindow(){
+	// Dump Console Content to log file
 	std::ofstream logFile ("GPIOStudio.log");
 	this->log("Qutting Application!");
 	logFile << convertToStdString(this->MainWindowConsole.toPlainText());
@@ -176,32 +180,45 @@ MainWindow::~MainWindow(){
 }
 
 void MainWindow::log(std::string value){
+	// LOGS Value e.g LOG : <content>
 	this->MainWindowConsole.setTextColor(QColor("black"));
 	this->MainWindowConsole.append("LOG : " + convertToQString(value));
 }
 
 void MainWindow::warn(std::string value){
+	// WARNS user e.g WARN : <content>
 	this->MainWindowConsole.setTextColor(QColor("#E34234"));
 	this->MainWindowConsole.append("WARNING : " + convertToQString(value));
 }
 
 void MainWindow::debug(std::string value){
+	// Debugging usage, use when developing e.g DEBUG : <content>
 	this->MainWindowConsole.setTextColor(QColor("green"));
 	this->MainWindowConsole.append("DEBUG : " + convertToQString(value));
 }
 
 void MainWindow::err(std::string value){
+	// Use for invalid inputs or fatal errors e.g ERROR : <content>
 	this->MainWindowConsole.setTextColor(QColor("red"));
 	this->MainWindowConsole.append("ERROR : " + convertToQString(value));
 }
 
 void MainWindow::resetDrawArea(){
+	// Clean Slate Draw Area
 	this->MainWindowDrawArea.resetSelf();
 }
 
+// MASSIVE TODO : REMOVE buildAndRun() in favour of remote run
+// Reason : Qt deployment on RPis is hectic
+// 		 	Many Pis may not be able to process large projects
+//			Remote run using Remote GPIO is favourable
+// 			See - https://gpiozero.readthedocs.io/en/stable/remote_gpio.html
+
 void MainWindow::buildAndRun(){
+	// Emulate build()
 	this->MainWindowBuildButton.click();
 #ifndef __linux__
+	// If not a linux machine, do not run 
 	this->warn("The device you are currently using is not a Raspberry Pi.");
 	this->warn("The project has been built, but will not execute. Transfer the generated script.py file to your Raspberry Pi.");
 #endif
@@ -211,10 +228,14 @@ void MainWindow::buildAndRun(){
 }
 
 void MainWindow::QuitApp(){
+	// Calls QApplication::quit()
 	this->ParentApp->quit();
 }
 
 void MainWindow::RefreshDrawSelects(){
+	// Refresh Combo Boxes, lock combo box content length,
+	// So that forward function declarations are not included in them
+	// Python being interpreted does not play well with undefined functions
 	this->MainWindowDrawArea.RefreshSelects();
 }
 
@@ -228,6 +249,7 @@ ____  ____     ___        _    _    ____  _____    _
 DrawArea::DrawArea(MainWindow *parent) : 
 	QWidget(parent){
 	this->ParentMainWindow = parent;
+	// Insert Values for GPIOToolBar
 	this->setStyleSheet("background-color : white;");
 	ButtonLabelMap.insert({1, "Simple LED"});
 	ButtonLabelMap.insert({2, "Simple Buzzer"});
@@ -241,7 +263,12 @@ DrawArea::DrawArea(MainWindow *parent) :
 }
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
+	// Set of actions to do on mouse press
 	if (this->NWMode){
+		// Check if New Widget Mode is active
+		// I.e if NWMode == false
+		// No click action
+		// Prevents unnecessary clicks and GPIO Constructions
 		if (this->isNew){
 			QRect StartBox = QRect(0, 0, 200, 100);
 			ProgramStart* PStart = new ProgramStart(this, this->ParentMainWindow);
@@ -265,7 +292,8 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 }
 
 void DrawArea::createGPIODevice(int active, int X, int Y){
-	// Constructs a GPIO Device at the given coordinates;
+	// Constructs a GPIO Device at the given coordinates
+	// This function has been specifically created to allow loading of GPIO Devices from a JSON File
 	this->activeGPIO = active;
 	switch(this->activeGPIO){
 		case 1:{
@@ -462,6 +490,23 @@ void DrawArea::RefreshSelects(){
 | |_| |  __/| | |_| |
  \____|_|  |___\___/ */
 
+
+/* COMMON NOTE
+	Most GPIO Devices will have 3 functions -
+		- Constructor
+		- build()
+		- deleteSelf()
+
+	* Constructor -
+		: Sets layout and properties
+
+	* build() - 
+		: Returns equivalent python code
+	* deleteSelf() -
+		: logs into console deletion
+		: Literally deletes itself
+
+ */
 
 void GPIODevice::paintEvent(QPaintEvent *)
 {
