@@ -811,6 +811,7 @@ void Function::deleteSelf(){
 std::string Function::build(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	std::string out, templine;
+	this->FunctionText.clear();
 	this->FunctionText << convertToStdString(this->FunctionBody->toPlainText());
 	out = "def " + convertToStdString(this->NameEdit.text()) + "():\n";
 	while (std::getline(this->FunctionText, templine)){
