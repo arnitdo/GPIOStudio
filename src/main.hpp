@@ -77,6 +77,7 @@ class DrawArea: public QWidget{
 		virtual void mousePressEvent(QMouseEvent *event);
 		virtual void paintEvent(QPaintEvent* event);
 		void createGPIODevice(int active, int X, int Y);
+		void loadJson();
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;
@@ -343,7 +344,7 @@ class ProgramStart : public GPIODevice{
 	public:
 		// Functions
 		virtual std::string build(); // IMPORTANT
-		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow);
+		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QLabel DisplayText;
 		QGridLayout SelfLayout;
@@ -352,7 +353,7 @@ class ProgramStart : public GPIODevice{
 		std::string Color = "#aaaaaa";
 	public slots:
 		void TriggerBuild();
-		virtual void deleteSelf(){}; // Cannot be deleted.
+		virtual void deleteSelf();
 };
 
 /*  

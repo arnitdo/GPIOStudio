@@ -251,16 +251,19 @@ DrawArea::DrawArea(MainWindow *parent) :
 	this->ParentMainWindow = parent;
 	// Insert Values for GPIOToolBar
 	this->setStyleSheet("background-color : white;");
-	ButtonLabelMap.insert({1, "Simple LED"});
-	ButtonLabelMap.insert({2, "Simple Buzzer"});
-	ButtonLabelMap.insert({3, "LED Controls"});
-	ButtonLabelMap.insert({4, "Buzzer Controls"});
-	ButtonLabelMap.insert({5, "Sleep Timer"});
-	ButtonLabelMap.insert({6, "Simple Button"});
-	ButtonLabelMap.insert({7, "Custom Function"});
-	ButtonLabelMap.insert({8, "Function Controls"});
-	ButtonLabelMap.insert({9, "Button Controls"});
+	ButtonLabelMap.insert({1, "Program Start"});
+	ButtonLabelMap.insert({2, "Simple LED"});
+	ButtonLabelMap.insert({3, "Simple Buzzer"});
+	ButtonLabelMap.insert({4, "LED Controls"});
+	ButtonLabelMap.insert({5, "Buzzer Controls"});
+	ButtonLabelMap.insert({6, "Sleep Timer"});
+	ButtonLabelMap.insert({7, "Simple Button"});
+	ButtonLabelMap.insert({8, "Custom Function"});
+	ButtonLabelMap.insert({9, "Function Controls"});
+	ButtonLabelMap.insert({10, "Button Controls"});
 }
+
+void DrawArea::loadJson(){};
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
 	// Set of actions to do on mouse press
@@ -269,22 +272,6 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 		// I.e if NWMode == false
 		// No click action
 		// Prevents unnecessary clicks and GPIO Constructions
-		if (this->isNew){
-			QRect StartBox = QRect(0, 0, 200, 100);
-			ProgramStart* PStart = new ProgramStart(this, this->ParentMainWindow);
-			this->ProgStart = PStart;
-			PStart->setGeometry(StartBox);
-			PStart->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(PStart->Color) + ";");
-			this->isNew = false;
-			PStart->show();
-			GPIOCodeVector.push_back(PStart);
-			this->LastPoint = QPoint(200, 50);
-			this->CurrentPoint = QPoint(event->x(), event->y() + 50);
-		} else {
-			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
-			this->CurrentPoint = QPoint(event->x(), event->y() + 50);
-		}
-		this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
 		this->createGPIODevice(this->activeGPIO, event->x(), event->y());
 		this->setStyleSheet("background-color : #ffffff;");
 		this->NWMode = false;
@@ -298,92 +285,130 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 	switch(this->activeGPIO){
 		case 1:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			ProgramStart* GPIOD = new ProgramStart(this, ParentMainWindow, X, Y, ("Program Start"));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->LastPoint = QPoint(X + 200, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->LastPoint));
+			this->GPIOCodeVector.push_back(GPIOD);
+			break;
+		}
+		case 2:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			LED* GPIOD = new LED(this, ParentMainWindow, X, Y, ("LED " + std::to_string(Counters::LEDCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->LEDVec.push_back(GPIOD);
 			break;
 		}
-		case 2:{
+		case 3:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			Buzzer* GPIOD = new Buzzer(this, ParentMainWindow, X, Y, ("Buzzer " + std::to_string(Counters::BUZZERCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->BUZVec.push_back(GPIOD);
 			break;
 		}
-		case 3:{
+		case 4:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			LEDCtrl* GPIOD = new LEDCtrl(this, ParentMainWindow, X, Y, ("LED Controls " + std::to_string(Counters::LEDCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->LEDCTRLVec.push_back(GPIOD);
 			this->RefreshSelects();
 			break;
 		}
-		case 4:{
+		case 5:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			BuzzerCtrl* GPIOD = new BuzzerCtrl(this, ParentMainWindow, X, Y, ("Buzzer Controls " + std::to_string(Counters::BUZZERCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->BUZCTRLVec.push_back(GPIOD);
 			this->RefreshSelects();
 			break;
 		}
-		case 5:{
+		case 6:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			Sleep* GPIOD = new Sleep(this, ParentMainWindow, X, Y, ("Sleep Timer " + std::to_string(Counters::SLEEPCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
-			this->GPIOCodeVector.push_back(GPIOD);
-			break;
-		}
-		case 6:{
-			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
-			Button* GPIOD = new Button(this, ParentMainWindow, X, Y, ("Button " + std::to_string(Counters::BUTTONCount)));
-			GPIOD->setGeometry(GPIOBoundBox);
-			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
-			GPIOD->show();
-			this->BTNVec.push_back(GPIOD);
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
 		}
 		case 7:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
-			Function* GPIOD = new Function(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTIONCount)));
+			Button* GPIOD = new Button(this, ParentMainWindow, X, Y, ("Button " + std::to_string(Counters::BUTTONCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
-			this->FUNCVec.push_back(GPIOD);
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+			this->BTNVec.push_back(GPIOD);
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
 		}
 		case 8:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			Function* GPIOD = new Function(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTIONCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+			this->FUNCVec.push_back(GPIOD);
+			this->GPIOCodeVector.push_back(GPIOD);
+			break;
+		}
+		case 9:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			FunctionControl* GPIOD = new FunctionControl(this, ParentMainWindow, X, Y, ("Function Controls " + std::to_string(Counters::FUNCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->FUNCTRLVec.push_back(GPIOD);
 			this->RefreshSelects();
 			break;
 		}
-		case 9:{
+		case 10:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 			ButtonControl* GPIOD = new ButtonControl(this, ParentMainWindow, X, Y, ("Button Controls " + std::to_string(Counters::BTNCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->BTNCTRLVec.push_back(GPIOD);
 			this->RefreshSelects();
@@ -400,12 +425,11 @@ void DrawArea::paintEvent(QPaintEvent* event){
     opt->init(this);
 	this->style()->drawPrimitive(QStyle::PE_Widget, opt, p, this);
 	p->setRenderHint(QPainter::Antialiasing);
-	if(!this->isNew){
-		for (std::pair<QPoint, QPoint> PointPair : this->Lines){
-			p->setPen(QPen(Qt::black, 2));
-			p->drawLine(std::get<0>(PointPair), std::get<1>(PointPair));
-		};
-	}
+	for (std::pair<QPoint, QPoint> PointPair : this->Lines){
+		this->ParentMainWindow->log("WOW");
+		p->setPen(QPen(Qt::black, 2));
+		p->drawLine(std::get<0>(PointPair), std::get<1>(PointPair));
+	};
 	p->end();
 	event = event;
 	delete p;
@@ -1014,20 +1038,24 @@ void ProgramStart::TriggerBuild(){
 	this->ParentMainWindow->log("Finished Building!");
 }
 
-ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow) :
-	GPIODevice(parent, parentMainWindow, 0, 0, ""),
+ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X,Y, name),
 	DisplayText(this),
 	SelfLayout(this){
-		DisplayText.setText("Program Start!");
+		DisplayText.setText(convertToQString(name));
 		DisplayText.setFixedWidth(200);
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT ( TriggerBuild() ));
 }
 
+void ProgramStart::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
 
 std::string ProgramStart::build(){
-	return  "# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
+	return  "\n# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
 			"import gpiozero\n"
 			"import time\n";
 }
