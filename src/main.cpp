@@ -86,7 +86,7 @@ QString convertToQString(std::string in){
 
 std::string convertToStdString(QString in){
 	// Vice Versa, converts QString to std::string
-	return std::to_string(in.toUtf8().constData());
+	return in.toUtf8().constData();
 }
 
 /*

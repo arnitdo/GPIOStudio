@@ -7,3 +7,6 @@ Note : Original File Moved to `ROADMAP.md`
 * Line Sensor
 * Motion Sensor (PIR)
 * Distance Sensor (ultrasonic)
+
+* Sense HAT
+* PiCamera
