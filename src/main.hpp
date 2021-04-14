@@ -81,6 +81,7 @@ class DrawArea: public QWidget{
 		virtual void paintEvent(QPaintEvent* event);
 		void createGPIODevice(int active, int X, int Y);
 		void loadJson();
+		void saveToJson();
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;
@@ -168,6 +169,7 @@ class GPIODevice : public QWidget{
 		virtual void paintEvent(QPaintEvent* event);
 		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
+		int id;
 		DrawArea* ParentDrawArea;
 		MainWindow* ParentMainWindow;
 		int XCoord, YCoord;

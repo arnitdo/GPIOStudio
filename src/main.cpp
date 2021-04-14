@@ -267,7 +267,7 @@ void MainWindow::OpenJSON(){
 }
 
 void MainWindow::SaveToJSON(){
-	void(0);
+	this->MainWindowDrawArea.saveToJson();
 }
 
 void MainWindow::ShowHelpWindow(){
@@ -313,9 +313,11 @@ DrawArea::DrawArea(MainWindow *parent) :
 }
 
 void DrawArea::loadJson(){
-	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.gpio.json)");
+	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.json)");
 	if (!fname.isEmpty()){
 		this->ParentMainWindow->log("Opening file " + convertToStdString(fname));
+		this->ParentMainWindow->MainWindowClearButton.click();
+		// Emulate button click, clears the entire board
 		std::ifstream JSONFileIn (convertToStdString(fname));
 		json JSON;
 		JSONFileIn >> JSON;
@@ -334,6 +336,30 @@ void DrawArea::loadJson(){
 		}
 	}
 };
+
+void DrawArea::saveToJson(){
+	QFileDialog OpenFileDialog;
+	// OpenFileDialog.setDefaultSuffix("json");
+	QString fname = OpenFileDialog.getSaveFileName(this, "Save GPIO Project", "", "JSON Files (*.json)");
+	if (!fname.isEmpty()){
+		this->ParentMainWindow->log("Saving to File " + convertToStdString(fname));
+		json JsonWrite;
+		JsonWrite["version"] = convertToStdString(getVersionInfo());
+		json GPIOArray = json::array();
+		for (GPIODevice* GPIOD : this->GPIOCodeVector){
+			json GPIOJSON;
+			GPIOJSON["id"] = GPIOD->id;
+			GPIOJSON["x"] = GPIOD->XCoord;
+			GPIOJSON["y"] = GPIOD->YCoord;
+			GPIOArray.push_back(GPIOJSON);
+		}
+		JsonWrite["json"] = GPIOArray;
+		std::ofstream WriteFile;
+		WriteFile.open(convertToStdString(fname), std::ios::trunc);
+		WriteFile << JsonWrite.dump(4);
+		WriteFile.close();
+	}
+}
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
 	// Set of actions to do on mouse press
@@ -637,6 +663,7 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 	DisplayLabel(convertToQString(name), this),
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
+		this->id = 2;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -685,6 +712,7 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	PinLabel("Pin : ", this),
 	NameLabel("State : ", this)
 	{
+		this->id = 3;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -733,6 +761,7 @@ LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, s
 	LEDLabel("LED : ", this),
 	StateLabel("Pin State : ", this)
 	{
+		this->id = 4;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -774,6 +803,7 @@ BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	BuzzerLabel("Buzzer : ", this),
 	StateLabel("Pin State : ", this)
 	{
+		this->id = 5;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -813,6 +843,7 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 	DurationEdit(this),
 	DisplayLabel(convertToQString(name), this),
 	DurationLabel("Duration : ", this){
+		this->id = 6;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -850,6 +881,7 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	DisplayLabel(convertToQString(name), this),
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
+		this->id = 7;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -897,6 +929,7 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 	NameEdit(this),
 	BodyLabel("Body : ", this),
 	BodyButton("Edit Function Body", this){
+		this->id = 8;
 		QWidget* BodyWindow = new QWidget;
 		QTextEdit* FunctionBodyEdit = new QTextEdit(BodyWindow);
 		QPushButton* CBody = new QPushButton("Close Window", BodyWindow);
@@ -965,6 +998,7 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 	DisplayLabel(convertToQString(name), this),
 	ExecuteLabel("Select Function to execute : ", this)
 	{
+		this->id = 9;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1004,6 +1038,7 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 	StateLabel("Select Button Trigger State : ", this),
 	ExecuteLabel("Select Function to execute : ", this)
 	{
+		this->id = 10;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1111,6 +1146,7 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X
 	GPIODevice(parent, parentMainWindow, X,Y, name),
 	DisplayText(this),
 	SelfLayout(this){
+		this->id = 1;
 		DisplayText.setText(convertToQString(name));
 		DisplayText.setFixedWidth(200);
 		this->ParentDrawArea = parent;
