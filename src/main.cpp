@@ -26,6 +26,9 @@ using json = nlohmann::json;
 #include <QPushButton>
 #include <QLabel>
 #include <QComboBox>
+#include <QFileDialog>
+#include <QDesktopServices>
+#include <QUrl>
 
 //end Qt imports
 //begin system imports
@@ -41,7 +44,7 @@ using json = nlohmann::json;
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
-#define REVISION 4
+#define REVISION 5
 
 namespace Counters{
 	int BUZZERCount = 1;
@@ -103,10 +106,14 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowGPIOScrollArea(this),
 	MainWindowGPIOToolBar(&MainWindowGPIOScrollArea, this),
 	MainWindowClearButton(this),
-	MainWindowBuildButton(this),
-	MainWindowBRComboButton(this),
-	MainWindowQuitButton(this),
 	MainWindowRefreshButton(this),
+	MainWindowBuildButton(this),
+	MainWindowRemoteButton(this),
+	MainWindowLoadButton(this),
+	MainWindowSaveButton(this),
+	MainWindowHelpButton(this),
+	MainWindowAboutButton(this),
+	MainWindowQuitButton(this),
 	MainWindowLayout(this)
 {
 	this->ParentApp = parentApplication;
@@ -136,39 +143,74 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	this->setWindowTitle("GPIO Studio v" + getVersionInfo());
 	this->setFixedSize(1280, 720);
 	MainWindowClearButton.setFixedHeight(36);
-	MainWindowClearButton.setText(" Clear All!");
+	MainWindowClearButton.setText(" Clear All");
 	MainWindowClearButton.setIcon(QIcon("static/clear.svg"));
 	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
-	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 0, 1, 2);
+	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 0);
+
+	MainWindowRefreshButton.setFixedHeight(36);
+	MainWindowRefreshButton.setText(" Refresh");
+	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
+	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
+	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 1);
 
 	MainWindowBuildButton.setFixedHeight(36);
-	MainWindowBuildButton.setText(" Build!");
+	MainWindowBuildButton.setText(" Build");
 	MainWindowBuildButton.setIcon(QIcon("static/hammer.svg"));
 	MainWindowBuildButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
-	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 2, 1, 2);
+	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 2);
 
-	MainWindowBRComboButton.setFixedHeight(36);
-	MainWindowBRComboButton.setText(" Build and Run!");
-	MainWindowBRComboButton.setIcon(QIcon("static/run-build.svg"));
-	MainWindowBRComboButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
-	MainWindowLayout.addWidget(&MainWindowBRComboButton, 0, 4, 1 ,2);
+	MainWindowRemoteButton.setFixedHeight(36);
+	MainWindowRemoteButton.setText(" Run Remote");
+	MainWindowRemoteButton.setIcon(QIcon("static/remote.svg"));
+	MainWindowRemoteButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
+	MainWindowLayout.addWidget(&MainWindowRemoteButton, 0, 3);
+
+	MainWindowLoadButton.setFixedHeight(36);
+	MainWindowLoadButton.setText(" Load File");
+	MainWindowLoadButton.setIcon(QIcon("static/package.svg"));
+	MainWindowLoadButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
+	MainWindowLayout.addWidget(&MainWindowLoadButton, 0, 4);
+
+	MainWindowSaveButton.setFixedHeight(36);
+	MainWindowSaveButton.setText(" Save File");
+	MainWindowSaveButton.setIcon(QIcon("static/save.svg"));
+	MainWindowSaveButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
+	MainWindowLayout.addWidget(&MainWindowSaveButton, 0, 5);
+
+	MainWindowHelpButton.setFixedHeight(36);
+	MainWindowHelpButton.setText(" Help");
+	MainWindowHelpButton.setIcon(QIcon("static/help.svg"));
+	MainWindowHelpButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
+	MainWindowLayout.addWidget(&MainWindowHelpButton, 0, 6);
+
+	MainWindowAboutButton.setFixedHeight(36);
+	MainWindowAboutButton.setText(" About");
+	MainWindowAboutButton.setIcon(QIcon("static/help-about.svg"));
+	MainWindowAboutButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_A));
+	MainWindowLayout.addWidget(&MainWindowAboutButton, 0, 7);
+
+	MainWindowGithubButton.setFixedHeight(36);
+	MainWindowGithubButton.setText(" GitHub");
+	MainWindowGithubButton.setIcon(QIcon("static/github.svg"));
+	MainWindowGithubButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
+	MainWindowLayout.addWidget(&MainWindowGithubButton, 0, 8);
 
 	MainWindowQuitButton.setFixedHeight(36);
 	MainWindowQuitButton.setText(" Quit Application!");
 	MainWindowQuitButton.setIcon(QIcon("static/logout.svg"));
 	MainWindowQuitButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
-	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 8, 1 ,2);
-
-	MainWindowRefreshButton.setFixedHeight(36);
-	MainWindowRefreshButton.setText(" Refresh!");
-	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
-	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
-	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 6, 1 ,2);
+	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 9);
 
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
-	QObject::connect(&MainWindowBRComboButton, SIGNAL (clicked()), this, SLOT (buildAndRun()));
-	QObject::connect(&MainWindowQuitButton, SIGNAL (clicked()), this, SLOT (QuitApp()));
 	QObject::connect(&MainWindowRefreshButton, SIGNAL (clicked()), this, SLOT (RefreshDrawSelects()));
+	QObject::connect(&MainWindowRemoteButton, SIGNAL (clicked()), this, SLOT (runRemote()));
+	QObject::connect(&MainWindowLoadButton, SIGNAL (clicked()), this, SLOT (OpenJSON()));
+	QObject::connect(&MainWindowSaveButton, SIGNAL (clicked()), this, SLOT (SaveToJSON()));
+	QObject::connect(&MainWindowHelpButton, SIGNAL (clicked()), this, SLOT (ShowHelpWindow()));
+	QObject::connect(&MainWindowAboutButton, SIGNAL (clicked()), this, SLOT (ShowAboutWindow()));
+	QObject::connect(&MainWindowGithubButton, SIGNAL (clicked()), this, SLOT (OpenGithub()));
+	QObject::connect(&MainWindowQuitButton, SIGNAL (clicked()), this, SLOT (QuitApp()));
 }
 
 MainWindow::~MainWindow(){
@@ -203,28 +245,41 @@ void MainWindow::err(std::string value){
 	this->MainWindowConsole.append("ERROR : " + convertToQString(value));
 }
 
+void MainWindow::RefreshDrawSelects(){
+	// Refresh Combo Boxes, lock combo box content length,
+	// So that forward function declarations are not included in them
+	// Python being interpreted does not play well with undefined functions
+	this->MainWindowDrawArea.RefreshSelects();
+}
+
 void MainWindow::resetDrawArea(){
 	// Clean Slate Draw Area
 	this->MainWindowDrawArea.resetSelf();
 }
 
-// MASSIVE TODO : REMOVE buildAndRun() in favour of remote run
-// Reason : Qt deployment on RPis is hectic
-// 		 	Many Pis may not be able to process large projects
-//			Remote run using Remote GPIO is favourable
-// 			See - https://gpiozero.readthedocs.io/en/stable/remote_gpio.html
-
-void MainWindow::buildAndRun(){
+void MainWindow::runRemote(){
 	// Emulate build()
 	this->MainWindowBuildButton.click();
-#ifndef __linux__
-	// If not a linux machine, do not run 
-	this->warn("The device you are currently using is not a Raspberry Pi.");
-	this->warn("The project has been built, but will not execute. Transfer the generated script.py file to your Raspberry Pi.");
-#endif
-#ifdef __linux__
-	system("python3 script.py");
-#endif
+}
+
+void MainWindow::OpenJSON(){
+	this->MainWindowDrawArea.loadJson();
+}
+
+void MainWindow::SaveToJSON(){
+	void(0);
+}
+
+void MainWindow::ShowHelpWindow(){
+	void(0);
+}
+
+void MainWindow::ShowAboutWindow(){
+	void(0);
+}
+
+void MainWindow::OpenGithub(){
+	QDesktopServices::openUrl(QUrl("https://www.github.com/arnitdo/GPIOStudio/"));
 }
 
 void MainWindow::QuitApp(){
@@ -232,12 +287,6 @@ void MainWindow::QuitApp(){
 	this->ParentApp->quit();
 }
 
-void MainWindow::RefreshDrawSelects(){
-	// Refresh Combo Boxes, lock combo box content length,
-	// So that forward function declarations are not included in them
-	// Python being interpreted does not play well with undefined functions
-	this->MainWindowDrawArea.RefreshSelects();
-}
 
 /*  
 ____  ____     ___        _    _    ____  _____    _
@@ -263,7 +312,28 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({10, "Button Controls"});
 }
 
-void DrawArea::loadJson(){};
+void DrawArea::loadJson(){
+	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.gpio.json)");
+	if (!fname.isEmpty()){
+		this->ParentMainWindow->log("Opening file " + convertToStdString(fname));
+		std::ifstream JSONFileIn (convertToStdString(fname));
+		json JSON;
+		JSONFileIn >> JSON;
+		if (JSON["version"].get<std::string>() == convertToStdString(getVersionInfo())){
+			// Version Matches, Proceed!
+			for (auto GPIOJSON : JSON["json"]){
+				int id, x, y;
+				id = GPIOJSON["id"].get<int>();
+				x = GPIOJSON["x"].get<int>();
+				y = GPIOJSON["y"].get<int>();
+				this->createGPIODevice(id, x, y);
+			}
+		} else {
+			this->ParentMainWindow->err("Version Mismatch!");
+			this->ParentMainWindow->err("The version of the file you have provided does not match the current version of GPIO Studio!");
+		}
+	}
+};
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
 	// Set of actions to do on mouse press
@@ -426,7 +496,6 @@ void DrawArea::paintEvent(QPaintEvent* event){
 	this->style()->drawPrimitive(QStyle::PE_Widget, opt, p, this);
 	p->setRenderHint(QPainter::Antialiasing);
 	for (std::pair<QPoint, QPoint> PointPair : this->Lines){
-		this->ParentMainWindow->log("WOW");
 		p->setPen(QPen(Qt::black, 2));
 		p->drawLine(std::get<0>(PointPair), std::get<1>(PointPair));
 	};
@@ -1055,7 +1124,7 @@ void ProgramStart::deleteSelf(){
 }
 
 std::string ProgramStart::build(){
-	return  "\n# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
+	return  "# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
 			"import gpiozero\n"
 			"import time\n";
 }

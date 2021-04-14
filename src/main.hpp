@@ -21,6 +21,9 @@
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QFileDialog>
+#include <QDesktopServices>
+#include <QUrl>
 
 #include <vector>
 #include <cstdlib>
@@ -127,22 +130,32 @@ class MainWindow : public QWidget{
 		QScrollArea MainWindowGPIOScrollArea;
 		GPIOToolBar MainWindowGPIOToolBar;
 		QPushButton MainWindowClearButton;
-		QPushButton MainWindowBuildButton;
-		QPushButton MainWindowBRComboButton;
-		QPushButton MainWindowQuitButton;
 		QPushButton MainWindowRefreshButton;
+		QPushButton MainWindowBuildButton;
+		QPushButton MainWindowRemoteButton;
+		QPushButton MainWindowLoadButton;
+		QPushButton MainWindowSaveButton;
+		QPushButton MainWindowHelpButton;
+		QPushButton MainWindowAboutButton;
+		QPushButton MainWindowGithubButton;
+		QPushButton MainWindowQuitButton;
 		QGridLayout MainWindowLayout;
 	public slots:
-		void resetDrawArea();
-		void buildAndRun();
-		void QuitApp();
+		// Most of these slots are nothing but invocations of the respective DrawArea function
 		void RefreshDrawSelects();
+		void resetDrawArea();
+		void runRemote();
+		void OpenJSON();
+		void SaveToJSON();
+		void ShowHelpWindow();
+		void ShowAboutWindow();
+		void OpenGithub();
+		void QuitApp();
 };
 
 /* 
   ____ ____ ___ ___
  / ___|  _ |_ _/ _ \
- std::vector<Function*> FUNC
 | |  _| |_) | | | | |
 | |_| |  __/| | |_| |
  \____|_|  |___\___/ */
