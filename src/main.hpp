@@ -124,7 +124,14 @@ class MainWindow : public QWidget{
 		void debug(std::string value);
 		void err(std::string value);
 		//Members
+		std::string RemoteIP;
 		QApplication* ParentApp;
+		QWidget RemoteWindow;
+		QLineEdit RaspiIPEdit;
+		QPushButton RemoteRunButton;
+		QPushButton RWHideButton;
+		QWidget HelpWindow;
+		QWidget AboutWindow;
 		DrawArea MainWindowDrawArea;
 		QTextEdit MainWindowConsole;
 		QScrollArea MainWindowScrollArea;
@@ -145,6 +152,8 @@ class MainWindow : public QWidget{
 		// Most of these slots are nothing but invocations of the respective DrawArea function
 		void RefreshDrawSelects();
 		void resetDrawArea();
+		void showRemoteWindow();
+		void hideRemoteWindow();
 		void runRemote();
 		void OpenJSON();
 		void SaveToJSON();

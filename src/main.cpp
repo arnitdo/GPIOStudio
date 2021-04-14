@@ -100,6 +100,12 @@ std::string convertToStdString(QString in){
 |_|  |_/_/   \_|___|_| \_   \_/\_/  |___|_| \_|____/ \___/  \_/\_/ */
 
 MainWindow::MainWindow(QApplication* parentApplication) : 
+	RemoteWindow(nullptr),
+	RaspiIPEdit(&RemoteWindow),
+	RemoteRunButton("Run Script", &RemoteWindow),
+	RWHideButton("Hide Window", &RemoteWindow),
+	HelpWindow(nullptr),
+	AboutWindow(nullptr),
 	MainWindowDrawArea (this),
 	MainWindowConsole (this),
 	MainWindowScrollArea(this),
@@ -139,7 +145,17 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowGPIOScrollArea.setWidget(&MainWindowGPIOToolBar);
 	MainWindowLayout.addWidget(&MainWindowGPIOScrollArea, 1, 0, 2, 8);
 
+	// Remote Window Setup
+	this->RemoteWindow.setFixedSize(320, 160);
+	QGridLayout* RWLayout = new QGridLayout(&RemoteWindow);
+	this->RemoteWindow.setLayout(RWLayout);
+	RWLayout->addWidget(&this->RaspiIPEdit, 1, 2);
+	RWLayout->addWidget(new QLabel("Raspberry Pi IP Address : ", &this->RemoteWindow), 1, 1);
+	RWLayout->addWidget(&this->RWHideButton, 2, 1);
+	RWLayout->addWidget(&this->RemoteRunButton, 2 ,2);
+	this->RemoteWindow.hide();
 	// Finishing up
+	// Adding to Layouts
 	this->setWindowTitle("GPIO Studio v" + getVersionInfo());
 	this->setFixedSize(1280, 720);
 	MainWindowClearButton.setFixedHeight(36);
@@ -204,7 +220,9 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
 	QObject::connect(&MainWindowRefreshButton, SIGNAL (clicked()), this, SLOT (RefreshDrawSelects()));
-	QObject::connect(&MainWindowRemoteButton, SIGNAL (clicked()), this, SLOT (runRemote()));
+	QObject::connect(&MainWindowRemoteButton, SIGNAL (clicked()), this, SLOT (showRemoteWindow()));
+	QObject::connect(&RWHideButton, SIGNAL (clicked()), this, SLOT (hideRemoteWindow()));
+	QObject::connect(&RemoteRunButton, SIGNAL (clicked()), this, SLOT (runRemote()));
 	QObject::connect(&MainWindowLoadButton, SIGNAL (clicked()), this, SLOT (OpenJSON()));
 	QObject::connect(&MainWindowSaveButton, SIGNAL (clicked()), this, SLOT (SaveToJSON()));
 	QObject::connect(&MainWindowHelpButton, SIGNAL (clicked()), this, SLOT (ShowHelpWindow()));
@@ -257,9 +275,35 @@ void MainWindow::resetDrawArea(){
 	this->MainWindowDrawArea.resetSelf();
 }
 
+void MainWindow::showRemoteWindow(){
+	this->RemoteWindow.show();
+}
+
+void MainWindow::hideRemoteWindow(){
+	this->RemoteWindow.hide();
+}
+
 void MainWindow::runRemote(){
-	// Emulate build()
-	this->MainWindowBuildButton.click();
+	if (this->RaspiIPEdit.text() != ""){
+		this->RemoteIP = convertToStdString(this->RaspiIPEdit.text());
+		this->MainWindowBuildButton.click();
+		#ifdef _WIN32
+		if (!system("python.exe script.py")){
+			this->log("Remote Success!");
+		} else {
+			this->err("An error occured when running remote script!");
+		}
+		#endif
+		#ifdef __linux__
+		if (!system("python3 script.py")){
+			this->log("Remote Success!");
+		} else {
+			this->err("An error occured when running remote script!");
+		}
+		#endif
+	} else {
+		this->err("No valid IP Address Provided for Remote Raspberry Pi!");
+	}
 }
 
 void MainWindow::OpenJSON(){
@@ -271,6 +315,7 @@ void MainWindow::SaveToJSON(){
 }
 
 void MainWindow::ShowHelpWindow(){
+	// this->HelpWindow.show();
 	void(0);
 }
 
@@ -696,7 +741,7 @@ std::string LED::build(){
 	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
 		return convertToStdString(this->VarnameEdit.text()) +
 		" = gpiozero.LED(" + convertToStdString(this->PinSelect.currentText()) +
-		")\n";
+		", pin_factory=remote_pin_factory)\n";
 	} else {
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
@@ -745,7 +790,7 @@ std::string Buzzer::build(){
 	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
 		return convertToStdString(this->VarnameEdit.text()) +
 		" = gpiozero.Buzzer(" + convertToStdString(this->PinSelect.currentText()) +
-		")\n";
+		", pin_factory=remote_pin_factory)\n";
 	} else {
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
@@ -914,7 +959,7 @@ std::string Button::build(){
 	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
 		return convertToStdString(this->VarnameEdit.text()) +
 		" = gpiozero.Button(" + convertToStdString(this->PinSelect.currentText()) +
-		")\n";
+		", pin_factory=remote_pin_factory)\n";
 	} else {
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
@@ -1162,7 +1207,8 @@ void ProgramStart::deleteSelf(){
 std::string ProgramStart::build(){
 	return  "# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
 			"import gpiozero\n"
-			"import time\n";
+			"import time\n"
+			"remote_pin_factory = gpiozero.pins.pigpio.PiGPIOFactory(host=\"" + this->ParentMainWindow->RemoteIP + "\")\n";
 }
 /*
  __  __    _    ___ _   _
