@@ -304,6 +304,7 @@ void MainWindow::runRemote(){
 	} else {
 		this->err("No valid IP Address Provided for Remote Raspberry Pi!");
 	}
+	this->hideRemoteWindow();
 }
 
 void MainWindow::OpenJSON(){
@@ -384,7 +385,6 @@ void DrawArea::loadJson(){
 
 void DrawArea::saveToJson(){
 	QFileDialog OpenFileDialog;
-	// OpenFileDialog.setDefaultSuffix("json");
 	QString fname = OpenFileDialog.getSaveFileName(this, "Save GPIO Project", "", "JSON Files (*.json)");
 	if (!fname.isEmpty()){
 		this->ParentMainWindow->log("Saving to File " + convertToStdString(fname));
@@ -1182,7 +1182,7 @@ void ProgramStart::TriggerBuild(){
 	for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
 	{
 		outfile << GPD->build();
-	} 
+	}
 	outfile.close();
 	this->ParentMainWindow->log("Finished Building!");
 }

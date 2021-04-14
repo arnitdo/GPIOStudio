@@ -18,7 +18,7 @@ v0.0.4
 
 v0.0.5
 
-- [ ] Remote GPIO
+- [x] Remote GPIO
 
 v0.0.6
 
@@ -30,11 +30,11 @@ v0.0.7
 
 v0.0.8
 
-- [ ] `gpiozero` (non third party) support
+- [ ] Maximum possible `gpiozero` (non third party) device support
 
 v0.0.9
 
-- [ ] JSON Saving and Loading
+- [x] JSON Saving and Loading
 
 v0.1.0
 - [ ] ? Skip to Public Release 1.0.0 ?
