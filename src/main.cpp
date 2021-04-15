@@ -203,7 +203,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 
 	MainWindowAboutButton.setFixedHeight(36);
 	MainWindowAboutButton.setText(" About");
-	MainWindowAboutButton.setIcon(QIcon("static/help-about.svg"));
+	MainWindowAboutButton.setIcon(QIcon("static/info.svg"));
 	MainWindowAboutButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_A));
 	MainWindowLayout.addWidget(&MainWindowAboutButton, 0, 7);
 
@@ -372,9 +372,9 @@ void DrawArea::loadJson(){
 			// Version Matches, Proceed!
 			for (auto GPIOJSON : JSON["json"]){
 				int id, x, y;
-				id = GPIOJSON["id"].get<int>();
-				x = GPIOJSON["x"].get<int>();
-				y = GPIOJSON["y"].get<int>();
+				id = GPIOJSON["id"].get<int>(); // Note : ignore VSCode error, if raised
+				x = GPIOJSON["x"].get<int>(); // Note : ignore VSCode error, if raised
+				y = GPIOJSON["y"].get<int>(); // Note : ignore VSCode error, if raised
 				this->createGPIODevice(id, x, y);
 			}
 		} else {
