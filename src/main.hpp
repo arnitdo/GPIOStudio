@@ -89,6 +89,7 @@ class DrawArea: public QWidget{
 		MainWindow* ParentMainWindow;
 		std::vector<std::pair<QPoint, QPoint>> Lines;
 		std::vector<GPIODevice*> GPIOCodeVector;
+		std::vector<std::string> LOOPCodeVector;
 		std::vector<LED*> LEDVec;
 		std::vector<Buzzer*> BUZVec;
 		std::vector<LEDCtrl*> LEDCTRLVec;
@@ -98,6 +99,7 @@ class DrawArea: public QWidget{
 		std::vector<FunctionControl*> FUNCTRLVec;
 		std::vector<ButtonControl*>BTNCTRLVec;
 		std::map<int, std::string> ButtonLabelMap;
+		std::stringstream LoopCode;
 		int activeGPIO;
 		bool isNew = true;
 		bool NWMode = false;

@@ -100,7 +100,7 @@ std::string convertToStdString(QString in){
 |_|  |_/_/   \_|___|_| \_   \_/\_/  |___|_| \_|____/ \___/  \_/\_/ */
 
 MainWindow::MainWindow(QApplication* parentApplication) : 
-	RemoteWindow(nullptr),
+	RemoteWindow(nullptr, Qt::WindowMaximizeButtonHint),
 	RaspiIPEdit(&RemoteWindow),
 	RemoteRunButton("Run Script", &RemoteWindow),
 	RWHideButton("Hide Window", &RemoteWindow),
@@ -149,6 +149,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	this->RemoteWindow.setFixedSize(320, 160);
 	QGridLayout* RWLayout = new QGridLayout(&RemoteWindow);
 	this->RemoteWindow.setLayout(RWLayout);
+	this->RaspiIPEdit.setFixedWidth(150);
 	RWLayout->addWidget(&this->RaspiIPEdit, 1, 2);
 	RWLayout->addWidget(new QLabel("Raspberry Pi IP Address : ", &this->RemoteWindow), 1, 1);
 	RWLayout->addWidget(&this->RWHideButton, 2, 1);
@@ -583,12 +584,14 @@ void DrawArea::OnGPIODeviceSignal(int GPIOID){
 
 void DrawArea::resetSelf(){
 	this->Lines.clear();
+	this->LastPoint = QPoint(0, 0);
 	this->setStyleSheet("background-color : #ffffff;");
 	this->isNew = true;	
 	this->ParentMainWindow->log("Resetting Project!");	
 	this->GPIOCodeVector.clear();
 	this->BUZVec.clear();
 	this->LEDVec.clear();
+	this->BTNVec.clear();
 	this->LEDCTRLVec.clear();
 	this->BUZCTRLVec.clear();
 	this->FUNCVec.clear();
@@ -597,10 +600,7 @@ void DrawArea::resetSelf(){
 }
 
 void DrawArea::RefreshSelects(){
-	QStringList LEDNames;
-	QStringList BuzzerNames;
-	QStringList FuncNames;
-	QStringList ButtonNames;
+	QStringList LEDNames, BuzzerNames, FuncNames, FunctionNames, ButtonNames;
 	// LEDCtrl Refresh
 
 	for (LED* Led : this->LEDVec){
@@ -638,13 +638,23 @@ void DrawArea::RefreshSelects(){
 		ButtonNames << BTN->VarnameEdit.text();
 	}
 
-	for (ButtonControl* BCTRL : this->BTNCTRLVec){
+	for (Function* F : this->FUNCVec){
+		FunctionNames << F->NameEdit.text();
+	}
+
+	 for (ButtonControl* BCTRL : this->BTNCTRLVec){
 		BCTRL->FunctionSelect.clear();
 		BCTRL->ButtonSelect.clear();
 		BCTRL->ButtonSelect.insertItems(0, ButtonNames);
-		BCTRL->FunctionSelect.insertItems(0, FuncNames);
+		BCTRL->ButtonSelect.setMaxCount(BCTRL->ButtonSelect.count());
+		BCTRL->FunctionSelect.insertItems(0, FunctionNames);
 		BCTRL->FunctionSelect.setMaxCount(BCTRL->FunctionSelect.count());
-	}
+	 }
+	FunctionNames.clear();
+	FuncNames.clear();
+	ButtonNames.clear();
+	LEDNames.clear();
+	BuzzerNames.clear();
 }
 
 /* 
@@ -1140,7 +1150,6 @@ std::string ButtonControl::build(){
 	this->MainWindowDrawArea = &this->ParentMainWindow->MainWindowDrawArea;
 	GPIOToolBarLayout.setSpacing(0);
 	GPIOToolBarLayout.setMargin(0);
-	QMap<int, QString> GPIOSignalMap;
 	for (int i = 1; i < (int)this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.size() + 1; i++){
 		GPIOButton* GPIOSelectButton = new GPIOButton(convertToQString(this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.at(i)), i,  this, this->ParentMainWindow);
 		GPIOSelectButton->setFixedSize(233, 36);
@@ -1183,6 +1192,17 @@ void ProgramStart::TriggerBuild(){
 	{
 		outfile << GPD->build();
 	}
+	outfile << "\n";
+	this->ParentDrawArea->LoopCode.clear();
+	for (std::string lc : this->ParentDrawArea->LOOPCodeVector){
+		this->ParentDrawArea->LoopCode << lc;
+	}
+	std::string tempstr;
+	outfile << "while True:\n";
+	while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
+		outfile << "\t" + tempstr;
+	}
+	outfile << "\ttime.sleep(1)\n";
 	outfile.close();
 	this->ParentMainWindow->log("Finished Building!");
 }
