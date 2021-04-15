@@ -4,6 +4,4 @@ SOURCES += src/main.cpp
 
 HEADERS += src/main.hpp src/thirdparty/**
 
-CONFIG += release
-
-QMAKE_CXXFLAGS += -std=c++11
+CONFIG += release c++11
