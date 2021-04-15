@@ -5,8 +5,8 @@ echo ""
 echo "Please Press Y or ENTER when prompted"
 echo ""
 echo "The script will now install the basic dependencies"
-# sudo apt install libxcb-xinerama0
-# sudo apt install libxkb*
+sudo apt install libxcb-xinerama0
+sudo apt install libxkb*
 echo ""
 echo "The problem now should have been fixed, if not, please create an issue here"
 echo ""
