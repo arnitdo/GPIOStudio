@@ -22,10 +22,15 @@ The following content in this repository or program has been sourced from the re
 
 static - 
 * clear.svg - [Iconduck](https://iconduck.com/icons/31176/clear)
+* github.svg - [Iconduck](https://iconduck.com/icons/43730/github)
 * hammer.svg - [Iconduck](https://iconduck.com/icons/98126/hammer)
-* run-build.svg - [Iconduck](https://iconduck.com/icons/60348/run-build)
+* help.svg - [Iconduck](https://iconduck.com/icons/9318/help)
+* info.svg - [Iconduck](https://iconduck.com/icons/4013/info)
 * logout.svg - [Iconduck](https://iconduck.com/icons/9455/logout)
+* package.svg - [Iconduck](https://iconduck.com/icons/9592/package)
 * refresh.svg - [Iconduck](https://iconduck.com/icons/55985/refresh)
+* remote.svg - [Iconduck](https://iconduck.com/icons/69209/remote)
+* save.svg - [Iconduck](https://iconduck.com/icons/68149/save)
 
 src/thirdparty - 
 * nlohmann/json - [GitHub - nlohmann/json](https://github.com/nlohmann/json/)

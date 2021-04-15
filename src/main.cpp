@@ -26,6 +26,9 @@ using json = nlohmann::json;
 #include <QPushButton>
 #include <QLabel>
 #include <QComboBox>
+#include <QFileDialog>
+#include <QDesktopServices>
+#include <QUrl>
 
 //end Qt imports
 //begin system imports
@@ -41,7 +44,7 @@ using json = nlohmann::json;
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
-#define REVISION 4
+#define REVISION 5
 
 namespace Counters{
 	int BUZZERCount = 1;
@@ -74,15 +77,18 @@ namespace Counters{
 
 
 QString getVersionInfo(){
+	// Returns "MAJOR_VERSION.MINOR_VERSION.REVISION"
 	std::string VInfo = std::to_string(MAJOR_VERSION) + "." + std::to_string(MINOR_VERSION) + "." + std::to_string(REVISION);
 	return QString(VInfo.c_str());
 }
 
 QString convertToQString(std::string in){
+	// Converts std::string to QString
 	return QString(in.c_str());
 }
 
 std::string convertToStdString(QString in){
+	// Vice Versa, converts QString to std::string
 	return in.toUtf8().constData();
 }
 
@@ -94,16 +100,26 @@ std::string convertToStdString(QString in){
 |_|  |_/_/   \_|___|_| \_   \_/\_/  |___|_| \_|____/ \___/  \_/\_/ */
 
 MainWindow::MainWindow(QApplication* parentApplication) : 
+	RemoteWindow(nullptr, Qt::WindowMaximizeButtonHint),
+	RaspiIPEdit(&RemoteWindow),
+	RemoteRunButton("Run Script", &RemoteWindow),
+	RWHideButton("Hide Window", &RemoteWindow),
+	HelpWindow(nullptr),
+	AboutWindow(nullptr),
 	MainWindowDrawArea (this),
 	MainWindowConsole (this),
 	MainWindowScrollArea(this),
 	MainWindowGPIOScrollArea(this),
 	MainWindowGPIOToolBar(&MainWindowGPIOScrollArea, this),
 	MainWindowClearButton(this),
-	MainWindowBuildButton(this),
-	MainWindowBRComboButton(this),
-	MainWindowQuitButton(this),
 	MainWindowRefreshButton(this),
+	MainWindowBuildButton(this),
+	MainWindowRemoteButton(this),
+	MainWindowLoadButton(this),
+	MainWindowSaveButton(this),
+	MainWindowHelpButton(this),
+	MainWindowAboutButton(this),
+	MainWindowQuitButton(this),
 	MainWindowLayout(this)
 {
 	this->ParentApp = parentApplication;
@@ -129,46 +145,95 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowGPIOScrollArea.setWidget(&MainWindowGPIOToolBar);
 	MainWindowLayout.addWidget(&MainWindowGPIOScrollArea, 1, 0, 2, 8);
 
+	// Remote Window Setup
+	this->RemoteWindow.setFixedSize(320, 160);
+	QGridLayout* RWLayout = new QGridLayout(&RemoteWindow);
+	this->RemoteWindow.setLayout(RWLayout);
+	this->RaspiIPEdit.setFixedWidth(150);
+	RWLayout->addWidget(&this->RaspiIPEdit, 1, 2);
+	RWLayout->addWidget(new QLabel("Raspberry Pi IP Address : ", &this->RemoteWindow), 1, 1);
+	RWLayout->addWidget(&this->RWHideButton, 2, 1);
+	RWLayout->addWidget(&this->RemoteRunButton, 2 ,2);
+	this->RemoteWindow.hide();
 	// Finishing up
+	// Adding to Layouts
 	this->setWindowTitle("GPIO Studio v" + getVersionInfo());
 	this->setFixedSize(1280, 720);
 	MainWindowClearButton.setFixedHeight(36);
-	MainWindowClearButton.setText(" Clear All!");
+	MainWindowClearButton.setText(" Clear All");
 	MainWindowClearButton.setIcon(QIcon("static/clear.svg"));
 	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
-	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 0, 1, 2);
+	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 0);
+
+	MainWindowRefreshButton.setFixedHeight(36);
+	MainWindowRefreshButton.setText(" Refresh");
+	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
+	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
+	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 1);
 
 	MainWindowBuildButton.setFixedHeight(36);
-	MainWindowBuildButton.setText(" Build!");
+	MainWindowBuildButton.setText(" Build");
 	MainWindowBuildButton.setIcon(QIcon("static/hammer.svg"));
 	MainWindowBuildButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
-	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 2, 1, 2);
+	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 2);
 
-	MainWindowBRComboButton.setFixedHeight(36);
-	MainWindowBRComboButton.setText(" Build and Run!");
-	MainWindowBRComboButton.setIcon(QIcon("static/run-build.svg"));
-	MainWindowBRComboButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
-	MainWindowLayout.addWidget(&MainWindowBRComboButton, 0, 4, 1 ,2);
+	MainWindowRemoteButton.setFixedHeight(36);
+	MainWindowRemoteButton.setText(" Run Remote");
+	MainWindowRemoteButton.setIcon(QIcon("static/remote.svg"));
+	MainWindowRemoteButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
+	MainWindowLayout.addWidget(&MainWindowRemoteButton, 0, 3);
+
+	MainWindowLoadButton.setFixedHeight(36);
+	MainWindowLoadButton.setText(" Load File");
+	MainWindowLoadButton.setIcon(QIcon("static/package.svg"));
+	MainWindowLoadButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
+	MainWindowLayout.addWidget(&MainWindowLoadButton, 0, 4);
+
+	MainWindowSaveButton.setFixedHeight(36);
+	MainWindowSaveButton.setText(" Save File");
+	MainWindowSaveButton.setIcon(QIcon("static/save.svg"));
+	MainWindowSaveButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
+	MainWindowLayout.addWidget(&MainWindowSaveButton, 0, 5);
+
+	MainWindowHelpButton.setFixedHeight(36);
+	MainWindowHelpButton.setText(" Help");
+	MainWindowHelpButton.setIcon(QIcon("static/help.svg"));
+	MainWindowHelpButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
+	MainWindowLayout.addWidget(&MainWindowHelpButton, 0, 6);
+
+	MainWindowAboutButton.setFixedHeight(36);
+	MainWindowAboutButton.setText(" About");
+	MainWindowAboutButton.setIcon(QIcon("static/info.svg"));
+	MainWindowAboutButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_A));
+	MainWindowLayout.addWidget(&MainWindowAboutButton, 0, 7);
+
+	MainWindowGithubButton.setFixedHeight(36);
+	MainWindowGithubButton.setText(" GitHub");
+	MainWindowGithubButton.setIcon(QIcon("static/github.svg"));
+	MainWindowGithubButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
+	MainWindowLayout.addWidget(&MainWindowGithubButton, 0, 8);
 
 	MainWindowQuitButton.setFixedHeight(36);
 	MainWindowQuitButton.setText(" Quit Application!");
 	MainWindowQuitButton.setIcon(QIcon("static/logout.svg"));
 	MainWindowQuitButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
-	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 8, 1 ,2);
-
-	MainWindowRefreshButton.setFixedHeight(36);
-	MainWindowRefreshButton.setText(" Refresh!");
-	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
-	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
-	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 6, 1 ,2);
+	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 9);
 
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
-	QObject::connect(&MainWindowBRComboButton, SIGNAL (clicked()), this, SLOT (buildAndRun()));
-	QObject::connect(&MainWindowQuitButton, SIGNAL (clicked()), this, SLOT (QuitApp()));
 	QObject::connect(&MainWindowRefreshButton, SIGNAL (clicked()), this, SLOT (RefreshDrawSelects()));
+	QObject::connect(&MainWindowRemoteButton, SIGNAL (clicked()), this, SLOT (showRemoteWindow()));
+	QObject::connect(&RWHideButton, SIGNAL (clicked()), this, SLOT (hideRemoteWindow()));
+	QObject::connect(&RemoteRunButton, SIGNAL (clicked()), this, SLOT (runRemote()));
+	QObject::connect(&MainWindowLoadButton, SIGNAL (clicked()), this, SLOT (OpenJSON()));
+	QObject::connect(&MainWindowSaveButton, SIGNAL (clicked()), this, SLOT (SaveToJSON()));
+	QObject::connect(&MainWindowHelpButton, SIGNAL (clicked()), this, SLOT (ShowHelpWindow()));
+	QObject::connect(&MainWindowAboutButton, SIGNAL (clicked()), this, SLOT (ShowAboutWindow()));
+	QObject::connect(&MainWindowGithubButton, SIGNAL (clicked()), this, SLOT (OpenGithub()));
+	QObject::connect(&MainWindowQuitButton, SIGNAL (clicked()), this, SLOT (QuitApp()));
 }
 
 MainWindow::~MainWindow(){
+	// Dump Console Content to log file
 	std::ofstream logFile ("GPIOStudio.log");
 	this->log("Qutting Application!");
 	logFile << convertToStdString(this->MainWindowConsole.toPlainText());
@@ -176,47 +241,99 @@ MainWindow::~MainWindow(){
 }
 
 void MainWindow::log(std::string value){
+	// LOGS Value e.g LOG : <content>
 	this->MainWindowConsole.setTextColor(QColor("black"));
 	this->MainWindowConsole.append("LOG : " + convertToQString(value));
 }
 
 void MainWindow::warn(std::string value){
+	// WARNS user e.g WARN : <content>
 	this->MainWindowConsole.setTextColor(QColor("#E34234"));
 	this->MainWindowConsole.append("WARNING : " + convertToQString(value));
 }
 
 void MainWindow::debug(std::string value){
+	// Debugging usage, use when developing e.g DEBUG : <content>
 	this->MainWindowConsole.setTextColor(QColor("green"));
 	this->MainWindowConsole.append("DEBUG : " + convertToQString(value));
 }
 
 void MainWindow::err(std::string value){
+	// Use for invalid inputs or fatal errors e.g ERROR : <content>
 	this->MainWindowConsole.setTextColor(QColor("red"));
 	this->MainWindowConsole.append("ERROR : " + convertToQString(value));
 }
 
+void MainWindow::RefreshDrawSelects(){
+	// Refresh Combo Boxes, lock combo box content length,
+	// So that forward function declarations are not included in them
+	// Python being interpreted does not play well with undefined functions
+	this->MainWindowDrawArea.RefreshSelects();
+}
+
 void MainWindow::resetDrawArea(){
+	// Clean Slate Draw Area
 	this->MainWindowDrawArea.resetSelf();
 }
 
-void MainWindow::buildAndRun(){
-	this->MainWindowBuildButton.click();
-#ifndef __linux__
-	this->warn("The device you are currently using is not a Raspberry Pi.");
-	this->warn("The project has been built, but will not execute. Transfer the generated script.py file to your Raspberry Pi.");
-#endif
-#ifdef __linux__
-	system("python3 script.py");
-#endif
+void MainWindow::showRemoteWindow(){
+	this->RemoteWindow.show();
+}
+
+void MainWindow::hideRemoteWindow(){
+	this->RemoteWindow.hide();
+}
+
+void MainWindow::runRemote(){
+	if (this->RaspiIPEdit.text() != ""){
+		this->RemoteIP = convertToStdString(this->RaspiIPEdit.text());
+		this->MainWindowBuildButton.click();
+		#ifdef _WIN32
+		if (!system("python.exe script.py")){
+			this->log("Remote Success!");
+		} else {
+			this->err("An error occured when running remote script!");
+		}
+		#endif
+		#ifdef __linux__
+		if (!system("python3 script.py")){
+			this->log("Remote Success!");
+		} else {
+			this->err("An error occured when running remote script!");
+		}
+		#endif
+	} else {
+		this->err("No valid IP Address Provided for Remote Raspberry Pi!");
+	}
+	this->hideRemoteWindow();
+}
+
+void MainWindow::OpenJSON(){
+	this->MainWindowDrawArea.loadJson();
+}
+
+void MainWindow::SaveToJSON(){
+	this->MainWindowDrawArea.saveToJson();
+}
+
+void MainWindow::ShowHelpWindow(){
+	// this->HelpWindow.show();
+	void(0);
+}
+
+void MainWindow::ShowAboutWindow(){
+	void(0);
+}
+
+void MainWindow::OpenGithub(){
+	QDesktopServices::openUrl(QUrl("https://www.github.com/arnitdo/GPIOStudio/"));
 }
 
 void MainWindow::QuitApp(){
+	// Calls QApplication::quit()
 	this->ParentApp->quit();
 }
 
-void MainWindow::RefreshDrawSelects(){
-	this->MainWindowDrawArea.RefreshSelects();
-}
 
 /*  
 ____  ____     ___        _    _    ____  _____    _
@@ -228,36 +345,75 @@ ____  ____     ___        _    _    ____  _____    _
 DrawArea::DrawArea(MainWindow *parent) : 
 	QWidget(parent){
 	this->ParentMainWindow = parent;
+	// Insert Values for GPIOToolBar
 	this->setStyleSheet("background-color : white;");
-	ButtonLabelMap.insert({1, "Simple LED"});
-	ButtonLabelMap.insert({2, "Simple Buzzer"});
-	ButtonLabelMap.insert({3, "LED Controls"});
-	ButtonLabelMap.insert({4, "Buzzer Controls"});
-	ButtonLabelMap.insert({5, "Sleep Timer"});
-	ButtonLabelMap.insert({6, "Simple Button"});
-	ButtonLabelMap.insert({7, "Custom Function"});
-	ButtonLabelMap.insert({8, "Function Controls"});
-	ButtonLabelMap.insert({9, "Button Controls"});
+	ButtonLabelMap.insert({1, "Program Start"});
+	ButtonLabelMap.insert({2, "Simple LED"});
+	ButtonLabelMap.insert({3, "Simple Buzzer"});
+	ButtonLabelMap.insert({4, "LED Controls"});
+	ButtonLabelMap.insert({5, "Buzzer Controls"});
+	ButtonLabelMap.insert({6, "Sleep Timer"});
+	ButtonLabelMap.insert({7, "Simple Button"});
+	ButtonLabelMap.insert({8, "Custom Function"});
+	ButtonLabelMap.insert({9, "Function Controls"});
+	ButtonLabelMap.insert({10, "Button Controls"});
+}
+
+void DrawArea::loadJson(){
+	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.json)");
+	if (!fname.isEmpty()){
+		this->ParentMainWindow->log("Opening file " + convertToStdString(fname));
+		this->ParentMainWindow->MainWindowClearButton.click();
+		// Emulate button click, clears the entire board
+		std::ifstream JSONFileIn (convertToStdString(fname));
+		json JSON;
+		JSONFileIn >> JSON;
+		if (JSON["version"].get<std::string>() == convertToStdString(getVersionInfo())){
+			// Version Matches, Proceed!
+			for (auto GPIOJSON : JSON["json"]){
+				int id, x, y;
+				id = GPIOJSON["id"].get<int>(); // Note : ignore VSCode error, if raised
+				x = GPIOJSON["x"].get<int>(); // Note : ignore VSCode error, if raised
+				y = GPIOJSON["y"].get<int>(); // Note : ignore VSCode error, if raised
+				this->createGPIODevice(id, x, y);
+			}
+		} else {
+			this->ParentMainWindow->err("Version Mismatch!");
+			this->ParentMainWindow->err("The version of the file you have provided does not match the current version of GPIO Studio!");
+		}
+	}
+};
+
+void DrawArea::saveToJson(){
+	QFileDialog OpenFileDialog;
+	QString fname = OpenFileDialog.getSaveFileName(this, "Save GPIO Project", "", "JSON Files (*.json)");
+	if (!fname.isEmpty()){
+		this->ParentMainWindow->log("Saving to File " + convertToStdString(fname));
+		json JsonWrite;
+		JsonWrite["version"] = convertToStdString(getVersionInfo());
+		json GPIOArray = json::array();
+		for (GPIODevice* GPIOD : this->GPIOCodeVector){
+			json GPIOJSON;
+			GPIOJSON["id"] = GPIOD->id;
+			GPIOJSON["x"] = GPIOD->XCoord;
+			GPIOJSON["y"] = GPIOD->YCoord;
+			GPIOArray.push_back(GPIOJSON);
+		}
+		JsonWrite["json"] = GPIOArray;
+		std::ofstream WriteFile;
+		WriteFile.open(convertToStdString(fname), std::ios::trunc);
+		WriteFile << JsonWrite.dump(4);
+		WriteFile.close();
+	}
 }
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
+	// Set of actions to do on mouse press
 	if (this->NWMode){
-		if (this->isNew){
-			QRect StartBox = QRect(0, 0, 200, 100);
-			ProgramStart* PStart = new ProgramStart(this, this->ParentMainWindow);
-			this->ProgStart = PStart;
-			PStart->setGeometry(StartBox);
-			PStart->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(PStart->Color) + ";");
-			this->isNew = false;
-			PStart->show();
-			GPIOCodeVector.push_back(PStart);
-			this->LastPoint = QPoint(200, 50);
-			this->CurrentPoint = QPoint(event->x(), event->y() + 50);
-		} else {
-			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
-			this->CurrentPoint = QPoint(event->x(), event->y() + 50);
-		}
-		this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+		// Check if New Widget Mode is active
+		// I.e if NWMode == false
+		// No click action
+		// Prevents unnecessary clicks and GPIO Constructions
 		this->createGPIODevice(this->activeGPIO, event->x(), event->y());
 		this->setStyleSheet("background-color : #ffffff;");
 		this->NWMode = false;
@@ -265,97 +421,136 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 }
 
 void DrawArea::createGPIODevice(int active, int X, int Y){
-	// Constructs a GPIO Device at the given coordinates;
+	// Constructs a GPIO Device at the given coordinates
+	// This function has been specifically created to allow loading of GPIO Devices from a JSON File
 	this->activeGPIO = active;
 	switch(this->activeGPIO){
 		case 1:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			ProgramStart* GPIOD = new ProgramStart(this, ParentMainWindow, X, Y, ("Program Start"));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->LastPoint = QPoint(X + 200, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->LastPoint));
+			this->GPIOCodeVector.push_back(GPIOD);
+			break;
+		}
+		case 2:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			LED* GPIOD = new LED(this, ParentMainWindow, X, Y, ("LED " + std::to_string(Counters::LEDCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->LEDVec.push_back(GPIOD);
 			break;
 		}
-		case 2:{
+		case 3:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			Buzzer* GPIOD = new Buzzer(this, ParentMainWindow, X, Y, ("Buzzer " + std::to_string(Counters::BUZZERCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->BUZVec.push_back(GPIOD);
 			break;
 		}
-		case 3:{
+		case 4:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			LEDCtrl* GPIOD = new LEDCtrl(this, ParentMainWindow, X, Y, ("LED Controls " + std::to_string(Counters::LEDCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->LEDCTRLVec.push_back(GPIOD);
 			this->RefreshSelects();
 			break;
 		}
-		case 4:{
+		case 5:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			BuzzerCtrl* GPIOD = new BuzzerCtrl(this, ParentMainWindow, X, Y, ("Buzzer Controls " + std::to_string(Counters::BUZZERCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->BUZCTRLVec.push_back(GPIOD);
 			this->RefreshSelects();
 			break;
 		}
-		case 5:{
+		case 6:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			Sleep* GPIOD = new Sleep(this, ParentMainWindow, X, Y, ("Sleep Timer " + std::to_string(Counters::SLEEPCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
-			this->GPIOCodeVector.push_back(GPIOD);
-			break;
-		}
-		case 6:{
-			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
-			Button* GPIOD = new Button(this, ParentMainWindow, X, Y, ("Button " + std::to_string(Counters::BUTTONCount)));
-			GPIOD->setGeometry(GPIOBoundBox);
-			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
-			GPIOD->show();
-			this->BTNVec.push_back(GPIOD);
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
 		}
 		case 7:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
-			Function* GPIOD = new Function(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTIONCount)));
+			Button* GPIOD = new Button(this, ParentMainWindow, X, Y, ("Button " + std::to_string(Counters::BUTTONCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
-			this->FUNCVec.push_back(GPIOD);
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+			this->BTNVec.push_back(GPIOD);
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
 		}
 		case 8:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+			Function* GPIOD = new Function(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTIONCount)));
+			GPIOD->setGeometry(GPIOBoundBox);
+			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
+			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+			this->FUNCVec.push_back(GPIOD);
+			this->GPIOCodeVector.push_back(GPIOD);
+			break;
+		}
+		case 9:{
+			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			FunctionControl* GPIOD = new FunctionControl(this, ParentMainWindow, X, Y, ("Function Controls " + std::to_string(Counters::FUNCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->FUNCTRLVec.push_back(GPIOD);
 			this->RefreshSelects();
 			break;
 		}
-		case 9:{
+		case 10:{
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 			ButtonControl* GPIOD = new ButtonControl(this, ParentMainWindow, X, Y, ("Button Controls " + std::to_string(Counters::BTNCTRLCount)));
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + ";");
 			GPIOD->show();
+			this->CurrentPoint = QPoint(X, Y + 50);
+			this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+			this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 			this->GPIOCodeVector.push_back(GPIOD);
 			this->BTNCTRLVec.push_back(GPIOD);
 			this->RefreshSelects();
@@ -372,12 +567,10 @@ void DrawArea::paintEvent(QPaintEvent* event){
     opt->init(this);
 	this->style()->drawPrimitive(QStyle::PE_Widget, opt, p, this);
 	p->setRenderHint(QPainter::Antialiasing);
-	if(!this->isNew){
-		for (std::pair<QPoint, QPoint> PointPair : this->Lines){
-			p->setPen(QPen(Qt::black, 2));
-			p->drawLine(std::get<0>(PointPair), std::get<1>(PointPair));
-		};
-	}
+	for (std::pair<QPoint, QPoint> PointPair : this->Lines){
+		p->setPen(QPen(Qt::black, 2));
+		p->drawLine(std::get<0>(PointPair), std::get<1>(PointPair));
+	};
 	p->end();
 	event = event;
 	delete p;
@@ -391,12 +584,14 @@ void DrawArea::OnGPIODeviceSignal(int GPIOID){
 
 void DrawArea::resetSelf(){
 	this->Lines.clear();
+	this->LastPoint = QPoint(0, 0);
 	this->setStyleSheet("background-color : #ffffff;");
 	this->isNew = true;	
 	this->ParentMainWindow->log("Resetting Project!");	
 	this->GPIOCodeVector.clear();
 	this->BUZVec.clear();
 	this->LEDVec.clear();
+	this->BTNVec.clear();
 	this->LEDCTRLVec.clear();
 	this->BUZCTRLVec.clear();
 	this->FUNCVec.clear();
@@ -405,10 +600,7 @@ void DrawArea::resetSelf(){
 }
 
 void DrawArea::RefreshSelects(){
-	QStringList LEDNames;
-	QStringList BuzzerNames;
-	QStringList FuncNames;
-	QStringList ButtonNames;
+	QStringList LEDNames, BuzzerNames, FuncNames, FunctionNames, ButtonNames;
 	// LEDCtrl Refresh
 
 	for (LED* Led : this->LEDVec){
@@ -446,13 +638,23 @@ void DrawArea::RefreshSelects(){
 		ButtonNames << BTN->VarnameEdit.text();
 	}
 
-	for (ButtonControl* BCTRL : this->BTNCTRLVec){
+	for (Function* F : this->FUNCVec){
+		FunctionNames << F->NameEdit.text();
+	}
+
+	 for (ButtonControl* BCTRL : this->BTNCTRLVec){
 		BCTRL->FunctionSelect.clear();
 		BCTRL->ButtonSelect.clear();
 		BCTRL->ButtonSelect.insertItems(0, ButtonNames);
-		BCTRL->FunctionSelect.insertItems(0, FuncNames);
+		BCTRL->ButtonSelect.setMaxCount(BCTRL->ButtonSelect.count());
+		BCTRL->FunctionSelect.insertItems(0, FunctionNames);
 		BCTRL->FunctionSelect.setMaxCount(BCTRL->FunctionSelect.count());
-	}
+	 }
+	FunctionNames.clear();
+	FuncNames.clear();
+	ButtonNames.clear();
+	LEDNames.clear();
+	BuzzerNames.clear();
 }
 
 /* 
@@ -462,6 +664,23 @@ void DrawArea::RefreshSelects(){
 | |_| |  __/| | |_| |
  \____|_|  |___\___/ */
 
+
+/* COMMON NOTE
+	Most GPIO Devices will have 3 functions -
+		- Constructor
+		- build()
+		- deleteSelf()
+
+	* Constructor -
+		: Sets layout and properties
+
+	* build() - 
+		: Returns equivalent python code
+	* deleteSelf() -
+		: logs into console deletion
+		: Literally deletes itself
+
+ */
 
 void GPIODevice::paintEvent(QPaintEvent *)
 {
@@ -499,6 +718,7 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 	DisplayLabel(convertToQString(name), this),
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
+		this->id = 2;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -531,7 +751,7 @@ std::string LED::build(){
 	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
 		return convertToStdString(this->VarnameEdit.text()) +
 		" = gpiozero.LED(" + convertToStdString(this->PinSelect.currentText()) +
-		")\n";
+		", pin_factory=remote_pin_factory)\n";
 	} else {
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
@@ -547,6 +767,7 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	PinLabel("Pin : ", this),
 	NameLabel("State : ", this)
 	{
+		this->id = 3;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -579,7 +800,7 @@ std::string Buzzer::build(){
 	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
 		return convertToStdString(this->VarnameEdit.text()) +
 		" = gpiozero.Buzzer(" + convertToStdString(this->PinSelect.currentText()) +
-		")\n";
+		", pin_factory=remote_pin_factory)\n";
 	} else {
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
@@ -595,6 +816,7 @@ LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, s
 	LEDLabel("LED : ", this),
 	StateLabel("Pin State : ", this)
 	{
+		this->id = 4;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -636,6 +858,7 @@ BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	BuzzerLabel("Buzzer : ", this),
 	StateLabel("Pin State : ", this)
 	{
+		this->id = 5;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -675,6 +898,7 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 	DurationEdit(this),
 	DisplayLabel(convertToQString(name), this),
 	DurationLabel("Duration : ", this){
+		this->id = 6;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -712,6 +936,7 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	DisplayLabel(convertToQString(name), this),
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
+		this->id = 7;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -744,7 +969,7 @@ std::string Button::build(){
 	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
 		return convertToStdString(this->VarnameEdit.text()) +
 		" = gpiozero.Button(" + convertToStdString(this->PinSelect.currentText()) +
-		")\n";
+		", pin_factory=remote_pin_factory)\n";
 	} else {
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
@@ -759,6 +984,7 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 	NameEdit(this),
 	BodyLabel("Body : ", this),
 	BodyButton("Edit Function Body", this){
+		this->id = 8;
 		QWidget* BodyWindow = new QWidget;
 		QTextEdit* FunctionBodyEdit = new QTextEdit(BodyWindow);
 		QPushButton* CBody = new QPushButton("Close Window", BodyWindow);
@@ -827,6 +1053,7 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 	DisplayLabel(convertToQString(name), this),
 	ExecuteLabel("Select Function to execute : ", this)
 	{
+		this->id = 9;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -866,6 +1093,7 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 	StateLabel("Select Button Trigger State : ", this),
 	ExecuteLabel("Select Function to execute : ", this)
 	{
+		this->id = 10;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -922,7 +1150,6 @@ std::string ButtonControl::build(){
 	this->MainWindowDrawArea = &this->ParentMainWindow->MainWindowDrawArea;
 	GPIOToolBarLayout.setSpacing(0);
 	GPIOToolBarLayout.setMargin(0);
-	QMap<int, QString> GPIOSignalMap;
 	for (int i = 1; i < (int)this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.size() + 1; i++){
 		GPIOButton* GPIOSelectButton = new GPIOButton(convertToQString(this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.at(i)), i,  this, this->ParentMainWindow);
 		GPIOSelectButton->setFixedSize(233, 36);
@@ -964,27 +1191,44 @@ void ProgramStart::TriggerBuild(){
 	for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
 	{
 		outfile << GPD->build();
-	} 
+	}
+	outfile << "\n";
+	this->ParentDrawArea->LoopCode.clear();
+	for (std::string lc : this->ParentDrawArea->LOOPCodeVector){
+		this->ParentDrawArea->LoopCode << lc;
+	}
+	std::string tempstr;
+	outfile << "while True:\n";
+	while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
+		outfile << "\t" + tempstr;
+	}
+	outfile << "\ttime.sleep(1)\n";
 	outfile.close();
 	this->ParentMainWindow->log("Finished Building!");
 }
 
-ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow) :
-	GPIODevice(parent, parentMainWindow, 0, 0, ""),
+ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X,Y, name),
 	DisplayText(this),
 	SelfLayout(this){
-		DisplayText.setText("Program Start!");
+		this->id = 1;
+		DisplayText.setText(convertToQString(name));
 		DisplayText.setFixedWidth(200);
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT ( TriggerBuild() ));
 }
 
+void ProgramStart::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
 
 std::string ProgramStart::build(){
 	return  "# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
 			"import gpiozero\n"
-			"import time\n";
+			"import time\n"
+			"remote_pin_factory = gpiozero.pins.pigpio.PiGPIOFactory(host=\"" + this->ParentMainWindow->RemoteIP + "\")\n";
 }
 /*
  __  __    _    ___ _   _

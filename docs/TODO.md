@@ -1,42 +1,12 @@
-# ROADMAP
+Note : Original File Moved to `ROADMAP.md`
 
-v0.0.1
+* PWM LED
+* RGB LED
+* Motor (Simple)
 
-- [x] Basic output devices (LED, Buzzer, Sleep, Controls)
+* Line Sensor
+* Motion Sensor (PIR)
+* Distance Sensor (ultrasonic)
 
-v0.0.2
-
-- [x] Memory Cleanup, Minor Refactoring
-
-v0.0.3
-
-- [x] Basic Input Devices
-
-v0.0.4
-
-- [x] User Functions
-
-v0.0.5
-
-- [ ] Remote GPIO
-
-v0.0.6
-
-- [ ] SenseHAT / PiCamera Integration?
-
----
-
-# GOALS
-
-For Public Release v1.0.0
-
-- [ ] Program supports most, if not all `gpiozero` components
-- [ ] Basic Interaction with SenseHAT, PiCamera
-- [ ] Better UI
-- [ ] Video Tutorials, with side-by-side code comparison
-
----
-
-# Extras in Consideration
-
-### User Createable GPIO Objects?
+* Sense HAT
+* PiCamera

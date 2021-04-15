@@ -21,6 +21,9 @@
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QFileDialog>
+#include <QDesktopServices>
+#include <QUrl>
 
 #include <vector>
 #include <cstdlib>
@@ -77,6 +80,8 @@ class DrawArea: public QWidget{
 		virtual void mousePressEvent(QMouseEvent *event);
 		virtual void paintEvent(QPaintEvent* event);
 		void createGPIODevice(int active, int X, int Y);
+		void loadJson();
+		void saveToJson();
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;
@@ -84,6 +89,7 @@ class DrawArea: public QWidget{
 		MainWindow* ParentMainWindow;
 		std::vector<std::pair<QPoint, QPoint>> Lines;
 		std::vector<GPIODevice*> GPIOCodeVector;
+		std::vector<std::string> LOOPCodeVector;
 		std::vector<LED*> LEDVec;
 		std::vector<Buzzer*> BUZVec;
 		std::vector<LEDCtrl*> LEDCTRLVec;
@@ -93,6 +99,7 @@ class DrawArea: public QWidget{
 		std::vector<FunctionControl*> FUNCTRLVec;
 		std::vector<ButtonControl*>BTNCTRLVec;
 		std::map<int, std::string> ButtonLabelMap;
+		std::stringstream LoopCode;
 		int activeGPIO;
 		bool isNew = true;
 		bool NWMode = false;
@@ -119,29 +126,48 @@ class MainWindow : public QWidget{
 		void debug(std::string value);
 		void err(std::string value);
 		//Members
+		std::string RemoteIP;
 		QApplication* ParentApp;
+		QWidget RemoteWindow;
+		QLineEdit RaspiIPEdit;
+		QPushButton RemoteRunButton;
+		QPushButton RWHideButton;
+		QWidget HelpWindow;
+		QWidget AboutWindow;
 		DrawArea MainWindowDrawArea;
 		QTextEdit MainWindowConsole;
 		QScrollArea MainWindowScrollArea;
 		QScrollArea MainWindowGPIOScrollArea;
 		GPIOToolBar MainWindowGPIOToolBar;
 		QPushButton MainWindowClearButton;
-		QPushButton MainWindowBuildButton;
-		QPushButton MainWindowBRComboButton;
-		QPushButton MainWindowQuitButton;
 		QPushButton MainWindowRefreshButton;
+		QPushButton MainWindowBuildButton;
+		QPushButton MainWindowRemoteButton;
+		QPushButton MainWindowLoadButton;
+		QPushButton MainWindowSaveButton;
+		QPushButton MainWindowHelpButton;
+		QPushButton MainWindowAboutButton;
+		QPushButton MainWindowGithubButton;
+		QPushButton MainWindowQuitButton;
 		QGridLayout MainWindowLayout;
 	public slots:
-		void resetDrawArea();
-		void buildAndRun();
-		void QuitApp();
+		// Most of these slots are nothing but invocations of the respective DrawArea function
 		void RefreshDrawSelects();
+		void resetDrawArea();
+		void showRemoteWindow();
+		void hideRemoteWindow();
+		void runRemote();
+		void OpenJSON();
+		void SaveToJSON();
+		void ShowHelpWindow();
+		void ShowAboutWindow();
+		void OpenGithub();
+		void QuitApp();
 };
 
 /* 
   ____ ____ ___ ___
  / ___|  _ |_ _/ _ \
- std::vector<Function*> FUNC
 | |  _| |_) | | | | |
 | |_| |  __/| | |_| |
  \____|_|  |___\___/ */
@@ -154,6 +180,7 @@ class GPIODevice : public QWidget{
 		virtual void paintEvent(QPaintEvent* event);
 		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
+		int id;
 		DrawArea* ParentDrawArea;
 		MainWindow* ParentMainWindow;
 		int XCoord, YCoord;
@@ -343,7 +370,7 @@ class ProgramStart : public GPIODevice{
 	public:
 		// Functions
 		virtual std::string build(); // IMPORTANT
-		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow);
+		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QLabel DisplayText;
 		QGridLayout SelfLayout;
@@ -352,7 +379,7 @@ class ProgramStart : public GPIODevice{
 		std::string Color = "#aaaaaa";
 	public slots:
 		void TriggerBuild();
-		virtual void deleteSelf(){}; // Cannot be deleted.
+		virtual void deleteSelf();
 };
 
 /*  
