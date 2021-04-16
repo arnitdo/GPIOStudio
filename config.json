@@ -1,5 +1,6 @@
 {
 	"defaultPiIP" : "192.168.0.2",
 	"defaultSleepTime" : 5,
+	"keepaliveSleepTime" : 1,
 	"legacyMode" : 2
 }

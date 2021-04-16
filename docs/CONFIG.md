@@ -1,10 +1,12 @@
 The config.json file is used to define behaviour and settings of the program
 
-There are currently 3 properties that can be set in the file 
+There are currently 4 properties that can be set in the file 
 
 - `defaultPiIP` - The default Raspberry Pi IP to target when running the script remotely
 
 - `defaultSleepTime` - The default number of seconds, set in Sleep Timers
+
+- `keepaliveSleepTime` - The default number of seconds to sleep, when script is in keepalive mode
 
 - `legacyMode` - The legacy mode setting changes the number of pins available in the program. Accepted values are `0`, `1` or `2`
 	* `0` - Raspberry Pi 1 Model A, Model B (Rev 1.0) `(26 Pin Header)`
