@@ -68,6 +68,46 @@ namespace Counters{
 		BTNCTRLCount = 1;
 	}
 }
+
+namespace Config{
+	int defaultSleepTime = 5; // Default time in SleepTimer
+	int keepaliveSleepTime = 1; // Default time in keepalive
+	std::string defaultPiIP = ""; // Default pi IP in Remote
+	int legacyMode = 2;
+	/* 
+	LEGACY MODE DOC
+	Reference - https://elinux.org/RPi_Low-level_peripherals
+	legacy mode is defined by an integer - 
+	0 - Raspberry Pi Model A, B -  revision 1.0 (26 pin header)
+		[2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
+	1 - Raspberry Pi Model A, B - revision 2.0 (26 pin + 8 pin extra (4 GPIO Extra))
+		[0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31]
+	2 - Raspberry Pi Model 2, 2B+ .... (Full 40 Pins)
+		[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27]
+	 */
+	void LoadConfig(MainWindow* MainWin){
+		std::ifstream configFile;
+		configFile.open("config.json", std::ios::in);
+		if (!configFile){
+			MainWin->err("Error opening config.json file!");
+			MainWin->err("Falling back to default configuration");
+			defaultSleepTime = 5;
+			keepaliveSleepTime = 1;
+			defaultPiIP = "";
+			legacyMode = 2;
+			configFile.close();
+		} else {
+			json JsonConfigData;
+			configFile >> JsonConfigData;
+			defaultPiIP = JsonConfigData["defaultPiIP"].get<std::string>();
+			defaultSleepTime = JsonConfigData["defaultSleepTime"].get<int>();
+			keepaliveSleepTime = JsonConfigData["keepaliveSleepTime"].get<int>();
+			legacyMode = JsonConfigData["legacyMode"].get<int>();
+			configFile.close();
+		}
+	}
+}
+
 /*
   ____ _____ _   _ _____ ____  ___ ____
  / ___| ____| \ | | ____|  _ \|_ _/ ___|
@@ -150,6 +190,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	QGridLayout* RWLayout = new QGridLayout(&RemoteWindow);
 	this->RemoteWindow.setLayout(RWLayout);
 	this->RaspiIPEdit.setFixedWidth(150);
+	this->RaspiIPEdit.setText(convertToQString(Config::defaultPiIP));
 	RWLayout->addWidget(&this->RaspiIPEdit, 1, 2);
 	RWLayout->addWidget(new QLabel("Raspberry Pi IP Address : ", &this->RemoteWindow), 1, 1);
 	RWLayout->addWidget(&this->RWHideButton, 2, 1);
@@ -330,6 +371,7 @@ void MainWindow::OpenGithub(){
 }
 
 void MainWindow::QuitApp(){
+	this->close();
 	// Calls QApplication::quit()
 	this->ParentApp->quit();
 }
@@ -357,6 +399,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({8, "Custom Function"});
 	ButtonLabelMap.insert({9, "Function Controls"});
 	ButtonLabelMap.insert({10, "Button Controls"});
+	Config::LoadConfig(this->ParentMainWindow);
 }
 
 void DrawArea::loadJson(){
@@ -386,6 +429,7 @@ void DrawArea::loadJson(){
 
 void DrawArea::saveToJson(){
 	QFileDialog OpenFileDialog;
+	OpenFileDialog.setDefaultSuffix("json");
 	QString fname = OpenFileDialog.getSaveFileName(this, "Save GPIO Project", "", "JSON Files (*.json)");
 	if (!fname.isEmpty()){
 		this->ParentMainWindow->log("Saving to File " + convertToStdString(fname));
@@ -556,7 +600,10 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			this->RefreshSelects();
 			break;
 		}
-
+		default:{
+			this->ParentMainWindow->err("Invalid parameter passed!");
+			this->ParentMainWindow->err("The file you have loaded has been tampered with");
+		}
 	}	
 }
 
@@ -723,8 +770,18 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
-		for (int i = 2; i < 28; i++){
-			PinSelect.addItem(convertToQString(std::to_string(i)));
+		if (Config::legacyMode == 0){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 1){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 2){
+			for (int i : {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
 		}
 		DisplayLabel.setFixedSize(180, 20);
 		PinLabel.setStyleSheet("border : 0px;");
@@ -772,8 +829,18 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
-		for (int i = 2; i < 28; i++){
-			PinSelect.addItem(convertToQString(std::to_string(i)));
+		if (Config::legacyMode == 0){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 1){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 2){
+			for (int i : {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
 		}
 		DisplayLabel.setFixedSize(180, 20);
 		PinLabel.setStyleSheet("border : 0px;");
@@ -905,8 +972,8 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 		this->GPIOName = name;
 		DisplayLabel.setFixedSize(180, 20);
 		DurationLabel.setStyleSheet("border : 0px;");
-		// DisplayLabel->setText("MyLED" + convertToQString(std::to_string(LEDCount)));
 		this->DurationEdit.setStyleSheet("background-color : #FFFFE0;");
+		this->DurationEdit.setText(convertToQString(std::to_string(Config::defaultSleepTime)));
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&DurationLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->DurationEdit, 1, 2);
@@ -941,8 +1008,18 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
-		for (int i = 2; i < 28; i++){
-			PinSelect.addItem(convertToQString(std::to_string(i)));
+		if (Config::legacyMode == 0){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 1){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 2){
+			for (int i : {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
 		}
 		DisplayLabel.setFixedSize(180, 20);
 		PinLabel.setStyleSheet("border : 0px;");
@@ -1187,23 +1264,38 @@ void GPIOButton::SelfPressed(){
 
 void ProgramStart::TriggerBuild(){
 	this->ParentMainWindow->log("Building Project!");
-	std::ofstream outfile ("script.py");
+	// Main Code start
+	std::ofstream outfile ("script.py"); // Open File 
 	for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
 	{
-		outfile << GPD->build();
+		outfile << GPD->build(); // Write each GPIO Device's build to file
 	}
 	outfile << "\n";
-	this->ParentDrawArea->LoopCode.clear();
+	this->ParentDrawArea->LoopCode.clear(); // Clear Loopcode
 	for (std::string lc : this->ParentDrawArea->LOOPCodeVector){
-		this->ParentDrawArea->LoopCode << lc;
+		this->ParentDrawArea->LoopCode << lc; // Append to stringstream
 	}
+	// Main Code End
+	// Keepalive code start
 	std::string tempstr;
+	outfile << "print(\"The program will now run in 'keepalive' mode.\\n I.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\n";
 	outfile << "while True:\n";
+	outfile << "\ttry:\n";
 	while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
-		outfile << "\t" + tempstr;
+		outfile << "\t\t" + tempstr;
 	}
-	outfile << "\ttime.sleep(1)\n";
+	outfile << "\t\ttime.sleep(" + std::to_string(Config::keepaliveSleepTime) + ")\n";
+	outfile << "\texcept KeyboardInterrupt:\n";
+	outfile << "\t\timport sys\n";
+	outfile << "\t\tsys.exit()\n";
+	// Script no longer errs when interrupted by keyboard
+	/* DOC
+	After program has finished executing, it will go into a keepalive state
+	Various print statements, such as distance sensor print statements will be executed in the keepalive loop
+	Thus, the user will actually be able to see the output
+	 */
 	outfile.close();
+	// Keepalive code end;
 	this->ParentMainWindow->log("Finished Building!");
 }
 
