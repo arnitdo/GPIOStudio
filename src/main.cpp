@@ -1278,7 +1278,7 @@ void ProgramStart::TriggerBuild(){
 	// Main Code End
 	// Keepalive code start
 	std::string tempstr;
-	outfile << "print(\"The program will now run in 'keepalive' mode.\\n I.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\n";
+	outfile << "print(\"The program will now run in 'keepalive' mode.\\n I.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\")\n";
 	outfile << "while True:\n";
 	outfile << "\ttry:\n";
 	while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
