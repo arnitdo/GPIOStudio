@@ -80,8 +80,11 @@ class DrawArea: public QWidget{
 		virtual void mousePressEvent(QMouseEvent *event);
 		virtual void paintEvent(QPaintEvent* event);
 		void createGPIODevice(int active, int X, int Y);
+		void RefreshSelects();
+		void resetSelf();
 		void loadJson();
 		void saveToJson();
+		bool checkForPStart();
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;
@@ -105,8 +108,6 @@ class DrawArea: public QWidget{
 		bool NWMode = false;
 	public slots:
 		void OnGPIODeviceSignal(int GPIOID);
-		void resetSelf();
-		void RefreshSelects();
 };
 
 /* 
