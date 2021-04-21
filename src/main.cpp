@@ -88,7 +88,7 @@ namespace Config{
 	void LoadConfig(MainWindow* MainWin){
 		std::ifstream configFile;
 		configFile.open("config.json", std::ios::in);
-		if (!configFile){
+		if (!configFile.is_open()){
 			MainWin->err("Error opening config.json file!");
 			MainWin->err("Falling back to default configuration");
 			defaultSleepTime = 5;
@@ -200,59 +200,61 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	// Adding to Layouts
 	this->setWindowTitle("GPIO Studio v" + getVersionInfo());
 	this->setFixedSize(1280, 720);
+
+	MainWindowDeleteLastButton.setFixedHeight(36);
+	MainWindowDeleteLastButton.setText(" Delete Last");
+	MainWindowDeleteLastButton.setIcon(QIcon("static/undo.svg"));
+	MainWindowDeleteLastButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Z));
+	MainWindowLayout.addWidget(&MainWindowDeleteLastButton, 0, 0);
+	
 	MainWindowClearButton.setFixedHeight(36);
 	MainWindowClearButton.setText(" Clear All");
 	MainWindowClearButton.setIcon(QIcon("static/clear.svg"));
 	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
-	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 0);
+	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 1);
 
 	MainWindowRefreshButton.setFixedHeight(36);
 	MainWindowRefreshButton.setText(" Refresh");
 	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
 	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
-	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 1);
+	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 2);
 
 	MainWindowBuildButton.setFixedHeight(36);
 	MainWindowBuildButton.setText(" Build");
 	MainWindowBuildButton.setIcon(QIcon("static/hammer.svg"));
 	MainWindowBuildButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
-	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 2);
+	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 3);
 
 	MainWindowRemoteButton.setFixedHeight(36);
 	MainWindowRemoteButton.setText(" Run Remote");
 	MainWindowRemoteButton.setIcon(QIcon("static/remote.svg"));
 	MainWindowRemoteButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
-	MainWindowLayout.addWidget(&MainWindowRemoteButton, 0, 3);
+	MainWindowLayout.addWidget(&MainWindowRemoteButton, 0, 4);
 
 	MainWindowLoadButton.setFixedHeight(36);
 	MainWindowLoadButton.setText(" Load File");
 	MainWindowLoadButton.setIcon(QIcon("static/package.svg"));
 	MainWindowLoadButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
-	MainWindowLayout.addWidget(&MainWindowLoadButton, 0, 4);
+	MainWindowLayout.addWidget(&MainWindowLoadButton, 0, 5);
 
 	MainWindowSaveButton.setFixedHeight(36);
 	MainWindowSaveButton.setText(" Save File");
 	MainWindowSaveButton.setIcon(QIcon("static/save.svg"));
 	MainWindowSaveButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
-	MainWindowLayout.addWidget(&MainWindowSaveButton, 0, 5);
+	MainWindowLayout.addWidget(&MainWindowSaveButton, 0, 6);
 
 	MainWindowHelpButton.setFixedHeight(36);
 	MainWindowHelpButton.setText(" Help");
 	MainWindowHelpButton.setIcon(QIcon("static/help.svg"));
 	MainWindowHelpButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
-	MainWindowLayout.addWidget(&MainWindowHelpButton, 0, 6);
+	MainWindowLayout.addWidget(&MainWindowHelpButton, 0, 7);
 
 	MainWindowAboutButton.setFixedHeight(36);
 	MainWindowAboutButton.setText(" About");
 	MainWindowAboutButton.setIcon(QIcon("static/info.svg"));
 	MainWindowAboutButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_A));
-	MainWindowLayout.addWidget(&MainWindowAboutButton, 0, 7);
+	MainWindowLayout.addWidget(&MainWindowAboutButton, 0, 8);
 
-	MainWindowGithubButton.setFixedHeight(36);
-	MainWindowGithubButton.setText(" GitHub");
-	MainWindowGithubButton.setIcon(QIcon("static/github.svg"));
-	MainWindowGithubButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
-	MainWindowLayout.addWidget(&MainWindowGithubButton, 0, 8);
 
 	MainWindowQuitButton.setFixedHeight(36);
 	MainWindowQuitButton.setText(" Quit Application!");
@@ -260,6 +262,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowQuitButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
 	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 9);
 
+	QObject::connect(&MainWindowDeleteLastButton, SIGNAL (clicked()), this, SLOT (DeleteLast()));
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
 	QObject::connect(&MainWindowRefreshButton, SIGNAL (clicked()), this, SLOT (RefreshDrawSelects()));
 	QObject::connect(&MainWindowRemoteButton, SIGNAL (clicked()), this, SLOT (showRemoteWindow()));
@@ -269,7 +272,6 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	QObject::connect(&MainWindowSaveButton, SIGNAL (clicked()), this, SLOT (SaveToJSON()));
 	QObject::connect(&MainWindowHelpButton, SIGNAL (clicked()), this, SLOT (ShowHelpWindow()));
 	QObject::connect(&MainWindowAboutButton, SIGNAL (clicked()), this, SLOT (ShowAboutWindow()));
-	QObject::connect(&MainWindowGithubButton, SIGNAL (clicked()), this, SLOT (OpenGithub()));
 	QObject::connect(&MainWindowQuitButton, SIGNAL (clicked()), this, SLOT (QuitApp()));
 }
 
@@ -310,6 +312,10 @@ void MainWindow::RefreshDrawSelects(){
 	// So that forward function declarations are not included in them
 	// Python being interpreted does not play well with undefined functions
 	this->MainWindowDrawArea.RefreshSelects();
+}
+
+void MainWindow::DeleteLast(){
+	this->MainWindowDrawArea.deleteLast();
 }
 
 void MainWindow::resetDrawArea(){
@@ -358,16 +364,11 @@ void MainWindow::SaveToJSON(){
 }
 
 void MainWindow::ShowHelpWindow(){
-	// this->HelpWindow.show();
 	void(0);
 }
 
 void MainWindow::ShowAboutWindow(){
 	void(0);
-}
-
-void MainWindow::OpenGithub(){
-	QDesktopServices::openUrl(QUrl("https://www.github.com/arnitdo/GPIOStudio/"));
 }
 
 void MainWindow::QuitApp(){
@@ -448,6 +449,71 @@ void DrawArea::saveToJson(){
 		WriteFile.open(convertToStdString(fname), std::ios::trunc);
 		WriteFile << JsonWrite.dump(4);
 		WriteFile.close();
+	}
+}
+
+void DrawArea::deleteLast(){
+	if (this->GPIOCodeVector.size() > 0){
+		GPIODevice* GPIOD = this->GPIOCodeVector.back();
+		if (GPIOD->id == 1){
+			this->ParentMainWindow->warn("Deleting Program Start Block! Entire Project will be reset!");
+			this->ParentMainWindow->MainWindowClearButton.click();
+			this->setStyleSheet("background-color : #ffffff;");
+		} else {
+			switch(GPIOD->id){
+				case 2:{
+					Counters::LEDCount--;
+					this->LEDVec.pop_back();
+					break;
+					}
+				case 3:{
+					Counters::BUZZERCount--;
+					this->BUZVec.pop_back();
+					break;
+				}
+				case 4:{
+					Counters::LEDCTRLCount--;
+					this->LEDCTRLVec.pop_back();
+					break;
+				}
+				case 5:{
+					Counters::BUZZERCTRLCount--;
+					this->BUZCTRLVec.pop_back();
+					break;
+				}
+				case 6:{
+					Counters::SLEEPCount--;
+					break;
+				}
+				case 7:{
+					Counters::BUTTONCount--;
+					this->BTNVec.pop_back();
+					break;
+				}
+				case 8:{
+					Counters::FUNCTIONCount--;
+					this->FUNCVec.pop_back();
+					break;
+				}
+				case 9:{
+					Counters::FUNCTRLCount--;
+					this->FUNCTRLVec.pop_back();
+					break;
+				}
+				case 10:{
+					Counters::BTNCTRLCount--;
+					this->BUZCTRLVec.pop_back();
+					break;
+				}
+			}
+			GPIOD->deleteSelf();
+			this->GPIOCodeVector.pop_back();
+			this->Lines.pop_back();
+			this->LastPoint = QPoint(this->GPIOCodeVector.back()->x() + 200, this->GPIOCodeVector.back()->y() + 50);
+			this->setStyleSheet("background-color : #ffffff;");
+		}
+	} else {
+		this->resetSelf();
 	}
 }
 

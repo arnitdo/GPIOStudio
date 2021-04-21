@@ -84,6 +84,7 @@ class DrawArea: public QWidget{
 		void resetSelf();
 		void loadJson();
 		void saveToJson();
+		void deleteLast();
 		bool checkForPStart();
 		// Members
 		ProgramStart* ProgStart;
@@ -148,13 +149,14 @@ class MainWindow : public QWidget{
 		QPushButton MainWindowSaveButton;
 		QPushButton MainWindowHelpButton;
 		QPushButton MainWindowAboutButton;
-		QPushButton MainWindowGithubButton;
+		QPushButton MainWindowDeleteLastButton;
 		QPushButton MainWindowQuitButton;
 		QGridLayout MainWindowLayout;
 	public slots:
 		// Most of these slots are nothing but invocations of the respective DrawArea function
-		void RefreshDrawSelects();
+		void DeleteLast();
 		void resetDrawArea();
+		void RefreshDrawSelects();
 		void showRemoteWindow();
 		void hideRemoteWindow();
 		void runRemote();
@@ -162,7 +164,6 @@ class MainWindow : public QWidget{
 		void SaveToJSON();
 		void ShowHelpWindow();
 		void ShowAboutWindow();
-		void OpenGithub();
 		void QuitApp();
 };
 

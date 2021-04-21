@@ -1,5 +1,7 @@
 GPIO Studio has basic keyboard shortcuts in-built, for all the macro kings -
 
+ - Delete Last - `CTRL + Z`
+
  - Clear All - `CTRL + C`
 
  - Refresh - `CTRL + F`
@@ -16,6 +18,4 @@ GPIO Studio has basic keyboard shortcuts in-built, for all the macro kings -
 
  - About - `CTRL + A`
  
- - Open Github Repo - `CTRL + G`
-
  - Quit App - `CTRL + Q`
