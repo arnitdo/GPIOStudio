@@ -89,6 +89,7 @@ namespace Config{
 		std::ifstream configFile;
 		configFile.open("config.json", std::ios::in);
 		if (!configFile.is_open()){
+			// Revert to defaults
 			MainWin->err("Error opening config.json file!");
 			MainWin->err("Falling back to default configuration");
 			defaultSleepTime = 5;
@@ -97,6 +98,7 @@ namespace Config{
 			legacyMode = 2;
 			configFile.close();
 		} else {
+			// Load Config from JSON File
 			json JsonConfigData;
 			configFile >> JsonConfigData;
 			defaultPiIP = JsonConfigData["defaultPiIP"].get<std::string>();
@@ -196,72 +198,83 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	RWLayout->addWidget(&this->RWHideButton, 2, 1);
 	RWLayout->addWidget(&this->RemoteRunButton, 2 ,2);
 	this->RemoteWindow.hide();
+
 	// Finishing up
 	// Adding to Layouts
 	this->setWindowTitle("GPIO Studio v" + getVersionInfo());
 	this->setFixedSize(1280, 720);
 
+	// Delete Last Button
 	MainWindowDeleteLastButton.setFixedHeight(36);
 	MainWindowDeleteLastButton.setText(" Delete Last");
 	MainWindowDeleteLastButton.setIcon(QIcon("static/undo.svg"));
 	MainWindowDeleteLastButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Z));
 	MainWindowLayout.addWidget(&MainWindowDeleteLastButton, 0, 0);
 	
+	// Clear All Button
 	MainWindowClearButton.setFixedHeight(36);
 	MainWindowClearButton.setText(" Clear All");
 	MainWindowClearButton.setIcon(QIcon("static/clear.svg"));
 	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
 	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 1);
 
+	// Refresh Button
 	MainWindowRefreshButton.setFixedHeight(36);
 	MainWindowRefreshButton.setText(" Refresh");
 	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
 	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
 	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 2);
 
+	// Build Button
 	MainWindowBuildButton.setFixedHeight(36);
 	MainWindowBuildButton.setText(" Build");
 	MainWindowBuildButton.setIcon(QIcon("static/hammer.svg"));
 	MainWindowBuildButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
 	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 3);
 
+	// Remote Run Button
 	MainWindowRemoteButton.setFixedHeight(36);
 	MainWindowRemoteButton.setText(" Run Remote");
 	MainWindowRemoteButton.setIcon(QIcon("static/remote.svg"));
 	MainWindowRemoteButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
 	MainWindowLayout.addWidget(&MainWindowRemoteButton, 0, 4);
 
+	// Load Button
 	MainWindowLoadButton.setFixedHeight(36);
 	MainWindowLoadButton.setText(" Load File");
 	MainWindowLoadButton.setIcon(QIcon("static/package.svg"));
 	MainWindowLoadButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
 	MainWindowLayout.addWidget(&MainWindowLoadButton, 0, 5);
 
+	// Save Button
 	MainWindowSaveButton.setFixedHeight(36);
 	MainWindowSaveButton.setText(" Save File");
 	MainWindowSaveButton.setIcon(QIcon("static/save.svg"));
 	MainWindowSaveButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
 	MainWindowLayout.addWidget(&MainWindowSaveButton, 0, 6);
 
+	// Help Button
 	MainWindowHelpButton.setFixedHeight(36);
 	MainWindowHelpButton.setText(" Help");
 	MainWindowHelpButton.setIcon(QIcon("static/help.svg"));
 	MainWindowHelpButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
 	MainWindowLayout.addWidget(&MainWindowHelpButton, 0, 7);
 
+	// About Button
 	MainWindowAboutButton.setFixedHeight(36);
 	MainWindowAboutButton.setText(" About");
 	MainWindowAboutButton.setIcon(QIcon("static/info.svg"));
 	MainWindowAboutButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_A));
 	MainWindowLayout.addWidget(&MainWindowAboutButton, 0, 8);
 
-
+	// Quit Button
 	MainWindowQuitButton.setFixedHeight(36);
 	MainWindowQuitButton.setText(" Quit Application!");
 	MainWindowQuitButton.setIcon(QIcon("static/logout.svg"));
 	MainWindowQuitButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
 	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 9);
 
+	// Connecting SIGNALS and SLOTS
 	QObject::connect(&MainWindowDeleteLastButton, SIGNAL (clicked()), this, SLOT (DeleteLast()));
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
 	QObject::connect(&MainWindowRefreshButton, SIGNAL (clicked()), this, SLOT (RefreshDrawSelects()));
@@ -315,6 +328,8 @@ void MainWindow::RefreshDrawSelects(){
 }
 
 void MainWindow::DeleteLast(){
+	// Calls MainWindowDrawArea.deleteLast();
+	// Deletes The last created object
 	this->MainWindowDrawArea.deleteLast();
 }
 
@@ -335,19 +350,34 @@ void MainWindow::runRemote(){
 	if (this->RaspiIPEdit.text() != ""){
 		this->RemoteIP = convertToStdString(this->RaspiIPEdit.text());
 		this->MainWindowBuildButton.click();
-		#ifdef _WIN32
-		if (!system("python.exe script.py")){
-			this->log("Remote Success!");
-		} else {
-			this->err("An error occured when running remote script!");
-		}
-		#endif
-		#ifdef __linux__
-		if (!system("python3 script.py")){
-			this->log("Remote Success!");
-		} else {
-			this->err("An error occured when running remote script!");
-		}
+		#if defined(_WIN32)
+			if (!system("python.exe script.py")){
+				this->log("Remote Success!");
+			} else {
+				this->err("An error occured when running remote script!");
+			}
+		#elif defined(__linux__)
+			if (!system("python3 script.py")){
+				this->log("Remote Success!");
+			} else {
+				this->err("An error occured when running remote script!");
+			}
+		#else
+			// Fallback attempts.
+			this->log("Non Windows or Non Linux System Detected. Attempting to run python3");
+			if (system("python3 script.py")){
+				this->log("python3 failed! Now trying python.exe");
+				if (system("python.exe script.py")){
+					this->log("python.exe failed!");
+					this->err("Unable to run any python3 binary!");
+					this->log("You may need to simply build the project, and run it manually");
+				}
+				else {
+					this->log("python.exe succeeded!");
+				}
+			} else {
+				this->log("python3 succeeded!");
+			}
 		#endif
 	} else {
 		this->err("No valid IP Address Provided for Remote Raspberry Pi!");
@@ -389,7 +419,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	QWidget(parent){
 	this->ParentMainWindow = parent;
 	// Insert Values for GPIOToolBar
-	this->setStyleSheet("background-color : white;");
+	this->setStyleSheet("background-color : #ffffff;");
 	ButtonLabelMap.insert({1, "Program Start"});
 	ButtonLabelMap.insert({2, "Simple LED"});
 	ButtonLabelMap.insert({3, "Simple Buzzer"});
@@ -400,7 +430,6 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({8, "Custom Function"});
 	ButtonLabelMap.insert({9, "Function Controls"});
 	ButtonLabelMap.insert({10, "Button Controls"});
-	Config::LoadConfig(this->ParentMainWindow);
 }
 
 void DrawArea::loadJson(){
@@ -447,7 +476,7 @@ void DrawArea::saveToJson(){
 		JsonWrite["json"] = GPIOArray;
 		std::ofstream WriteFile;
 		WriteFile.open(convertToStdString(fname), std::ios::trunc);
-		WriteFile << JsonWrite.dump(4);
+		WriteFile << JsonWrite.dump(4); // Indentation!
 		WriteFile.close();
 	}
 }
@@ -506,10 +535,14 @@ void DrawArea::deleteLast(){
 					break;
 				}
 			}
-			GPIOD->deleteSelf();
-			this->GPIOCodeVector.pop_back();
-			this->Lines.pop_back();
-			this->LastPoint = QPoint(this->GPIOCodeVector.back()->x() + 200, this->GPIOCodeVector.back()->y() + 50);
+			GPIOD->deleteSelf(); // Delete GPIOD
+			this->GPIOCodeVector.pop_back(); // Delete Reference to GPIOD
+			this->Lines.pop_back(); // Delete last line
+			this->LastPoint = QPoint(
+				this->GPIOCodeVector.back()->x() + 200, /*Get last GPIODevice, get X coord, add 200 to X*/
+				this->GPIOCodeVector.back()->y() + 50 /*Get last GPIODevice, get Y coord, add 50 to Y*/
+			); 
+				// Line will be redrawn on next paintEvent.
 			this->setStyleSheet("background-color : #ffffff;");
 		}
 	} else {
@@ -724,7 +757,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 		}
 		default:{
 			this->ParentMainWindow->err("Invalid parameter passed!");
-			this->ParentMainWindow->warn("The file you have loaded has been tampered with");
+			this->ParentMainWindow->warn("The file you have loaded has been incorrectly modified");
 		}
 	}	
 }
@@ -736,6 +769,7 @@ void DrawArea::paintEvent(QPaintEvent* event){
     opt->init(this);
 	this->style()->drawPrimitive(QStyle::PE_Widget, opt, p, this);
 	p->setRenderHint(QPainter::Antialiasing);
+	// For each std::pair of points, draw line from p1 to p2;
 	for (std::pair<QPoint, QPoint> PointPair : this->Lines){
 		p->setPen(QPen(Qt::black, 2));
 		p->drawLine(std::get<0>(PointPair), std::get<1>(PointPair));
@@ -891,6 +925,7 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
+		// Based on Config::legacyMode, change number of pins available
 		if (Config::legacyMode == 0){
 			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
@@ -1455,5 +1490,6 @@ int main(int argc, char** argv){
 	QApplication app (argc, argv);
 	MainWindow w (&app);
 	w.show();
+	Config::LoadConfig(&w);
 	return app.exec();
 }
