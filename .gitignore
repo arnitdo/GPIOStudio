@@ -12,8 +12,6 @@ Makefile*
 
 script.py
 
-debug.lo
-
 *.o
 
 moc*
