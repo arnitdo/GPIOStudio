@@ -22,8 +22,7 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QFileDialog>
-#include <QDesktopServices>
-#include <QUrl>
+#include <QTextBrowser>
 
 #include <vector>
 #include <cstdlib>
@@ -136,6 +135,7 @@ class MainWindow : public QWidget{
 		QPushButton RWHideButton;
 		QWidget HelpWindow;
 		QWidget AboutWindow;
+		QTextBrowser AboutWindowContent;
 		DrawArea MainWindowDrawArea;
 		QTextEdit MainWindowConsole;
 		QScrollArea MainWindowScrollArea;

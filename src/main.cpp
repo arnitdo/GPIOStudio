@@ -27,8 +27,7 @@ using json = nlohmann::json;
 #include <QLabel>
 #include <QComboBox>
 #include <QFileDialog>
-#include <QDesktopServices>
-#include <QUrl>
+#include <QTextBrowser>
 
 //end Qt imports
 //begin system imports
@@ -142,12 +141,13 @@ std::string convertToStdString(QString in){
 |_|  |_/_/   \_|___|_| \_   \_/\_/  |___|_| \_|____/ \___/  \_/\_/ */
 
 MainWindow::MainWindow(QApplication* parentApplication) : 
-	RemoteWindow(nullptr, Qt::WindowMaximizeButtonHint),
+	RemoteWindow(nullptr),
 	RaspiIPEdit(&RemoteWindow),
 	RemoteRunButton("Run Script", &RemoteWindow),
 	RWHideButton("Hide Window", &RemoteWindow),
 	HelpWindow(nullptr),
 	AboutWindow(nullptr),
+	AboutWindowContent(&AboutWindow),
 	MainWindowDrawArea (this),
 	MainWindowConsole (this),
 	MainWindowScrollArea(this),
@@ -198,6 +198,21 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	RWLayout->addWidget(&this->RWHideButton, 2, 1);
 	RWLayout->addWidget(&this->RemoteRunButton, 2 ,2);
 	this->RemoteWindow.hide();
+
+	// About Window Setup
+	this->AboutWindow.setFixedSize(320, 160);
+	this->AboutWindow.setWindowTitle("About GPIO Studio");
+	this->AboutWindowContent.setGeometry(10, 10 ,300, 140);
+	this->AboutWindowContent.setReadOnly(true);
+	this->AboutWindowContent.setOpenExternalLinks(true);
+	this->AboutWindowContent.append(
+		"<p><h2>GPIO Studio v" + getVersionInfo() + "</h2>"
+		"A simple Flow-Based GUI Tool for creating GPIO Scripts on Raspberry Pi<br>"
+		"Developed in Qt 5.15.2 , C++11<br>"
+		"Distributed under the <b>GNU GPLv3 License</b><br>"
+		"The source code of this program can be found at<br>"
+		"<a href=\"https://www.github.com/arnitdo/GPIOStudio/\">https://www.github.com/arnitdo/GPIOStudio/</a><br></p>"
+	);
 
 	// Finishing up
 	// Adding to Layouts
@@ -398,7 +413,7 @@ void MainWindow::ShowHelpWindow(){
 }
 
 void MainWindow::ShowAboutWindow(){
-	void(0);
+	this->AboutWindow.show();
 }
 
 void MainWindow::QuitApp(){
