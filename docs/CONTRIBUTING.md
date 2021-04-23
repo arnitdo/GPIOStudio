@@ -1,3 +1,5 @@
+If you wish to contribute to this open source program, feel free to do so. I would recommend that you use the following configuration in order to have parity with the source system.
+
 #Build Notes:
 ```
 Program Versions -

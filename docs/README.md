@@ -41,6 +41,9 @@ static -
 * remote.svg - [Iconduck](https://iconduck.com/icons/69209/remote)
 * save.svg - [Iconduck](https://iconduck.com/icons/68149/save)
 
+* blank.png - [Wikimedia Uploads](https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Blank_button.svg/1124px-Blank_button.svg.png)
+* grid.png - [Mathpolate](https://mathpolate.com/grid-maker-tools/graph-paper-maker)
+
 src/thirdparty - 
 * nlohmann/json - [GitHub - nlohmann/json](https://github.com/nlohmann/json/)
 	Note : The file used is the single_include/nlohmann/json.hpp file
