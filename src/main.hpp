@@ -23,6 +23,7 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QTextBrowser>
+#include <QSlider>
 
 #include <vector>
 #include <cstdlib>
@@ -44,7 +45,8 @@ class Button;
 class Function;
 class FunctionControl;
 class ButtonControl;
-class MenuBar;
+class RGBLED;
+class RGBLEDControls;
 class GPIOButton;
 class GPIOToolBar;
 class ProgramStart;
@@ -101,6 +103,8 @@ class DrawArea: public QWidget{
 		std::vector<Function*> FUNCVec;
 		std::vector<FunctionControl*> FUNCTRLVec;
 		std::vector<ButtonControl*>BTNCTRLVec;
+		std::vector<RGBLED*> RGBLEDVec;
+		std::vector<RGBLEDControls*> RGBLEDCTRLVec;
 		std::map<int, std::string> ButtonLabelMap;
 		std::stringstream LoopCode;
 		int activeGPIO;
@@ -305,7 +309,7 @@ class Function : public GPIODevice{
 		Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		virtual std::string build();
 		// Members
-		std::string Color = "#98FB98";
+		std::string Color = "#00cc99";
 		QWidget* FunctionBodyWindow;
 		QTextEdit* FunctionBody;
 		QPushButton* CloseBodyButton;
@@ -357,6 +361,59 @@ class ButtonControl : public GPIODevice{
 		QLabel ExecuteLabel;
 	public slots:
 		virtual void deleteSelf();
+};
+
+class RGBLED : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		virtual std::string build(); // IMPORTANT
+		RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		// Members
+		std::string Color = "#f7957a";
+		QGridLayout SelfLayout;
+		QComboBox RPinSelect;
+		QComboBox GPinSelect;
+		QComboBox BPinSelect;
+		QLineEdit VarnameEdit;
+		QLabel DisplayLabel;
+		QLabel RPinLabel;
+		QLabel GPinLabel;
+		QLabel BPinLabel;
+		QLabel NameLabel;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class RGBLEDControls : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		virtual std::string build(); // IMPORTANT
+		RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		// Members
+		std::string Color = "#9acd32";
+		QGridLayout SelfLayout;
+		QSlider RPinSlider;
+		QSlider GPinSlider;
+		QSlider BPinSlider;
+		QLabel NameLabel;
+		QLabel DisplayLabel;
+		QLabel RLabel;
+		QLabel GLabel;
+		QLabel BLabel;
+		QComboBox RGBLEDSelect;
+		QLineEdit RValueEdit;
+		QLineEdit GValueEdit;
+		QLineEdit BValueEdit;
+	public slots:
+		void RSliderValueUpdated(int value);
+		void GSliderValueUpdated(int value);
+		void BSliderValueUpdated(int value);
+		void RTextValueUpdated(QString text);
+		void GTextValueUpdated(QString text);
+		void BTextValueUpdated(QString text);
+		virtual void deleteSelf();	
 };
 
 /* 
