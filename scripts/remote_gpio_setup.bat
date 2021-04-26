@@ -1,0 +1,1 @@
+pip.exe install gpiozero pigpio
