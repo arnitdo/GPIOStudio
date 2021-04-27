@@ -374,7 +374,6 @@ void MainWindow::hideRemoteWindow(){
 void MainWindow::runRemote(){
 	if (this->RaspiIPEdit.text() != ""){
 		this->RemoteIP = convertToStdString(this->RaspiIPEdit.text());
-		this->MainWindowBuildButton.click();
 		#if defined(_WIN32)
 			if (!system("python.exe script.py")){
 				this->log("Remote Success!");
@@ -1000,10 +999,9 @@ void GPIODevice::deleteSelf(){
 	delete this;
 }
 
-std::string GPIODevice::build(){
-	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	return "# " + this->GPIOName + "\n";
-}
+std::string GPIODevice::remoteBuild(){return "";}
+std::string GPIODevice::simpleBuild(){return "";}
+bool GPIODevice::validateInput(){return false;}
 
 LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),
@@ -1052,16 +1050,25 @@ void LED::deleteSelf(){
 	delete this;
 }
 
-std::string LED::build(){
+std::string LED::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
-		return convertToStdString(this->VarnameEdit.text()) +
+	return convertToStdString(this->VarnameEdit.text()) +
 		" = gpiozero.LED(" + convertToStdString(this->PinSelect.currentText()) +
 		", pin_factory=remote_pin_factory)\n";
-	} else {
+}
+
+std::string LED::simpleBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->VarnameEdit.text()) +
+		" = gpiozero.LED(" + convertToStdString(this->PinSelect.currentText()) + ")\n";
+}
+
+bool LED::validateInput(){
+	if (this->PinSelect.currentText().isEmpty() || this->VarnameEdit.text().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
+		return false;
 	}
+	return true;
 }
 
 Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) : 
@@ -1111,16 +1118,25 @@ void Buzzer::deleteSelf(){
 	delete this;
 }
 
-std::string Buzzer::build(){
+std::string Buzzer::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
-		return convertToStdString(this->VarnameEdit.text()) +
+	return convertToStdString(this->VarnameEdit.text()) +
 		" = gpiozero.Buzzer(" + convertToStdString(this->PinSelect.currentText()) +
 		", pin_factory=remote_pin_factory)\n";
-	} else {
+}
+
+std::string Buzzer::simpleBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->VarnameEdit.text()) +
+		" = gpiozero.Buzzer(" + convertToStdString(this->PinSelect.currentText()) + ")\n";
+}
+
+bool Buzzer::validateInput(){
+	if (this->PinSelect.currentText() == "" || this->VarnameEdit.text() == ""){
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
+		return false;
 	}
+	return true;
 }
 
 LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
@@ -1156,15 +1172,23 @@ void LEDCtrl::deleteSelf(){
 	delete this;
 }
 
-std::string LEDCtrl::build(){
+std::string LEDCtrl::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	if (this->LEDSelect.currentText() == ""){
-		this->ParentMainWindow->err("No LED Selected for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No LED Selected\n";
-	} else {
-		return convertToStdString(this->LEDSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
-	}
+	return convertToStdString(this->LEDSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
 }
+
+std::string LEDCtrl::simpleBuild(){
+	return this->remoteBuild();
+}
+
+bool LEDCtrl::validateInput(){
+	if (this->LEDSelect.currentText().isEmpty()){
+		this->ParentMainWindow->err("No LED Selected for " + this->GPIOName);
+		return false;
+	}
+	return true;
+}
+
 BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
@@ -1198,14 +1222,21 @@ void BuzzerCtrl::deleteSelf(){
 	delete this;
 }
 
-std::string BuzzerCtrl::build(){
+std::string BuzzerCtrl::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->BuzzerSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
+}
+
+std::string BuzzerCtrl::simpleBuild(){
+	return this->remoteBuild();
+}
+
+bool BuzzerCtrl::validateInput(){
 	if (this->BuzzerSelect.currentText() == ""){
 		this->ParentMainWindow->err("No Buzzer Selected for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No Buzzer Selected\n";
-	} else {
-		return convertToStdString(this->BuzzerSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
+		return false;
 	}
+	return true;
 }
 
 Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
@@ -1235,15 +1266,23 @@ void Sleep::deleteSelf(){
 	delete this;
 }
 
-std::string Sleep::build(){
+std::string Sleep::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return "time.sleep(" + convertToStdString(this->DurationEdit.text()) + ")\n";
+}
+
+std::string Sleep::simpleBuild(){
+	return this->remoteBuild();
+}
+
+bool Sleep::validateInput(){
 	if (this->DurationEdit.text() == ""){
 		this->ParentMainWindow->err("No Sleep Duration specified for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No sleep duration specified\n";
-	} else {
-		return "time.sleep(" + convertToStdString(this->DurationEdit.text()) + ")\n";
-	}
+		return false;
+	}	
+	return true;
 }
+
 Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
@@ -1290,16 +1329,24 @@ void Button::deleteSelf(){
 	delete this;
 }
 
-std::string Button::build(){
+std::string Button::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	if (!(this->PinSelect.currentText() == "" || this->VarnameEdit.text() == "")){
-		return convertToStdString(this->VarnameEdit.text()) +
-		" = gpiozero.Button(" + convertToStdString(this->PinSelect.currentText()) +
-		", pin_factory=remote_pin_factory)\n";
-	} else {
-		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.Button(" + convertToStdString(this->PinSelect.currentText()) +
+	", pin_factory=remote_pin_factory)\n";
+}
+
+std::string Button::simpleBuild(){
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.Button(" + convertToStdString(this->PinSelect.currentText()) + ")\n";
+}
+
+bool Button::validateInput(){
+	this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
+	if (this->PinSelect.currentText().isEmpty() || this->VarnameEdit.text().isEmpty()){
+		return false;
 	}
+	return true;
 }
 
 Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
@@ -1360,7 +1407,7 @@ void Function::deleteSelf(){
 	delete this;
 }
 
-std::string Function::build(){
+std::string Function::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	std::string out, templine;
 	this->FunctionText.clear();
@@ -1370,6 +1417,18 @@ std::string Function::build(){
 		out += "\t" + templine + "\n";
 	}
 	return out;
+}
+
+std::string Function::simpleBuild(){
+	return this->remoteBuild();
+}
+
+bool Function::validateInput(){
+	if (this->NameEdit.text().isEmpty()){
+		this->ParentMainWindow->err("No function name provided for " + this->GPIOName);
+		return false;
+	}
+	return true;
 }
 
 FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
@@ -1398,14 +1457,21 @@ void FunctionControl::deleteSelf(){
 	delete this;
 }
 
-std::string FunctionControl::build(){
+std::string FunctionControl::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->FunctionSelect.currentText()) + "()\n";
+}
+
+std::string FunctionControl::simpleBuild(){
+	return this->remoteBuild();
+}
+
+bool FunctionControl::validateInput(){
 	if (this->FunctionSelect.currentText() == ""){
-		this->ParentMainWindow->err("No Function Selected for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No Function Selected\n";
-	} else {
-		return convertToStdString(this->FunctionSelect.currentText()) + "()\n";
+		this->ParentMainWindow->err("No function selected for " + this->GPIOName);
+		return false;
 	}
+	return true;
 }
 
 ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
@@ -1447,19 +1513,25 @@ void ButtonControl::deleteSelf(){
 	delete this;
 }
 
-std::string ButtonControl::build(){
+std::string ButtonControl::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->ButtonSelect.currentText() + "." + this->StateSelect.currentText() + " = " + this->FunctionSelect.currentText() + "\n");
+}
+
+std::string ButtonControl::simpleBuild(){
+	return this->remoteBuild();
+}
+
+bool ButtonControl::validateInput(){
 	if (this->FunctionSelect.currentText() == ""){
 		this->ParentMainWindow->err("No Function Selected for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No Function Selected\n";
-	} else {
-		if (this->ButtonSelect.currentText() == ""){
-			this->ParentMainWindow->err("No Button Selected for " + this->GPIOName);
-			return "# GPIOStudio - " + this->GPIOName + " : No Function Selected\n";
-		} else {
-			return convertToStdString(this->ButtonSelect.currentText() + "." + this->StateSelect.currentText() + " = " + this->FunctionSelect.currentText() + "\n");
-		 }
+		return false;
 	}
+	if (this->ButtonSelect.currentText() == ""){
+		this->ParentMainWindow->err("No Button Selected for " + this->GPIOName);
+		return false;
+	}
+	return true;	
 }
 
 RGBLED::RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
@@ -1528,31 +1600,35 @@ void RGBLED::deleteSelf(){
 	delete this;
 }
 
-std::string RGBLED::build(){
+std::string RGBLED::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	if (!(this->VarnameEdit.text() == "")){
-		if (!(
-			this->RPinSelect.currentText() == this->GPinSelect.currentText() || // Compare Selected Pins
-			this->BPinSelect.currentText() == this->GPinSelect.currentText() || // User cannot set 1 pin for 2 colors
-			this->RPinSelect.currentText() == this->BPinSelect.currentText()
-		)){
-			return convertToStdString(this->VarnameEdit.text()) +
-			" = gpiozero.RGBLED(" + convertToStdString(this->RPinSelect.currentText()) +
-			", " + convertToStdString(this->GPinSelect.currentText()) +
-			", " + convertToStdString(this->BPinSelect.currentText()) +
-			", pin_factory=remote_pin_factory)\n";
-		}
-		else {
-			this->ParentMainWindow->err("Duplicate pin number provided for " + this->GPIOName);
-			return "# GPIOStudio - " + this->GPIOName + " : Duplicate pin number provided (" +
-			convertToStdString(this->RPinSelect.currentText()) + ", " +
-			convertToStdString(this->GPinSelect.currentText()) + ", " +
-			convertToStdString(this->BPinSelect.currentText()) + ")\n";
-		}	
-	} else {
+	return convertToStdString(this->VarnameEdit.text()) +
+		" = gpiozero.RGBLED(" + convertToStdString(this->RPinSelect.currentText()) +
+		", " + convertToStdString(this->GPinSelect.currentText()) +
+		", " + convertToStdString(this->BPinSelect.currentText()) +
+		", pin_factory=remote_pin_factory)\n";	
+}
+
+std::string RGBLED::simpleBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.RGBLED(" + convertToStdString(this->RPinSelect.currentText()) +
+	", " + convertToStdString(this->GPinSelect.currentText()) +
+	", " + convertToStdString(this->BPinSelect.currentText()) + ")\n";
+}
+
+bool RGBLED::validateInput(){
+	if (this->VarnameEdit.text().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No suitable variable name or pin number provided\n";
+		return false;
 	}
+	if (this->RPinSelect.currentText() == this->GPinSelect.currentText() || 
+		this->BPinSelect.currentText() == this->GPinSelect.currentText() ||
+		this->RPinSelect.currentText() == this->BPinSelect.currentText()){
+			this->ParentMainWindow->err("Duplicate pins provided for " + this->GPIOName);
+			return false;
+		}
+	return true;
 }
 
 RGBLEDControls::RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
@@ -1625,18 +1701,26 @@ void RGBLEDControls::deleteSelf(){
 	delete this;
 }
 
-std::string RGBLEDControls::build(){
-	if (!(this->RGBLEDSelect.currentText() == "")){
-		float red, blue, green;
-		red = (float) this->RPinSlider.value() / 255;
-		green = (float) this->GPinSlider.value() / 255;
-		blue = (float) this->BPinSlider.value() / 255;
-		return convertToStdString(this->RGBLEDSelect.currentText()) + ".color = (" +
-		std::to_string(red) + ", " + std::to_string(green) + ", " + std::to_string(blue) + ")\n";
-	} else {
+std::string RGBLEDControls::remoteBuild(){
+	float red, blue, green;
+	red = (float) this->RPinSlider.value() / 255;
+	green = (float) this->GPinSlider.value() / 255;
+	blue = (float) this->BPinSlider.value() / 255;
+	return convertToStdString(this->RGBLEDSelect.currentText()) + ".color = (" +
+	std::to_string(red) + ", " + std::to_string(green) + ", " + std::to_string(blue) + ")\n";
+}
+
+std::string RGBLEDControls::simpleBuild(){
+	return this->remoteBuild();
+	// Same thing, no need to copy.
+}
+
+bool RGBLEDControls::validateInput(){
+	if (this->RGBLEDSelect.currentText().isEmpty()){
 		this->ParentMainWindow->err("No RGB LED selected for " + this->GPIOName);
-		return "# GPIOStudio - " + this->GPIOName + " : No RGB LED Selected\n";
+		return false;
 	}
+	return true;
 }
 
 void RGBLEDControls::RSliderValueUpdated(int value){
@@ -1722,41 +1806,100 @@ void GPIOButton::SelfPressed(){
 |_|   |_| \_\\___/ \____|_| \_/_/   \_|_|  |_|____/ |_/_/   \_|_| \_\|_|
  */
 
-void ProgramStart::TriggerBuild(){
-	this->ParentMainWindow->log("Building Project!");
-	// Main Code start
-	std::ofstream outfile ("script.py"); // Open File 
-	for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
-	{
-		outfile << GPD->build(); // Write each GPIO Device's build to file
+/* DOC
+After program has finished executing, it will go into a keepalive state
+Various print statements, such as distance sensor print statements will be executed in the keepalive loop
+Thus, the user will actually be able to see the output
+*/
+
+void ProgramStart::TriggerRemoteBuild(){
+	this->ParentMainWindow->log("Validating Project!");
+	if (this->validateCode()){
+		this->ParentMainWindow->log("Program Validated Succesfully! No errors found!");
+		this->ParentMainWindow->log("Building Project, Config : Remote!");
+		// Main Code start
+		std::ofstream outfile ("script.py"); // Open File 
+		for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
+		{
+			outfile << GPD->remoteBuild(); // Write each GPIO Device's build to file
+		}
+		outfile << "\n";
+		this->ParentDrawArea->LoopCode.clear(); // Clear Loopcode
+		for (std::string lc : this->ParentDrawArea->LOOPCodeVector){
+			this->ParentDrawArea->LoopCode << lc; // Append to stringstream
+		}
+		// Main Code End
+		// Keepalive code start
+		std::string tempstr;
+		outfile << "print(\"The program will now run in 'keepalive' mode.\\nI.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\")\n";
+		outfile << "while True:\n";
+		outfile << "\ttry:\n";
+		while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
+			outfile << "\t\t" + tempstr;
+		}
+		outfile << "\t\ttime.sleep(" + std::to_string(Config::keepaliveSleepTime) + ")\n";
+		outfile << "\texcept KeyboardInterrupt:\n";
+		outfile << "\t\timport sys\n";
+		outfile << "\t\tsys.exit()\n";
+		// Script no longer errs when interrupted by keyboard
+		outfile.close();
+		// Keepalive code end;
+		this->ParentMainWindow->log("Finished Building!");
+	} else {
+		this->ParentMainWindow->warn("Invalid inputs found! Check console!");
+	}	
+}
+
+void ProgramStart::TriggerSimpleBuild(){
+	this->ParentMainWindow->log("Validating Project!");
+	if (this->validateCode()){
+		this->ParentMainWindow->log("Program Validated Succesfully! No errors found!");
+		this->ParentMainWindow->log("Building Project, Config : Local!");
+		// Main Code start
+		std::ofstream outfile ("script.py"); // Open File 
+		for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
+		{
+			outfile << GPD->simpleBuild(); // Write each GPIO Device's build to file
+		}
+		outfile << "\n";
+		this->ParentDrawArea->LoopCode.clear(); // Clear Loopcode
+		for (std::string lc : this->ParentDrawArea->LOOPCodeVector){
+			this->ParentDrawArea->LoopCode << lc; // Append to stringstream
+		}
+		// Main Code End
+		// Keepalive code start
+		std::string tempstr;
+		outfile << "print(\"The program will now run in 'keepalive' mode.\\nI.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\")\n";
+		outfile << "while True:\n";
+		outfile << "\ttry:\n";
+		while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
+			outfile << "\t\t" + tempstr;
+		}
+		outfile << "\t\ttime.sleep(" + std::to_string(Config::keepaliveSleepTime) + ")\n";
+		outfile << "\texcept KeyboardInterrupt:\n";
+		outfile << "\t\timport sys\n";
+		outfile << "\t\tsys.exit()\n";
+		// Script no longer errs when interrupted by keyboard
+		outfile.close();
+		// Keepalive code end;
+		this->ParentMainWindow->log("Finished Building!");
+	} else {
+		this->ParentMainWindow->warn("Invalid inputs found! Check console!");
 	}
-	outfile << "\n";
-	this->ParentDrawArea->LoopCode.clear(); // Clear Loopcode
-	for (std::string lc : this->ParentDrawArea->LOOPCodeVector){
-		this->ParentDrawArea->LoopCode << lc; // Append to stringstream
+}
+
+bool ProgramStart::validateInput(){
+	return true;
+}
+
+bool ProgramStart::validateCode(){
+	for (GPIODevice* GPIOD : this->ParentDrawArea->GPIOCodeVector){
+		if (GPIOD->validateInput() == false){
+			return false;
+			// If any GPIO Device reports invalid input, return false immediately
+		}
 	}
-	// Main Code End
-	// Keepalive code start
-	std::string tempstr;
-	outfile << "print(\"The program will now run in 'keepalive' mode.\\n I.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\")\n";
-	outfile << "while True:\n";
-	outfile << "\ttry:\n";
-	while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
-		outfile << "\t\t" + tempstr;
-	}
-	outfile << "\t\ttime.sleep(" + std::to_string(Config::keepaliveSleepTime) + ")\n";
-	outfile << "\texcept KeyboardInterrupt:\n";
-	outfile << "\t\timport sys\n";
-	outfile << "\t\tsys.exit()\n";
-	// Script no longer errs when interrupted by keyboard
-	/* DOC
-	After program has finished executing, it will go into a keepalive state
-	Various print statements, such as distance sensor print statements will be executed in the keepalive loop
-	Thus, the user will actually be able to see the output
-	 */
-	outfile.close();
-	// Keepalive code end;
-	this->ParentMainWindow->log("Finished Building!");
+	return true;
 }
 
 ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
@@ -1768,7 +1911,8 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X
 		DisplayText.setFixedWidth(200);
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
-		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT ( TriggerBuild() ));
+		QObject::connect(&(this->ParentMainWindow->RemoteRunButton), SIGNAL (clicked()), this, SLOT ( TriggerRemoteBuild() ));
+		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT (TriggerSimpleBuild()));
 }
 
 void ProgramStart::deleteSelf(){
@@ -1776,11 +1920,17 @@ void ProgramStart::deleteSelf(){
 	delete this;
 }
 
-std::string ProgramStart::build(){
+std::string ProgramStart::remoteBuild(){
 	return  "# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
 			"import gpiozero\n"
 			"import time\n"
-			"remote_pin_factory = gpiozero.pins.pigpio.PiGPIOFactory(host=\"" + this->ParentMainWindow->RemoteIP + "\")\n";
+			"remote_pin_factory = gpiozero.pins.pigpio.PiGPIOFactory(host=\"" + convertToStdString(this->ParentMainWindow->RaspiIPEdit.text()) + "\")\n";
+}
+
+std::string ProgramStart::simpleBuild(){
+	return  "# script.py generated by " + convertToStdString("GPIO Studio v" + getVersionInfo()) + "\n"
+			"import gpiozero\n"
+			"import time\n";
 }
 /*
  __  __    _    ___ _   _

@@ -182,7 +182,9 @@ class GPIODevice : public QWidget{
 	Q_OBJECT;
 	public:
 		// Functions
-		virtual std::string build(); // IMPORTANT
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		virtual void paintEvent(QPaintEvent* event);
 		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
@@ -200,7 +202,9 @@ class LED : public GPIODevice{
 	Q_OBJECT;
 	public:
 		// Functions
-		virtual std::string build(); // IMPORTANT
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		std::string Color = "#00ffff";
@@ -218,7 +222,9 @@ class Buzzer : public GPIODevice{
 	Q_OBJECT;
 	public:
 		// Functions
-		virtual std::string build(); // IMPORTANT
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		std::string Color = "#98fb98";
@@ -237,7 +243,9 @@ class LEDCtrl : public GPIODevice{
 	public:
 		// Functions
 		LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
-		virtual std::string build();
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		// Members
 		std::string Color = "#FFB473";
 		QGridLayout SelfLayout;
@@ -255,7 +263,9 @@ class BuzzerCtrl : public GPIODevice{
 	public:
 		// Functions
 		BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
-		virtual std::string build();
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		// Members
 		std::string Color = "#CACDFF";
 		QGridLayout SelfLayout;
@@ -273,7 +283,9 @@ class Sleep : public GPIODevice{
 	public:
 		// Functions
 		Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
-		virtual std::string build();
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		// Members
 		std::string Color = "#FEDF00";
 		QGridLayout SelfLayout;
@@ -289,7 +301,9 @@ class Button : public GPIODevice{
 	public:
 		// Functions
 		Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
-		virtual std::string build();
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		// Members
 		std::string Color = "#AADF0A";
 		QGridLayout SelfLayout;
@@ -307,7 +321,9 @@ class Function : public GPIODevice{
 	public:
 		// Functions
 		Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
-		virtual std::string build();
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		// Members
 		std::string Color = "#00cc99";
 		QWidget* FunctionBodyWindow;
@@ -332,7 +348,9 @@ class FunctionControl : public GPIODevice{
 	public:
 		// Functions
 		FunctionControl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
-		virtual std::string build();
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		// Members
 		std::string Color = "#FEDBF8";
 		QGridLayout SelfLayout;
@@ -348,7 +366,9 @@ class ButtonControl : public GPIODevice{
 	public:
 		// Functions
 		ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
-		virtual std::string build();
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		// Members
 		std::string Color = "#8DA3F3";
 		QGridLayout SelfLayout;
@@ -367,7 +387,9 @@ class RGBLED : public GPIODevice{
 	Q_OBJECT;
 	public:
 		// Functions
-		virtual std::string build(); // IMPORTANT
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		std::string Color = "#f7957a";
@@ -389,7 +411,9 @@ class RGBLEDControls : public GPIODevice{
 	Q_OBJECT;
 	public:
 		// Functions
-		virtual std::string build(); // IMPORTANT
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
 		RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		std::string Color = "#9acd32";
@@ -428,7 +452,10 @@ class ProgramStart : public GPIODevice{
 	Q_OBJECT;
 	public:
 		// Functions
-		virtual std::string build(); // IMPORTANT
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput(); // Self validation, will always return true
+		bool validateCode(); // Full code validation
 		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QLabel DisplayText;
@@ -437,7 +464,8 @@ class ProgramStart : public GPIODevice{
 		DrawArea* ParentDrawArea;
 		std::string Color = "#aaaaaa";
 	public slots:
-		void TriggerBuild();
+		void TriggerSimpleBuild();
+		void TriggerRemoteBuild();
 		virtual void deleteSelf();
 };
 
