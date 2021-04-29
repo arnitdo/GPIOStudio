@@ -463,6 +463,8 @@ class ProgramStart : public GPIODevice{
 		MainWindow* ParentMainWindow;
 		DrawArea* ParentDrawArea;
 		std::string Color = "#aaaaaa";
+	signals:
+		void buildCompleted();
 	public slots:
 		void TriggerSimpleBuild();
 		void TriggerRemoteBuild();
