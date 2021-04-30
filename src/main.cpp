@@ -110,9 +110,9 @@ namespace Config{
 			json JsonConfigData;
 			configFile >> JsonConfigData;
 			defaultPiIP = JsonConfigData["defaultPiIP"].get<std::string>();
-			defaultSleepTime = JsonConfigData["defaultSleepTime"].get<int>();
-			keepaliveSleepTime = JsonConfigData["keepaliveSleepTime"].get<int>();
-			legacyMode = JsonConfigData["legacyMode"].get<int>();
+			defaultSleepTime = JsonConfigData["defaultSleepTime"].get<int64_t>();
+			keepaliveSleepTime = JsonConfigData["keepaliveSleepTime"].get<int64_t>();
+			legacyMode = JsonConfigData["legacyMode"].get<int64_t>();
 			MainWin->RaspiIPEdit.setText(convertToQString(defaultPiIP));
 			configFile.close();
 		}
@@ -470,9 +470,9 @@ void DrawArea::loadJson(){
 			// Version Matches, Proceed!
 			for (auto GPIOJSON : JSON["json"]){
 				int id, x, y;
-				id = GPIOJSON["id"].get<int>(); // Note : ignore VSCode error, if raised
-				x = GPIOJSON["x"].get<int>(); // Note : ignore VSCode error, if raised
-				y = GPIOJSON["y"].get<int>(); // Note : ignore VSCode error, if raised
+				id = GPIOJSON["id"].get<int64_t>();
+				x = GPIOJSON["x"].get<int64_t>(); 
+				y = GPIOJSON["y"].get<int64_t>(); 
 				this->createGPIODevice(id, x, y);
 			}
 		} else {
@@ -758,7 +758,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 		case 9:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
-				RGBLEDControls* GPIOD = new RGBLEDControls(this, ParentMainWindow, X, Y, ("RGB LED Controls" + std::to_string(Counters::RGBLEDCTRLCount)));
+				RGBLEDControls* GPIOD = new RGBLEDControls(this, ParentMainWindow, X, Y, ("RGB LED Controls " + std::to_string(Counters::RGBLEDCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1341,8 +1341,8 @@ std::string Button::simpleBuild(){
 }
 
 bool Button::validateInput(){
-	this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 	if (this->PinSelect.currentText().isEmpty() || this->VarnameEdit.text().isEmpty()){
+		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return false;
 	}
 	return true;
@@ -1658,6 +1658,9 @@ RGBLEDControls::RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, i
 		RPinSlider.setStyleSheet("border : 0px; color : ");
 		GPinSlider.setStyleSheet("border : 0px;");
 		BPinSlider.setStyleSheet("border : 0px;");
+		RValueEdit.setStyleSheet("background-color : #cceecc;");
+		GValueEdit.setStyleSheet("background-color : #cceecc;");
+		BValueEdit.setStyleSheet("background-color : #cceecc;");
 		RPinSlider.setFixedWidth(100);
 		RPinSlider.setMaximum(255);
 		RPinSlider.setMinimum(0);
@@ -1673,6 +1676,9 @@ RGBLEDControls::RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, i
 		RValueEdit.setFixedWidth(60);
 		GValueEdit.setFixedWidth(60);
 		BValueEdit.setFixedWidth(60);
+		RValueEdit.setText("0");
+		GValueEdit.setText("0");
+		BValueEdit.setText("0");
 		this->SelfLayout.addWidget(&DisplayLabel, 1, 1, 1, 2);
 		this->SelfLayout.addWidget(&NameLabel, 3, 1, 1, 1);
 		this->SelfLayout.addWidget(&RGBLEDSelect, 4, 1, 1, 2);
