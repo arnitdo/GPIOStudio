@@ -1262,7 +1262,7 @@ void PWMLEDCtrl::deleteSelf(){
 }
 
 std::string PWMLEDCtrl::remoteBuild(){
-	float value = (float) (std::stoi(convertToStdString(this->ValueEdit.text())) / 100); 
+	float value = std::stof(convertToStdString(this->ValueEdit.text())) / 100; 
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	return convertToStdString(this->PWMLEDSelect.currentText()) + ".value = " + std::to_string(value) + "\n";
 }
