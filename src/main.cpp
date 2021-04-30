@@ -45,6 +45,21 @@ using json = nlohmann::json;
 #define MINOR_VERSION 0
 #define REVISION 6
 
+#define PSTART_ID 1
+#define LED_ID 2
+#define PWMLED_ID 3
+#define RGBLED_ID 4
+#define BUZ_ID 5
+#define FUNC_ID 6
+#define BTN_ID 7
+#define SLEEP_ID 8
+#define LEDCTRL_ID 9
+#define PWMLEDCTRL_ID 10
+#define RGBLEDCTRL_ID 11
+#define BUZCTRL_ID 12
+#define FCTRL_ID 13
+#define BTNCTRL_ID 14
+
 // Function Prototypes
 QString getVersionInfo();
 QString convertToQString(std::string in);
@@ -62,6 +77,7 @@ namespace Counters{
 	int BTNCTRLCount = 1;
 	int RGBLEDCount = 1;
 	int RGBLEDCTRLCount = 1;
+	int PWMLEDCount = 1;
 	void reset(){
 		BUZZERCount = 1;
 		LEDCount = 1;
@@ -74,6 +90,7 @@ namespace Counters{
 		BTNCTRLCount = 1;
 		RGBLEDCount = 1;
 		RGBLEDCTRLCount = 1;
+		PWMLEDCount = 1;
 	}
 }
 
@@ -443,18 +460,20 @@ DrawArea::DrawArea(MainWindow *parent) :
 	this->ParentMainWindow = parent;
 	// Insert Values for GPIOToolBar
 	this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
-	ButtonLabelMap.insert({1, "Program Start"});
-	ButtonLabelMap.insert({2, "Simple LED"});
-	ButtonLabelMap.insert({3, "RGB LED"});
-	ButtonLabelMap.insert({4, "Simple Buzzer"});
-	ButtonLabelMap.insert({5, "Custom Function"});
-	ButtonLabelMap.insert({6, "Simple Button"});
-	ButtonLabelMap.insert({7, "Sleep Timer"});
-	ButtonLabelMap.insert({8, "LED Controls"});
-	ButtonLabelMap.insert({9, "RGB LED Controls"});
-	ButtonLabelMap.insert({10, "Buzzer Controls"});
-	ButtonLabelMap.insert({11, "Function Controls"});
-	ButtonLabelMap.insert({12, "Button Controls"});
+	ButtonLabelMap.insert({PSTART_ID, "Program Start"});
+	ButtonLabelMap.insert({LED_ID, "Simple LED"});
+	ButtonLabelMap.insert({PWMLED_ID, "PWM LED"});
+	ButtonLabelMap.insert({RGBLED_ID, "RGB LED"});
+	ButtonLabelMap.insert({BUZ_ID, "Simple Buzzer"});
+	ButtonLabelMap.insert({FUNC_ID, "Custom Function"});
+	ButtonLabelMap.insert({BTN_ID, "Simple Button"});
+	ButtonLabelMap.insert({SLEEP_ID, "Sleep Timer"});
+	ButtonLabelMap.insert({LEDCTRL_ID, "LED Controls"});
+	ButtonLabelMap.insert({PWMLEDCTRL_ID, "PWM LED Controls"});
+	ButtonLabelMap.insert({RGBLEDCTRL_ID, "RGB LED Controls"});
+	ButtonLabelMap.insert({BUZCTRL_ID, "Buzzer Controls"});
+	ButtonLabelMap.insert({FCTRL_ID, "Function Controls"});
+	ButtonLabelMap.insert({BTNCTRL_ID, "Button Controls"});
 }
 
 void DrawArea::loadJson(){
@@ -509,62 +528,72 @@ void DrawArea::saveToJson(){
 void DrawArea::deleteLast(){
 	if (this->GPIOCodeVector.size() > 0){
 		GPIODevice* GPIOD = this->GPIOCodeVector.back();
-		if (GPIOD->id == 1){
+		if (GPIOD->id == PSTART_ID){
 			this->ParentMainWindow->warn("Deleting Program Start Block! Entire Project will be reset!");
 			this->ParentMainWindow->MainWindowClearButton.click();
 			this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
 		} else {
 			switch(GPIOD->id){
-				case 2:{
+				case LED_ID:{
 					Counters::LEDCount--;
 					this->LEDVec.pop_back();
 					break;
 				}
-				case 3:{
+				case PWMLED_ID:{
+					Counters::PWMLEDCount--;
+					this->PWMLEDVec.pop_back();
+					break;
+				}
+				case RGBLED_ID:{
 					Counters::RGBLEDCount--;
 					this->RGBLEDVec.pop_back();
 					break;
 				}
-				case 4:{
+				case BUZ_ID:{
 					Counters::BUZZERCount--;
 					this->BUZVec.pop_back();
 					break;
 				}
-				case 5:{
+				case FUNC_ID:{
 					Counters::FUNCTIONCount--;
 					this->FUNCVec.pop_back();
 					break;
 				}
-				case 6:{
+				case BTN_ID:{
 					Counters::BUTTONCount--;
 					this->BTNVec.pop_back();
 					break;
 				}
-				case 7:{
+				case SLEEP_ID:{
 					Counters::SLEEPCount--;
 					break;
 				}
-				case 8:{
+				case LEDCTRL_ID:{
 					Counters::LEDCTRLCount--;
 					this->LEDCTRLVec.pop_back();
 					break;
 				}
-				case 9:{
+				case PWMLEDCTRL_ID:{
+					Counters::PWMLEDCount--;
+					this->PWMLEDVec.pop_back();
+					break;
+				}
+				case RGBLEDCTRL_ID:{
 					Counters::RGBLEDCTRLCount--;
 					this->RGBLEDCTRLVec.pop_back();
 					break;
 				}
-				case 10:{
+				case BUZCTRL_ID:{
 					Counters::BUZZERCTRLCount--;
 					this->BUZCTRLVec.pop_back();
 					break;
 				}
-				case 11:{
+				case FCTRL_ID:{
 					Counters::FUNCTRLCount--;
 					this->FUNCTRLVec.pop_back();
 					break;
 				}
-				case 12:{
+				case BTNCTRL_ID:{
 					Counters::BTNCTRLCount--;
 					this->BTNCTRLVec.pop_back();
 					break;
@@ -587,7 +616,7 @@ void DrawArea::deleteLast(){
 
 bool DrawArea::checkForPStart(){
 	for (GPIODevice* GPIOD : this->GPIOCodeVector){
-		if (GPIOD->id == 1){
+		if (GPIOD->id == PSTART_ID){
 			return true; // ProgramStart exists, somewhere in the area
 		}
 	}
@@ -615,7 +644,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 	// Horrible fix, no other option. :-(
 	this->activeGPIO = active;
 	switch(this->activeGPIO){
-		case 1:{
+		case PSTART_ID:{
 			this->ParentMainWindow->log("New Program Start block created! Project will be reset.");
 			this->ParentMainWindow->MainWindowClearButton.click(); // Reset self, so that any programstart created will be at top of code
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
@@ -628,7 +657,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
 		}
-		case 2:{
+		case LED_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				LED* GPIOD = new LED(this, ParentMainWindow, X, Y, ("LED " + std::to_string(Counters::LEDCount)));
@@ -646,7 +675,25 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}
 		}
-		case 3:{
+		case PWMLED_ID:{
+			if (this->checkForPStart()){
+				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+				PWMLED* GPIOD = new PWMLED(this, ParentMainWindow, X, Y, ("PWM LED " + std::to_string(Counters::PWMLEDCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->show();
+				this->CurrentPoint = QPoint(X, Y + 50);
+				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->GPIOCodeVector.push_back(GPIOD);
+				this->PWMLEDVec.push_back(GPIOD);
+				break;
+			} else {
+				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
+				break;		
+			}
+		}
+		case RGBLED_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 				RGBLED* GPIOD = new RGBLED(this, ParentMainWindow, X, Y, ("RGB LED " + std::to_string(Counters::BTNCTRLCount)));
@@ -665,7 +712,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}
 		}
-		case 4:{
+		case BUZ_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Buzzer* GPIOD = new Buzzer(this, ParentMainWindow, X, Y, ("Buzzer " + std::to_string(Counters::BUZZERCount)));
@@ -683,7 +730,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}			
 		}
-		case 5:{
+		case FUNC_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Function* GPIOD = new Function(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTIONCount)));
@@ -701,7 +748,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}
 		}
-		case 6:{
+		case BTN_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Button* GPIOD = new Button(this, ParentMainWindow, X, Y, ("Button " + std::to_string(Counters::BUTTONCount)));
@@ -719,7 +766,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}
 		}
-		case 7:{
+		case SLEEP_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Sleep* GPIOD = new Sleep(this, ParentMainWindow, X, Y, ("Sleep Timer " + std::to_string(Counters::SLEEPCount)));
@@ -736,7 +783,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}
 		}		
-		case 8:{
+		case LEDCTRL_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				LEDCtrl* GPIOD = new LEDCtrl(this, ParentMainWindow, X, Y, ("LED Controls " + std::to_string(Counters::LEDCTRLCount)));
@@ -755,10 +802,13 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}
 		}
-		case 9:{
+		case PWMLEDCTRL_ID:{
+			break;
+		}
+		case RGBLEDCTRL_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
-				RGBLEDControls* GPIOD = new RGBLEDControls(this, ParentMainWindow, X, Y, ("RGB LED Controls " + std::to_string(Counters::RGBLEDCTRLCount)));
+				RGBLEDCtrl* GPIOD = new RGBLEDCtrl(this, ParentMainWindow, X, Y, ("RGB LED Controls " + std::to_string(Counters::RGBLEDCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -774,7 +824,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}
 		}
-		case 10:{
+		case BUZCTRL_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				BuzzerCtrl* GPIOD = new BuzzerCtrl(this, ParentMainWindow, X, Y, ("Buzzer Controls " + std::to_string(Counters::BUZZERCTRLCount)));
@@ -794,7 +844,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			}
 		}
 
-		case 11:{
+		case FCTRL_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				FunctionControl* GPIOD = new FunctionControl(this, ParentMainWindow, X, Y, ("Function Controls " + std::to_string(Counters::FUNCTRLCount)));
@@ -813,7 +863,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				break;		
 			}
 		}
-		case 12:{
+		case BTNCTRL_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 				ButtonControl* GPIOD = new ButtonControl(this, ParentMainWindow, X, Y, ("Button Controls " + std::to_string(Counters::BTNCTRLCount)));
@@ -936,7 +986,7 @@ void DrawArea::RefreshSelects(){
 		RGBLEDNames << RGB->VarnameEdit.text();
 	}
 
-	for (RGBLEDControls* RGBC : this->RGBLEDCTRLVec){
+	for (RGBLEDCtrl* RGBC : this->RGBLEDCTRLVec){
 		RGBC->RGBLEDSelect.clear();
 		RGBC->RGBLEDSelect.insertItems(0, RGBLEDNames);
 		RGBC->RGBLEDSelect.setMaxCount(RGBC->RGBLEDSelect.count());
@@ -1010,7 +1060,7 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 	DisplayLabel(convertToQString(name), this),
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
-		this->id = 2;
+		this->id = LED_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1070,6 +1120,74 @@ bool LED::validateInput(){
 	return true;
 }
 
+PWMLED::PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	PinSelect(this),
+	VarnameEdit(this),
+	DisplayLabel(convertToQString(name), this),
+	PinLabel("Pin : ", this),
+	NameLabel("Name : ", this){
+		this->id = PWMLED_ID;
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		// Based on Config::legacyMode, change number of pins available
+		if (Config::legacyMode == 0){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 1){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 2){
+			for (int i : {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		}
+		DisplayLabel.setFixedSize(180, 20);
+		PinLabel.setStyleSheet("border : 0px;");
+		this->PinSelect.setStyleSheet("background-color : #cceecc;");
+		NameLabel.setStyleSheet("border : 0px;");
+		VarnameEdit.setText("MyPWMLED" + convertToQString(std::to_string(Counters::PWMLEDCount)));
+		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&PinLabel, 1, 1);
+		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
+		this->SelfLayout.addWidget(&NameLabel, 2, 1);
+		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::PWMLEDCount++;
+}
+
+void PWMLED::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string PWMLED::remoteBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->VarnameEdit.text()) +
+		" = gpiozero.PWMLED(" + convertToStdString(this->PinSelect.currentText()) +
+		", pin_factory=__remote_pin_factory)\n";
+}
+
+std::string PWMLED::simpleBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->VarnameEdit.text()) +
+		" = gpiozero.PWMLED(" + convertToStdString(this->PinSelect.currentText()) + ")\n";
+}
+
+bool PWMLED::validateInput(){
+	if (this->PinSelect.currentText().isEmpty() || this->VarnameEdit.text().isEmpty()){
+		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
+		return false;
+	}
+	return true;
+}
+
 Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) : 
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
@@ -1079,7 +1197,7 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	PinLabel("Pin : ", this),
 	NameLabel("State : ", this)
 	{
-		this->id = 4;
+		this->id = BUZ_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1147,7 +1265,7 @@ LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, s
 	LEDLabel("LED : ", this),
 	StateLabel("Pin State : ", this)
 	{
-		this->id = 8;
+		this->id = LEDCTRL_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1197,7 +1315,7 @@ BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	BuzzerLabel("Buzzer : ", this),
 	StateLabel("Pin State : ", this)
 	{
-		this->id = 10;
+		this->id = BUZCTRL_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1244,7 +1362,7 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 	DurationEdit(this),
 	DisplayLabel(convertToQString(name), this),
 	DurationLabel("Duration : ", this){
-		this->id = 7;
+		this->id = SLEEP_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1290,7 +1408,7 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	DisplayLabel(convertToQString(name), this),
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
-		this->id = 6;
+		this->id = BTN_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1356,7 +1474,7 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 	NameEdit(this),
 	BodyLabel("Body : ", this),
 	BodyButton("Edit Function Body", this){
-		this->id = 5;
+		this->id = FUNC_ID;
 		QWidget* BodyWindow = new QWidget;
 		QTextEdit* FunctionBodyEdit = new QTextEdit(BodyWindow);
 		QPushButton* CBody = new QPushButton("Close Window", BodyWindow);
@@ -1437,7 +1555,7 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 	DisplayLabel(convertToQString(name), this),
 	ExecuteLabel("Select Function to execute : ", this)
 	{
-		this->id = 11;
+		this->id = FCTRL_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1484,7 +1602,7 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 	StateLabel("Select Button Trigger State : ", this),
 	ExecuteLabel("Select Function to execute : ", this)
 	{
-		this->id = 12;
+		this->id = BTNCTRL_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1545,7 +1663,7 @@ RGBLED::RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	GPinLabel("Green : ", this),
 	BPinLabel("Blue : ", this),
 	NameLabel("Name : ", this){
-		this->id = 3;
+		this->id = RGBLED_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1630,7 +1748,7 @@ bool RGBLED::validateInput(){
 	return true;
 }
 
-RGBLEDControls::RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+RGBLEDCtrl::RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
 	RPinSlider(Qt::Horizontal, this),
@@ -1645,7 +1763,7 @@ RGBLEDControls::RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, i
 	RValueEdit(this),
 	GValueEdit(this),
 	BValueEdit(this){
-		this->id = 9;
+		this->id = RGBLEDCTRL_ID;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1701,12 +1819,12 @@ RGBLEDControls::RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, i
 		Counters::RGBLEDCTRLCount++;
 	}
 
-void RGBLEDControls::deleteSelf(){
+void RGBLEDCtrl::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
 }
 
-std::string RGBLEDControls::remoteBuild(){
+std::string RGBLEDCtrl::remoteBuild(){
 	float red, blue, green;
 	red = (float) this->RPinSlider.value() / 255;
 	green = (float) this->GPinSlider.value() / 255;
@@ -1715,12 +1833,12 @@ std::string RGBLEDControls::remoteBuild(){
 	std::to_string(red) + ", " + std::to_string(green) + ", " + std::to_string(blue) + ")\n";
 }
 
-std::string RGBLEDControls::simpleBuild(){
+std::string RGBLEDCtrl::simpleBuild(){
 	return this->remoteBuild();
 	// Same thing, no need to copy.
 }
 
-bool RGBLEDControls::validateInput(){
+bool RGBLEDCtrl::validateInput(){
 	if (this->RGBLEDSelect.currentText().isEmpty()){
 		this->ParentMainWindow->err("No RGB LED selected for " + this->GPIOName);
 		return false;
@@ -1728,16 +1846,16 @@ bool RGBLEDControls::validateInput(){
 	return true;
 }
 
-void RGBLEDControls::RSliderValueUpdated(int value){
+void RGBLEDCtrl::RSliderValueUpdated(int value){
 	this->RValueEdit.setText(convertToQString(std::to_string(value)));
 }
-void RGBLEDControls::GSliderValueUpdated(int value){
+void RGBLEDCtrl::GSliderValueUpdated(int value){
 	this->GValueEdit.setText(convertToQString(std::to_string(value)));
 }
-void RGBLEDControls::BSliderValueUpdated(int value){
+void RGBLEDCtrl::BSliderValueUpdated(int value){
 	this->BValueEdit.setText(convertToQString(std::to_string(value)));
 }
-void RGBLEDControls::RTextValueUpdated(QString text){
+void RGBLEDCtrl::RTextValueUpdated(QString text){
 	int val = std::stoi(convertToStdString(text));
 	if (val >= 0 && val <= 256){
 		this->RPinSlider.setValue(val);
@@ -1745,7 +1863,7 @@ void RGBLEDControls::RTextValueUpdated(QString text){
 		this->ParentMainWindow->err("Invalid Red value provided for " + this->GPIOName);
 	}	
 }
-void RGBLEDControls::GTextValueUpdated(QString text){
+void RGBLEDCtrl::GTextValueUpdated(QString text){
 	int val = std::stoi(convertToStdString(text));
 	if (val >= 0 && val <= 256){
 		this->GPinSlider.setValue(val);
@@ -1753,7 +1871,7 @@ void RGBLEDControls::GTextValueUpdated(QString text){
 		this->ParentMainWindow->err("Invalid Green value provided for " + this->GPIOName);
 	}	
 }
-void RGBLEDControls::BTextValueUpdated(QString text){
+void RGBLEDCtrl::BTextValueUpdated(QString text){
 	int val = std::stoi(convertToStdString(text));
 	if (val >= 0 && val <= 256){
 		this->BPinSlider.setValue(val);
@@ -1915,7 +2033,7 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X
 	GPIODevice(parent, parentMainWindow, X,Y, name),
 	DisplayText(this),
 	SelfLayout(this){
-		this->id = 1;
+		this->id = PSTART_ID;
 		DisplayText.setText(convertToQString(name));
 		DisplayText.setFixedWidth(200);
 		this->ParentDrawArea = parent;

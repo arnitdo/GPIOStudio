@@ -35,21 +35,23 @@
 
 class MainWindow;
 class DrawArea;
-class GPIODevice;
-class Buzzer;
-class LED;
-class LEDCtrl;
-class BuzzerCtrl;
-class Sleep;
-class Button;
-class Function;
-class FunctionControl;
-class ButtonControl;
-class RGBLED;
-class RGBLEDControls;
 class GPIOButton;
 class GPIOToolBar;
+class GPIODevice;
 class ProgramStart;
+class LED;
+class PWMLED;
+class RGBLED;
+class Buzzer;
+class Button;
+class Sleep;
+class Function;
+class LEDCtrl;
+class PWMLEDCtrl;
+class RGBLEDCtrl;
+class BuzzerCtrl;
+class FunctionControl;
+class ButtonControl;
 
 /*  
   ____ ____ ___ ___ _____ ___   ___  _     ____    _    ____
@@ -96,6 +98,7 @@ class DrawArea: public QWidget{
 		std::vector<GPIODevice*> GPIOCodeVector;
 		std::vector<std::string> LOOPCodeVector;
 		std::vector<LED*> LEDVec;
+		std::vector<PWMLED*> PWMLEDVec;
 		std::vector<Buzzer*> BUZVec;
 		std::vector<LEDCtrl*> LEDCTRLVec;
 		std::vector<BuzzerCtrl*> BUZCTRLVec;
@@ -104,7 +107,7 @@ class DrawArea: public QWidget{
 		std::vector<FunctionControl*> FUNCTRLVec;
 		std::vector<ButtonControl*>BTNCTRLVec;
 		std::vector<RGBLED*> RGBLEDVec;
-		std::vector<RGBLEDControls*> RGBLEDCTRLVec;
+		std::vector<RGBLEDCtrl*> RGBLEDCTRLVec;
 		std::map<int, std::string> ButtonLabelMap;
 		std::stringstream LoopCode;
 		int activeGPIO;
@@ -208,6 +211,26 @@ class LED : public GPIODevice{
 		LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		std::string Color = "#00ffff";
+		QGridLayout SelfLayout;
+		QComboBox PinSelect;
+		QLineEdit VarnameEdit;
+		QLabel DisplayLabel;
+		QLabel PinLabel;
+		QLabel NameLabel;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class PWMLED : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		// Members
+		std::string Color = "#69b5e2";
 		QGridLayout SelfLayout;
 		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
@@ -407,14 +430,14 @@ class RGBLED : public GPIODevice{
 		virtual void deleteSelf();
 };
 
-class RGBLEDControls : public GPIODevice{
+class RGBLEDCtrl : public GPIODevice{
 	Q_OBJECT;
 	public:
 		// Functions
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
-		RGBLEDControls(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		std::string Color = "#9acd32";
 		QGridLayout SelfLayout;
