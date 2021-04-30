@@ -78,6 +78,7 @@ namespace Counters{
 	int RGBLEDCount = 1;
 	int RGBLEDCTRLCount = 1;
 	int PWMLEDCount = 1;
+	int PWMLEDCTRLCount = 1;
 	void reset(){
 		BUZZERCount = 1;
 		LEDCount = 1;
@@ -91,6 +92,7 @@ namespace Counters{
 		RGBLEDCount = 1;
 		RGBLEDCTRLCount = 1;
 		PWMLEDCount = 1;
+		PWMLEDCTRLCount = 1;
 	}
 }
 
@@ -574,8 +576,8 @@ void DrawArea::deleteLast(){
 					break;
 				}
 				case PWMLEDCTRL_ID:{
-					Counters::PWMLEDCount--;
-					this->PWMLEDVec.pop_back();
+					Counters::PWMLEDCTRLCount--;
+					this->PWMLEDCTRLVec.pop_back();
 					break;
 				}
 				case RGBLEDCTRL_ID:{
@@ -803,7 +805,23 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			}
 		}
 		case PWMLEDCTRL_ID:{
-			break;
+			if (this->checkForPStart()){
+				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+				PWMLEDCtrl* GPIOD = new PWMLEDCtrl(this, ParentMainWindow, X, Y, ("PWM LED Controls " + std::to_string(Counters::PWMLEDCTRLCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->show();
+				this->CurrentPoint = QPoint(X, Y + 50);
+				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->GPIOCodeVector.push_back(GPIOD);
+				this->PWMLEDCTRLVec.push_back(GPIOD);
+				this->RefreshSelects();
+				break;
+			} else {
+				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
+				break;		
+			}
 		}
 		case RGBLEDCTRL_ID:{
 			if (this->checkForPStart()){
@@ -926,11 +944,19 @@ void DrawArea::resetSelf(){
 	this->FUNCVec.clear();
 	this->BTNCTRLVec.clear();
 	this->RGBLEDVec.clear();
+	this->PWMLEDVec.clear();
+	this->PWMLEDCTRLVec.clear();
 	Counters::reset();
 }
 
 void DrawArea::RefreshSelects(){
-	QStringList LEDNames, BuzzerNames, FuncNames, FunctionNames, ButtonNames, RGBLEDNames;
+	QStringList LEDNames,
+		BuzzerNames,
+		FuncNames,
+		FunctionNames,
+		ButtonNames,
+		RGBLEDNames,
+		PWMLEDNames;
 	// LEDCtrl Refresh
 
 	for (LED* Led : this->LEDVec){
@@ -992,12 +1018,24 @@ void DrawArea::RefreshSelects(){
 		RGBC->RGBLEDSelect.setMaxCount(RGBC->RGBLEDSelect.count());
 	}
 
+	// PWMLED Refresh
+	for (PWMLED* PWM : this->PWMLEDVec){
+		PWMLEDNames << PWM->VarnameEdit.text();
+	}
+
+	for (PWMLEDCtrl* PWMC : this->PWMLEDCTRLVec){
+		PWMC->PWMLEDSelect.clear();
+		PWMC->PWMLEDSelect.insertItems(0, PWMLEDNames);
+		PWMC->PWMLEDSelect.setMaxCount(PWMC->PWMLEDSelect.count());
+	}
+
 	FunctionNames.clear();
 	FuncNames.clear();
 	ButtonNames.clear();
 	LEDNames.clear();
 	BuzzerNames.clear();
 	RGBLEDNames.clear();
+	PWMLEDNames.clear();
 }
 
 /* 
@@ -1149,10 +1187,10 @@ PWMLED::PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		}
 		DisplayLabel.setFixedSize(180, 20);
 		PinLabel.setStyleSheet("border : 0px;");
-		this->PinSelect.setStyleSheet("background-color : #cceecc;");
+		this->PinSelect.setStyleSheet("background-color : #4ae4f4;");
 		NameLabel.setStyleSheet("border : 0px;");
 		VarnameEdit.setText("MyPWMLED" + convertToQString(std::to_string(Counters::PWMLEDCount)));
-		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
+		this->VarnameEdit.setStyleSheet("background-color : #4ae4f4;");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&PinLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
@@ -1183,6 +1221,65 @@ std::string PWMLED::simpleBuild(){
 bool PWMLED::validateInput(){
 	if (this->PinSelect.currentText().isEmpty() || this->VarnameEdit.text().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
+		return false;
+	}
+	return true;
+}
+
+PWMLEDCtrl::PWMLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	PWMLEDSelect(this),
+	ValueEdit(this),
+	DisplayLabel(convertToQString(name), this),
+	PWMLEDLabel("PWMLED : ", this),
+	ValueLabel("Value : ", this)
+	{
+		this->id = PWMLEDCTRL_ID;
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		DisplayLabel.setFixedSize(180, 20);
+		PWMLEDLabel.setStyleSheet("border : 0px;");
+		ValueEdit.setMaxLength(3);
+		ValueEdit.setText("0");
+		PWMLEDSelect.setStyleSheet("background-color : #cceecc;");
+		ValueEdit.setStyleSheet("background-color : #cceecc;");
+		ValueLabel.setStyleSheet("border : 0px;");
+		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
+		this->SelfLayout.addWidget(&PWMLEDLabel, 1, 1);
+		this->SelfLayout.addWidget(&this->PWMLEDSelect, 1, 2);
+		this->SelfLayout.addWidget(&ValueLabel, 2, 1);
+		this->SelfLayout.addWidget(&this->ValueEdit, 2, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::PWMLEDCTRLCount++;
+	}
+
+void PWMLEDCtrl::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string PWMLEDCtrl::remoteBuild(){
+	float value = (float) (std::stoi(convertToStdString(this->ValueEdit.text())) / 100); 
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	return convertToStdString(this->PWMLEDSelect.currentText()) + ".value = " + std::to_string(value) + "\n";
+}
+
+std::string PWMLEDCtrl::simpleBuild(){
+	return this->remoteBuild();
+}
+
+bool PWMLEDCtrl::validateInput(){
+	int value = std::stoi(convertToStdString(this->ValueEdit.text()));
+	bool valueInLimits = (0 <= value && value <= 100) ? true : false; 
+	if (this->PWMLEDSelect.currentText().isEmpty()){
+		this->ParentMainWindow->err("No PWM LED Selected for " + this->GPIOName);
+		return false;
+	}
+	if (!valueInLimits){
+		this->ParentMainWindow->err("Invalid value provided for " + this->GPIOName);
 		return false;
 	}
 	return true;

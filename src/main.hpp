@@ -101,6 +101,7 @@ class DrawArea: public QWidget{
 		std::vector<PWMLED*> PWMLEDVec;
 		std::vector<Buzzer*> BUZVec;
 		std::vector<LEDCtrl*> LEDCTRLVec;
+		std::vector<PWMLEDCtrl*> PWMLEDCTRLVec;
 		std::vector<BuzzerCtrl*> BUZCTRLVec;
 		std::vector<Button*> BTNVec;
 		std::vector<Function*> FUNCVec;
@@ -277,6 +278,26 @@ class LEDCtrl : public GPIODevice{
 		QLabel DisplayLabel;
 		QLabel LEDLabel;
 		QLabel StateLabel;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class PWMLEDCtrl : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		PWMLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		// Members
+		std::string Color = "#abe587";
+		QGridLayout SelfLayout;
+		QComboBox PWMLEDSelect;
+		QLineEdit ValueEdit;
+		QLabel DisplayLabel;
+		QLabel PWMLEDLabel;
+		QLabel ValueLabel;
 	public slots:
 		virtual void deleteSelf();
 };
