@@ -44,6 +44,7 @@ class PWMLED;
 class RGBLED;
 class Buzzer;
 class Button;
+class DistanceSensor;
 class Sleep;
 class Function;
 class LEDCtrl;
@@ -96,7 +97,7 @@ class DrawArea: public QWidget{
 		MainWindow* ParentMainWindow;
 		std::vector<std::pair<QPoint, QPoint>> Lines;
 		std::vector<GPIODevice*> GPIOCodeVector;
-		std::vector<std::string> LOOPCodeVector;
+		std::vector<std::string> LoopCodeVector;
 		std::vector<LED*> LEDVec;
 		std::vector<PWMLED*> PWMLEDVec;
 		std::vector<Buzzer*> BUZVec;
@@ -110,7 +111,6 @@ class DrawArea: public QWidget{
 		std::vector<RGBLED*> RGBLEDVec;
 		std::vector<RGBLEDCtrl*> RGBLEDCTRLVec;
 		std::map<int, std::string> ButtonLabelMap;
-		std::stringstream LoopCode;
 		int activeGPIO;
 		bool isNew = true;
 		bool NWMode = false;
@@ -386,6 +386,29 @@ class Function : public GPIODevice{
 		virtual void deleteSelf();
 		
 };
+
+class DistanceSensor : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		// Members
+		std::string Color = "#bccc38";
+		QGridLayout SelfLayout;
+		QLabel DisplayLabel;
+		QLabel TrigPinLabel;
+		QLabel EchoPinLabel;
+		QComboBox TrigPinSelect;
+		QComboBox EchoPinSelect;
+		QLabel NameLabel;
+		QLineEdit VarnameEdit;
+	public slots:
+		virtual void deleteSelf();
+};
+
 
 class FunctionControl : public GPIODevice{
 	Q_OBJECT;

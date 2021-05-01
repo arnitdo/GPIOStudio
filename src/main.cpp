@@ -38,12 +38,14 @@ using json = nlohmann::json;
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <thread>
+#include <chrono>
 
 //end system imports
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
-#define REVISION 6
+#define REVISION -1
 
 #define PSTART_ID 1
 #define LED_ID 2
@@ -52,13 +54,14 @@ using json = nlohmann::json;
 #define BUZ_ID 5
 #define FUNC_ID 6
 #define BTN_ID 7
-#define SLEEP_ID 8
-#define LEDCTRL_ID 9
-#define PWMLEDCTRL_ID 10
-#define RGBLEDCTRL_ID 11
-#define BUZCTRL_ID 12
-#define FCTRL_ID 13
-#define BTNCTRL_ID 14
+#define DISTS_ID 8
+#define SLEEP_ID 9
+#define LEDCTRL_ID 10
+#define PWMLEDCTRL_ID 11
+#define RGBLEDCTRL_ID 12
+#define BUZCTRL_ID 13
+#define FCTRL_ID 14
+#define BTNCTRL_ID 15
 
 // Function Prototypes
 QString getVersionInfo();
@@ -72,6 +75,7 @@ namespace Counters{
 	int BUZZERCTRLCount = 1;
 	int SLEEPCount = 1;
 	int BUTTONCount = 1;
+	int DISTSCount = 1;
 	int FUNCTIONCount = 1;
 	int FUNCTRLCount = 1;
 	int BTNCTRLCount = 1;
@@ -86,6 +90,7 @@ namespace Counters{
 		BUZZERCTRLCount = 1;
 		SLEEPCount = 1;
 		BUTTONCount = 1;
+		DISTSCount = 1;
 		FUNCTIONCount = 1;
 		FUNCTRLCount = 1;
 		BTNCTRLCount = 1;
@@ -106,9 +111,9 @@ namespace Config{
 	Reference - https://elinux.org/RPi_Low-level_peripherals
 	legacy mode is defined by an integer - 
 	0 - Raspberry Pi Model A, B -  revision 1.0 (26 pin header)
-		[2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
+		[0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27]
 	1 - Raspberry Pi Model A, B - revision 2.0 (26 pin + 8 pin extra (4 GPIO Extra))
-		[0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31]
+		[2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31]
 	2 - Raspberry Pi Model 2, 2B+ .... (Full 40 Pins)
 		[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27]
 	 */
@@ -218,6 +223,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 
 	// Remote Window Setup
 	this->RemoteWindow.setFixedSize(320, 160);
+	this->RemoteWindow.setWindowTitle("Run Script Remotely");
 	QGridLayout* RWLayout = new QGridLayout(&RemoteWindow);
 	this->RemoteWindow.setLayout(RWLayout);
 	this->RaspiIPEdit.setFixedWidth(150);
@@ -469,6 +475,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({BUZ_ID, "Simple Buzzer"});
 	ButtonLabelMap.insert({FUNC_ID, "Custom Function"});
 	ButtonLabelMap.insert({BTN_ID, "Simple Button"});
+	ButtonLabelMap.insert({DISTS_ID, "Distance Sensor"});
 	ButtonLabelMap.insert({SLEEP_ID, "Sleep Timer"});
 	ButtonLabelMap.insert({LEDCTRL_ID, "LED Controls"});
 	ButtonLabelMap.insert({PWMLEDCTRL_ID, "PWM LED Controls"});
@@ -564,6 +571,11 @@ void DrawArea::deleteLast(){
 				case BTN_ID:{
 					Counters::BUTTONCount--;
 					this->BTNVec.pop_back();
+					break;
+				}
+				case DISTS_ID:{
+					Counters::DISTSCount--;
+					this->LoopCodeVector.pop_back();
 					break;
 				}
 				case SLEEP_ID:{
@@ -761,6 +773,23 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
 				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 				this->BTNVec.push_back(GPIOD);
+				this->GPIOCodeVector.push_back(GPIOD);
+				break;
+			} else {
+				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
+				break;		
+			}
+		}
+		case DISTS_ID:{
+			if (this->checkForPStart()){
+				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
+				DistanceSensor* GPIOD = new DistanceSensor(this, ParentMainWindow, X, Y, ("Distance Sensor " + std::to_string(Counters::DISTSCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->show();
+				this->CurrentPoint = QPoint(X, Y + 50);
+				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
 				this->GPIOCodeVector.push_back(GPIOD);
 				break;
 			} else {
@@ -1074,6 +1103,7 @@ void GPIODevice::paintEvent(QPaintEvent *)
 }
 
 GPIODevice::GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) : QWidget(parent){
+	this->ParentDrawArea = parent;
 	this->ParentMainWindow = parentMainWindow;
 	this->XCoord = X;
 	this->YCoord = Y;
@@ -1099,17 +1129,18 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
 		this->id = LED_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
 		// Based on Config::legacyMode, change number of pins available
 		if (Config::legacyMode == 0){
-			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 1){
-			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 2){
@@ -1167,17 +1198,18 @@ PWMLED::PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
 		this->id = PWMLED_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
 		// Based on Config::legacyMode, change number of pins available
 		if (Config::legacyMode == 0){
-			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 1){
-			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 2){
@@ -1236,6 +1268,7 @@ PWMLEDCtrl::PWMLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	ValueLabel("Value : ", this)
 	{
 		this->id = PWMLEDCTRL_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1295,16 +1328,17 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	NameLabel("State : ", this)
 	{
 		this->id = BUZ_ID;
-		this->ParentMainWindow = parentMainWindow;
+		this->ParentDrawArea = parent;
+	this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
 		if (Config::legacyMode == 0){
-			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 1){
-			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 2){
@@ -1363,6 +1397,7 @@ LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, s
 	StateLabel("Pin State : ", this)
 	{
 		this->id = LEDCTRL_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1413,6 +1448,7 @@ BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	StateLabel("Pin State : ", this)
 	{
 		this->id = BUZCTRL_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1460,6 +1496,7 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 	DisplayLabel(convertToQString(name), this),
 	DurationLabel("Duration : ", this){
 		this->id = SLEEP_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1506,16 +1543,17 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
 		this->id = BTN_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
 		if (Config::legacyMode == 0){
-			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 1){
-			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
 				PinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 2){
@@ -1563,6 +1601,93 @@ bool Button::validateInput(){
 	return true;
 }
 
+DistanceSensor::DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	DisplayLabel(convertToQString(name), this),
+	TrigPinLabel("Trigger Pin : ", this),
+	EchoPinLabel("Echo Pin : ", this),
+	TrigPinSelect(this),
+	EchoPinSelect(this),
+	NameLabel("Name : ", this),
+	VarnameEdit(this){
+		this->id = DISTS_ID;
+		this->ParentDrawArea = parent; 
+		this->ParentDrawArea = parent;
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		if (Config::legacyMode == 0){
+			for (int i : {4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+				TrigPinSelect.addItem(convertToQString(std::to_string(i)));
+				EchoPinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 1){
+			for (int i : {4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+				TrigPinSelect.addItem(convertToQString(std::to_string(i)));
+				EchoPinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 2){
+			for (int i : {4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27}){
+				TrigPinSelect.addItem(convertToQString(std::to_string(i)));
+				EchoPinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		}
+		TrigPinLabel.setStyleSheet("border : 0px;");
+		EchoPinLabel.setStyleSheet("border : 0px;");
+		NameLabel.setStyleSheet("border : 0px;");
+		TrigPinSelect.setStyleSheet("background-color : #cceecc;");
+		EchoPinSelect.setStyleSheet("background-color : #cceecc;");
+		VarnameEdit.setStyleSheet("background-color : #cceecc;");
+		VarnameEdit.setText("MyDistanceSensor" + convertToQString(std::to_string(Counters::DISTSCount)));
+		this->SelfLayout.addWidget(&DisplayLabel, 1, 1, 1, 2);
+		this->SelfLayout.addWidget(&EchoPinLabel, 2, 1);
+		this->SelfLayout.addWidget(&EchoPinSelect, 2, 2);
+		this->SelfLayout.addWidget(&TrigPinLabel, 3, 1);
+		this->SelfLayout.addWidget(&TrigPinSelect, 3, 2);
+		this->SelfLayout.addWidget(&NameLabel, 4, 1);
+		this->SelfLayout.addWidget(&VarnameEdit, 4, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::DISTSCount++;
+	}
+
+void DistanceSensor::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	Counters::DISTSCount--;
+	delete this;
+}
+
+std::string DistanceSensor::remoteBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string VNamePrint = "print(" + convertToStdString(this->VarnameEdit.text()) + ".distance)\n";
+	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);	
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.DistanceSensor(" + convertToStdString(this->EchoPinSelect.currentText()) +
+	", " + convertToStdString(this->TrigPinSelect.currentText()) + ", pin_factory=__remote_pin_factory)\n";
+}
+
+std::string DistanceSensor::simpleBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string VNamePrint = "print(" + convertToStdString(this->VarnameEdit.text()) + ".distance)\n";
+	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.DistanceSensor(" + convertToStdString(this->EchoPinSelect.currentText()) +
+	", " + convertToStdString(this->TrigPinSelect.currentText()) + ")\n";
+}
+
+bool DistanceSensor::validateInput(){
+	if (this->VarnameEdit.text().isEmpty()){
+		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
+		return false;
+	}
+	if (this->EchoPinSelect.currentText() == this->TrigPinSelect.currentText()){
+		this->ParentMainWindow->err("Duplicate Pins provided for " + this->GPIOName);
+		return false;
+	}
+	return true;
+}
+
 Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),
 	SelfLayout(this),
@@ -1584,6 +1709,7 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 		this->FunctionBodyWindow = BodyWindow;
 		this->FunctionBody = FunctionBodyEdit;
 		this->CloseBodyButton = CBody;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1653,6 +1779,7 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 	ExecuteLabel("Select Function to execute : ", this)
 	{
 		this->id = FCTRL_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1700,6 +1827,7 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 	ExecuteLabel("Select Function to execute : ", this)
 	{
 		this->id = BTNCTRL_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1761,19 +1889,20 @@ RGBLED::RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	BPinLabel("Blue : ", this),
 	NameLabel("Name : ", this){
 		this->id = RGBLED_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
 		// Based on Config::legacyMode, change number of pins available
 		if (Config::legacyMode == 0){
-			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
 				RPinSelect.addItem(convertToQString(std::to_string(i)));
 				GPinSelect.addItem(convertToQString(std::to_string(i)));
 				BPinSelect.addItem(convertToQString(std::to_string(i)));
 			}
 		} else if (Config::legacyMode == 1){
-			for (int i : {0, 1, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+			for (int i : {2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
 				RPinSelect.addItem(convertToQString(std::to_string(i)));
 				GPinSelect.addItem(convertToQString(std::to_string(i)));
 				BPinSelect.addItem(convertToQString(std::to_string(i)));
@@ -1861,6 +1990,7 @@ RGBLEDCtrl::RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	GValueEdit(this),
 	BValueEdit(this){
 		this->id = RGBLEDCTRL_ID;
+		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -2038,24 +2168,20 @@ void ProgramStart::TriggerRemoteBuild(){
 		this->ParentMainWindow->log("Program Validated Succesfully! No errors found!");
 		this->ParentMainWindow->log("Building Project, Config : Remote!");
 		// Main Code start
+		this->ParentDrawArea->LoopCodeVector.clear();
 		std::ofstream outfile ("script.py"); // Open File 
 		for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
 		{
 			outfile << GPD->remoteBuild(); // Write each GPIO Device's build to file
 		}
 		outfile << "\n";
-		this->ParentDrawArea->LoopCode.clear(); // Clear Loopcode
-		for (std::string lc : this->ParentDrawArea->LOOPCodeVector){
-			this->ParentDrawArea->LoopCode << lc; // Append to stringstream
-		}
 		// Main Code End
 		// Keepalive code start
-		std::string tempstr;
 		outfile << "print(\"The program will now run in 'keepalive' mode.\\nI.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\")\n";
 		outfile << "while True:\n";
 		outfile << "\ttry:\n";
-		while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
-			outfile << "\t\t" + tempstr;
+		for (std::string lcstring : this->ParentDrawArea->LoopCodeVector){
+			outfile << "\t\t" << lcstring;
 		}
 		outfile << "\t\ttime.sleep(" + std::to_string(Config::keepaliveSleepTime) + ")\n";
 		outfile << "\texcept KeyboardInterrupt:\n";
@@ -2080,24 +2206,20 @@ void ProgramStart::TriggerSimpleBuild(){
 		this->ParentMainWindow->log("Program Validated Succesfully! No errors found!");
 		this->ParentMainWindow->log("Building Project, Config : Local!");
 		// Main Code start
+		this->ParentDrawArea->LoopCodeVector.clear();
 		std::ofstream outfile ("script.py"); // Open File 
 		for (GPIODevice* GPD : this->ParentDrawArea->GPIOCodeVector)
 		{
 			outfile << GPD->simpleBuild(); // Write each GPIO Device's build to file
 		}
 		outfile << "\n";
-		this->ParentDrawArea->LoopCode.clear(); // Clear Loopcode
-		for (std::string lc : this->ParentDrawArea->LOOPCodeVector){
-			this->ParentDrawArea->LoopCode << lc; // Append to stringstream
-		}
 		// Main Code End
 		// Keepalive code start
-		std::string tempstr;
 		outfile << "print(\"The program will now run in 'keepalive' mode.\\nI.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\")\n";
 		outfile << "while True:\n";
 		outfile << "\ttry:\n";
-		while (std::getline(this->ParentDrawArea->LoopCode, tempstr)){
-			outfile << "\t\t" + tempstr;
+		for (std::string lcstring : this->ParentDrawArea->LoopCodeVector){
+			outfile << "\t\t" << lcstring;
 		}
 		outfile << "\t\ttime.sleep(" + std::to_string(Config::keepaliveSleepTime) + ")\n";
 		outfile << "\texcept KeyboardInterrupt:\n";
@@ -2134,7 +2256,8 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X
 		DisplayText.setText(convertToQString(name));
 		DisplayText.setFixedWidth(200);
 		this->ParentDrawArea = parent;
-		this->ParentMainWindow = parentMainWindow;
+		this->ParentDrawArea = parent;
+this->ParentMainWindow = parentMainWindow;
 		QObject::connect(&(this->ParentMainWindow->RemoteRunButton), SIGNAL (clicked()), this, SLOT (TriggerRemoteBuild()));
 		QObject::connect(this, SIGNAL (buildCompleted()), this->ParentMainWindow, SLOT (runRemote()));
 		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT (TriggerSimpleBuild()));
