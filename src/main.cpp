@@ -45,7 +45,7 @@ using json = nlohmann::json;
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
-#define REVISION -1
+#define REVISION 6
 
 #define PSTART_ID 1
 #define LED_ID 2
@@ -133,10 +133,16 @@ namespace Config{
 			// Load Config from JSON File
 			json JsonConfigData;
 			configFile >> JsonConfigData;
-			defaultPiIP = JsonConfigData["defaultPiIP"].get<std::string>();
-			defaultSleepTime = JsonConfigData["defaultSleepTime"].get<int64_t>();
-			keepaliveSleepTime = JsonConfigData["keepaliveSleepTime"].get<int64_t>();
-			legacyMode = JsonConfigData["legacyMode"].get<int64_t>();
+			try {
+				defaultPiIP = JsonConfigData.at("defaultPiIP").get<std::string>();
+				defaultSleepTime = JsonConfigData.at("defaultSleepTime").get<int64_t>();
+				keepaliveSleepTime = JsonConfigData.at("keepaliveSleepTime").get<int64_t>();
+				legacyMode = JsonConfigData.at("legacyMode").get<int64_t>();
+			} catch (json::out_of_range JSONExcept){
+				if (JSONExcept.id == 403){
+					MainWin->err("Unable to set configuration. config.json file is invalid");
+				}
+			}
 			MainWin->RaspiIPEdit.setText(convertToQString(defaultPiIP));
 			configFile.close();
 		}
@@ -498,9 +504,14 @@ void DrawArea::loadJson(){
 			// Version Matches, Proceed!
 			for (auto GPIOJSON : JSON["json"]){
 				int id, x, y;
-				id = GPIOJSON["id"].get<int64_t>();
-				x = GPIOJSON["x"].get<int64_t>(); 
-				y = GPIOJSON["y"].get<int64_t>(); 
+				try {
+					id = GPIOJSON.at("id").get<int64_t>();
+					x = GPIOJSON.at("x").get<int64_t>(); 
+					y = GPIOJSON.at("y").get<int64_t>(); 
+				} catch (json::out_of_range JSONExcept){
+					this->ParentMainWindow->log("Invalid file provided!Project will be reset!");
+					this->ParentMainWindow->MainWindowClearButton.click();
+				}
 				this->createGPIODevice(id, x, y);
 			}
 		} else {
@@ -1660,7 +1671,7 @@ void DistanceSensor::deleteSelf(){
 
 std::string DistanceSensor::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	std::string VNamePrint = "print(" + convertToStdString(this->VarnameEdit.text()) + ".distance)\n";
+	std::string VNamePrint = "print(\"Distance of " + convertToStdString(this->VarnameEdit.text()) + " in meters : \" + " + convertToStdString(this->VarnameEdit.text()) + ".distance)\n";
 	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);	
 	return convertToStdString(this->VarnameEdit.text()) +
 	" = gpiozero.DistanceSensor(" + convertToStdString(this->EchoPinSelect.currentText()) +
@@ -1669,7 +1680,7 @@ std::string DistanceSensor::remoteBuild(){
 
 std::string DistanceSensor::simpleBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	std::string VNamePrint = "print(" + convertToStdString(this->VarnameEdit.text()) + ".distance)\n";
+	std::string VNamePrint = "print(\"Distance of " + convertToStdString(this->VarnameEdit.text()) + " in meters : \" + " + convertToStdString(this->VarnameEdit.text()) + ".distance)\n";
 	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);
 	return convertToStdString(this->VarnameEdit.text()) +
 	" = gpiozero.DistanceSensor(" + convertToStdString(this->EchoPinSelect.currentText()) +
