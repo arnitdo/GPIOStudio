@@ -193,11 +193,11 @@ class GPIODevice : public QWidget{
 		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		int id;
+		QString backgroundcolor, foreground, textcolor;
 		DrawArea* ParentDrawArea;
 		MainWindow* ParentMainWindow;
 		int XCoord, YCoord;
 		std::string GPIOName;
-		std::string Color = "#ffff66";
 	public slots:
 		virtual void deleteSelf();
 };
@@ -211,7 +211,7 @@ class LED : public GPIODevice{
 		virtual bool validateInput();
 		LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
-		std::string Color = "#00ffff";
+		QString backgroundcolor = "#00ffff";
 		QGridLayout SelfLayout;
 		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
@@ -231,7 +231,7 @@ class PWMLED : public GPIODevice{
 		virtual bool validateInput();
 		PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
-		std::string Color = "#69b5e2";
+		QString backgroundcolor = "#69b5e2";
 		QGridLayout SelfLayout;
 		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
@@ -251,7 +251,7 @@ class Buzzer : public GPIODevice{
 		virtual bool validateInput();
 		Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
-		std::string Color = "#98fb98";
+		QString backgroundcolor = "#98fb98";
 		QGridLayout SelfLayout;
 		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
@@ -271,7 +271,7 @@ class LEDCtrl : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#FFB473";
+		QString backgroundcolor = "#FFB473";
 		QGridLayout SelfLayout;
 		QComboBox LEDSelect;
 		QComboBox StateSelect;
@@ -291,7 +291,7 @@ class PWMLEDCtrl : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#abe587";
+		QString backgroundcolor = "#abe587";
 		QGridLayout SelfLayout;
 		QComboBox PWMLEDSelect;
 		QLineEdit ValueEdit;
@@ -311,7 +311,7 @@ class BuzzerCtrl : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#CACDFF";
+		QString backgroundcolor = "#CACDFF";
 		QGridLayout SelfLayout;
 		QComboBox BuzzerSelect;
 		QComboBox StateSelect;
@@ -331,7 +331,7 @@ class Sleep : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#FEDF00";
+		QString backgroundcolor = "#FEDF00";
 		QGridLayout SelfLayout;
 		QLineEdit DurationEdit;
 		QLabel DisplayLabel;
@@ -349,7 +349,7 @@ class Button : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#AADF0A";
+		QString backgroundcolor = "#AADF0A";
 		QGridLayout SelfLayout;
 		QComboBox PinSelect;
 		QLineEdit VarnameEdit;
@@ -369,7 +369,7 @@ class Function : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#00cc99";
+		QString backgroundcolor = "#00cc99";
 		QWidget* FunctionBodyWindow;
 		QTextEdit* FunctionBody;
 		QPushButton* CloseBodyButton;
@@ -396,7 +396,7 @@ class DistanceSensor : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#bccc38";
+		QString backgroundcolor = "#bccc38";
 		QGridLayout SelfLayout;
 		QLabel DisplayLabel;
 		QLabel TrigPinLabel;
@@ -419,7 +419,7 @@ class FunctionControl : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#FEDBF8";
+		QString backgroundcolor = "#FEDBF8";
 		QGridLayout SelfLayout;
 		QComboBox FunctionSelect;
 		QLabel DisplayLabel;
@@ -437,7 +437,7 @@ class ButtonControl : public GPIODevice{
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
 		// Members
-		std::string Color = "#8DA3F3";
+		QString backgroundcolor = "#8DA3F3";
 		QGridLayout SelfLayout;
 		QComboBox ButtonSelect;
 		QComboBox StateSelect;
@@ -459,7 +459,7 @@ class RGBLED : public GPIODevice{
 		virtual bool validateInput();
 		RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
-		std::string Color = "#f7957a";
+		QString backgroundcolor = "#f7957a";
 		QGridLayout SelfLayout;
 		QComboBox RPinSelect;
 		QComboBox GPinSelect;
@@ -483,7 +483,7 @@ class RGBLEDCtrl : public GPIODevice{
 		virtual bool validateInput();
 		RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
-		std::string Color = "#9acd32";
+		QString backgroundcolor = "#9acd32";
 		QGridLayout SelfLayout;
 		QSlider RPinSlider;
 		QSlider GPinSlider;
@@ -529,7 +529,7 @@ class ProgramStart : public GPIODevice{
 		QGridLayout SelfLayout;
 		MainWindow* ParentMainWindow;
 		DrawArea* ParentDrawArea;
-		std::string Color = "#aaaaaa";
+		QString backgroundcolor = "#aaaaaa";
 	signals:
 		void buildCompleted();
 	public slots:

@@ -1,6 +1,83 @@
 {
 	"defaultPiIP" : "127.0.0.1",
 	"defaultSleepTime" : 5,
-	"keepaliveSleepTime" : 1,
-	"legacyMode" : 2
+	"keepaliveSleepTime" : 5,
+	"legacyMode" : 2,
+	"colors" : {
+		"LED" : {
+			"background" : "#00ffff",
+			"foreground" : "#cceecc",
+			"text" : "#000000"
+		},
+		"PWMLED" : {
+			"background" : "#69b5e2",
+			"foreground" : "#4ae4f4",
+			"text" : "#000000"
+		},
+		"Buzzer" : {
+			"background" : "#98fb98",
+			"foreground" : "#cceecc",
+			"text" : "#000000"
+		},
+		"LEDCtrl" : {
+			"background" : "#ffb473",
+			"foreground" : "#fffa73",
+			"text" : "#000000"
+		},
+		"PWMLEDCtrl" : {
+			"background" : "#abe587",
+			"foreground" : "#cceecc",
+			"text" : "#000000"
+		},
+		"BuzzerCtrl" : {
+			"background" : "#cacdff",
+			"foreground" : "#cae8ff",
+			"text" : "#000000"
+		},
+		"Sleep" : {
+			"background" : "#fedf00",
+			"foreground" : "#defe00",
+			"text" : "#000000"
+		},
+		"Button" : {
+			"background" : "#aadf0a",
+			"foreground" : "#cceecc",
+			"text" : "#000000"
+		},
+		"Function" : {
+			"background" : "#00cc99",
+			"foreground" : "#ccffd3",
+			"text" : "#000000"
+		},
+		"DistanceSensor" : {
+			"background" : "#bccc38",
+			"foreground" : "#cceecc",
+			"text" : "#000000"
+		},
+		"FunctionControl" : {
+			"background" : "#fedbf8",
+			"foreground" : "#fedbe7",
+			"text" : "#000000"
+		},
+		"ButtonControl" : {
+			"background" : "#8da3f3",
+			"foreground" : "#8dd6f3",
+			"text" : "#000000"
+		},
+		"RGBLED" : {
+			"background" : "#f7957a",
+			"foreground" : "#dbf779",
+			"text" : "#000000"
+		},
+		"RGBLEDCtrl" : {
+			"background" : "#9acd32",
+			"foreground" : "#dbf779",
+			"text" : "#000000"
+		},
+		"ProgramStart" : {
+			"background" : "#aaaaaa",
+			"foreground" : "",
+			"text" : "#000000"
+		}
+	}
 }

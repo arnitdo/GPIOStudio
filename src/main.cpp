@@ -102,10 +102,31 @@ namespace Counters{
 }
 
 namespace Config{
-	int defaultSleepTime = 5; // Default time in SleepTimer
-	int keepaliveSleepTime = 1; // Default time in keepalive
-	std::string defaultPiIP = ""; // Default pi IP in Remote
-	int legacyMode = 2;
+	int defaultSleepTime; // Default time in SleepTimer
+	int keepaliveSleepTime; // Default time in keepalive
+	std::string defaultPiIP; // Default pi IP in Remote
+	// Default Colors (Stored as JSON{
+	//	"background" : "backgroundcolor",
+	// 	"foreground" : "foregroundcolor",
+	// "text" : "textcolor"
+	// })
+	json LEDColor,
+		PWMLEDColor,
+		BuzzerColor,
+		LEDCtrlColor,
+		PWMLEDCtrlColor,
+		BuzzerCtrlColor,
+		SleepColor,
+		ButtonColor,
+		FunctionColor,
+		DistanceSensorColor,
+		FunctionCtrlColor,
+		ButtonCtrlColor,
+		RGBLEDColor,
+		RGBLEDCtrlColor,
+		ProgramStartColor;
+	// End Colors
+	int legacyMode;
 	/* 
 	LEGACY MODE DOC
 	Reference - https://elinux.org/RPi_Low-level_peripherals
@@ -117,17 +138,97 @@ namespace Config{
 	2 - Raspberry Pi Model 2, 2B+ .... (Full 40 Pins)
 		[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27]
 	 */
+	void resetConfig(){
+		defaultSleepTime = 5;
+		keepaliveSleepTime = 1; 
+		defaultPiIP = ""; 
+		LEDColor = {
+			{"background", "#00ffff"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		PWMLEDColor = {
+			{"background", "#69b5e2"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		BuzzerColor = {
+			{"background", "#98fb98"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		LEDCtrlColor = {
+			{"background", "#ffb473"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		PWMLEDCtrlColor = {
+			{"background", "#abe587"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		BuzzerCtrlColor = {
+			{"background", "#cacdff"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		SleepColor = {
+			{"background", "#fedf00"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		ButtonColor = {
+			{"background", "#aadf0a"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		} ,
+		FunctionColor = {
+			{"background", "#00cc99"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		DistanceSensorColor = {
+			{"background", "#bccc38"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		FunctionCtrlColor =  {
+			{"background", "#fedbf8"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		ButtonCtrlColor = {
+			{"background", "#8da3f3"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		RGBLEDColor = {
+			{"background", "#f7957a"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		RGBLEDCtrlColor = {
+			{"background", "#9acd32"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		},
+		ProgramStartColor = {
+			{"background", "#aaaaaa"},
+			{"foreground", ""},
+			{"text", "#000000"}
+		};
+	// End Colors
+	legacyMode = 2;		
+	}
 	void LoadConfig(MainWindow* MainWin){
+		resetConfig();
 		std::ifstream configFile;
 		configFile.open("config.json", std::ios::in);
 		if (!configFile.is_open()){
 			// Revert to defaults
 			MainWin->err("Error opening config.json file!");
 			MainWin->err("Falling back to default configuration");
-			defaultSleepTime = 5;
-			keepaliveSleepTime = 1;
-			defaultPiIP = "";
-			legacyMode = 2;
+			resetConfig();
 			configFile.close();
 		} else {
 			// Load Config from JSON File
@@ -138,9 +239,26 @@ namespace Config{
 				defaultSleepTime = JsonConfigData.at("defaultSleepTime").get<int64_t>();
 				keepaliveSleepTime = JsonConfigData.at("keepaliveSleepTime").get<int64_t>();
 				legacyMode = JsonConfigData.at("legacyMode").get<int64_t>();
-			} catch (json::out_of_range JSONExcept){
+				LEDColor = JsonConfigData.at("colors").at("LED");
+				PWMLEDColor = JsonConfigData.at("colors").at("PWMLED");
+				BuzzerColor = JsonConfigData.at("colors").at("Buzzer");
+				LEDCtrlColor = JsonConfigData.at("colors").at("LEDCtrl");
+				PWMLEDCtrlColor = JsonConfigData.at("colors").at("PWMLEDCtrl");
+				BuzzerCtrlColor = JsonConfigData.at("colors").at("BuzzerCtrl");
+				SleepColor = JsonConfigData.at("colors").at("Sleep");
+				ButtonColor = JsonConfigData.at("colors").at("Button");
+				FunctionColor = JsonConfigData.at("colors").at("Function");
+				DistanceSensorColor = JsonConfigData.at("colors").at("DistanceSensor");
+				FunctionCtrlColor = JsonConfigData.at("colors").at("FunctionControl");
+				ButtonCtrlColor = JsonConfigData.at("colors").at("ButtonControl");
+				RGBLEDColor = JsonConfigData.at("colors").at("RGBLED");
+				RGBLEDCtrlColor = JsonConfigData.at("colors").at("RGBLEDCtrl");
+				ProgramStartColor = JsonConfigData.at("colors").at("ProgramStart");
+			} catch (json::out_of_range& JSONExcept){
 				if (JSONExcept.id == 403){
 					MainWin->err("Unable to set configuration. config.json file is invalid");
+					MainWin->err("Falling back to default configuration");
+					resetConfig();
 				}
 			}
 			MainWin->RaspiIPEdit.setText(convertToQString(defaultPiIP));
@@ -507,12 +625,14 @@ void DrawArea::loadJson(){
 				try {
 					id = GPIOJSON.at("id").get<int64_t>();
 					x = GPIOJSON.at("x").get<int64_t>(); 
-					y = GPIOJSON.at("y").get<int64_t>(); 
-				} catch (json::out_of_range JSONExcept){
-					this->ParentMainWindow->log("Invalid file provided!Project will be reset!");
-					this->ParentMainWindow->MainWindowClearButton.click();
+					y = GPIOJSON.at("y").get<int64_t>();
+					this->createGPIODevice(id, x, y);
+				} catch (json::out_of_range& JSONExcept){
+					if (JSONExcept.id == 403){
+						this->ParentMainWindow->log("Invalid file provided!Project will be reset!");
+						this->ParentMainWindow->MainWindowClearButton.click();
+					}
 				}
-				this->createGPIODevice(id, x, y);
 			}
 		} else {
 			this->ParentMainWindow->err("Version Mismatch!");
@@ -586,7 +706,6 @@ void DrawArea::deleteLast(){
 				}
 				case DISTS_ID:{
 					Counters::DISTSCount--;
-					this->LoopCodeVector.pop_back();
 					break;
 				}
 				case SLEEP_ID:{
@@ -675,7 +794,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 			ProgramStart* GPIOD = new ProgramStart(this, ParentMainWindow, X, Y, ("Program Start"));
 			GPIOD->setGeometry(GPIOBoundBox);
-			GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+			GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 			GPIOD->show();
 			this->LastPoint = QPoint(X + 200, Y + 50);
 			this->Lines.push_back(std::make_pair(this->LastPoint, this->LastPoint));
@@ -687,7 +806,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				LED* GPIOD = new LED(this, ParentMainWindow, X, Y, ("LED " + std::to_string(Counters::LEDCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -705,7 +824,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				PWMLED* GPIOD = new PWMLED(this, ParentMainWindow, X, Y, ("PWM LED " + std::to_string(Counters::PWMLEDCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -723,7 +842,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 				RGBLED* GPIOD = new RGBLED(this, ParentMainWindow, X, Y, ("RGB LED " + std::to_string(Counters::BTNCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 100);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -742,7 +861,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Buzzer* GPIOD = new Buzzer(this, ParentMainWindow, X, Y, ("Buzzer " + std::to_string(Counters::BUZZERCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -760,7 +879,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Function* GPIOD = new Function(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTIONCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -778,7 +897,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Button* GPIOD = new Button(this, ParentMainWindow, X, Y, ("Button " + std::to_string(Counters::BUTTONCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -796,7 +915,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
 				DistanceSensor* GPIOD = new DistanceSensor(this, ParentMainWindow, X, Y, ("Distance Sensor " + std::to_string(Counters::DISTSCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -813,7 +932,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Sleep* GPIOD = new Sleep(this, ParentMainWindow, X, Y, ("Sleep Timer " + std::to_string(Counters::SLEEPCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -830,7 +949,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				LEDCtrl* GPIOD = new LEDCtrl(this, ParentMainWindow, X, Y, ("LED Controls " + std::to_string(Counters::LEDCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -849,7 +968,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				PWMLEDCtrl* GPIOD = new PWMLEDCtrl(this, ParentMainWindow, X, Y, ("PWM LED Controls " + std::to_string(Counters::PWMLEDCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -868,7 +987,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 				RGBLEDCtrl* GPIOD = new RGBLEDCtrl(this, ParentMainWindow, X, Y, ("RGB LED Controls " + std::to_string(Counters::RGBLEDCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 100);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -887,7 +1006,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				BuzzerCtrl* GPIOD = new BuzzerCtrl(this, ParentMainWindow, X, Y, ("Buzzer Controls " + std::to_string(Counters::BUZZERCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -907,7 +1026,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				FunctionControl* GPIOD = new FunctionControl(this, ParentMainWindow, X, Y, ("Function Controls " + std::to_string(Counters::FUNCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -926,7 +1045,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 				ButtonControl* GPIOD = new ButtonControl(this, ParentMainWindow, X, Y, ("Button Controls " + std::to_string(Counters::BTNCTRLCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
-				GPIOD->setStyleSheet("border : 1px solid black; background-color : " + convertToQString(GPIOD->Color) + "; background-image : url('static/blank.png');");
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
 				this->CurrentPoint = QPoint(X, Y + 100);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
@@ -1140,6 +1259,9 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
 		this->id = LED_ID;
+		this->backgroundcolor = convertToQString(Config::LEDColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::LEDColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::LEDColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1161,10 +1283,10 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 		}
 		DisplayLabel.setFixedSize(180, 20);
 		PinLabel.setStyleSheet("border : 0px;");
-		this->PinSelect.setStyleSheet("background-color : #cceecc;");
+		this->PinSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		NameLabel.setStyleSheet("border : 0px;");
 		VarnameEdit.setText("MyLED" + convertToQString(std::to_string(Counters::LEDCount)));
-		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
+		this->VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&PinLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
@@ -1209,6 +1331,9 @@ PWMLED::PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
 		this->id = PWMLED_ID;
+		this->backgroundcolor = convertToQString(Config::PWMLEDColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::PWMLEDColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::PWMLEDColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1230,10 +1355,10 @@ PWMLED::PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		}
 		DisplayLabel.setFixedSize(180, 20);
 		PinLabel.setStyleSheet("border : 0px;");
-		this->PinSelect.setStyleSheet("background-color : #4ae4f4;");
+		this->PinSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		NameLabel.setStyleSheet("border : 0px;");
 		VarnameEdit.setText("MyPWMLED" + convertToQString(std::to_string(Counters::PWMLEDCount)));
-		this->VarnameEdit.setStyleSheet("background-color : #4ae4f4;");
+		this->VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&PinLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
@@ -1279,6 +1404,9 @@ PWMLEDCtrl::PWMLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	ValueLabel("Value : ", this)
 	{
 		this->id = PWMLEDCTRL_ID;
+		this->backgroundcolor = convertToQString(Config::PWMLEDColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::PWMLEDColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::PWMLEDColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1288,8 +1416,8 @@ PWMLEDCtrl::PWMLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 		PWMLEDLabel.setStyleSheet("border : 0px;");
 		ValueEdit.setMaxLength(3);
 		ValueEdit.setText("0");
-		PWMLEDSelect.setStyleSheet("background-color : #cceecc;");
-		ValueEdit.setStyleSheet("background-color : #cceecc;");
+		PWMLEDSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		ValueEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		ValueLabel.setStyleSheet("border : 0px;");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&PWMLEDLabel, 1, 1);
@@ -1339,8 +1467,11 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	NameLabel("State : ", this)
 	{
 		this->id = BUZ_ID;
+		this->backgroundcolor = convertToQString(Config::BuzzerColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::BuzzerColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::BuzzerColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
-	this->ParentMainWindow = parentMainWindow;
+		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
 		this->GPIOName = name;
@@ -1359,10 +1490,10 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		}
 		DisplayLabel.setFixedSize(180, 20);
 		PinLabel.setStyleSheet("border : 0px;");
-		this->PinSelect.setStyleSheet("background-color : #cceecc;");
+		this->PinSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		NameLabel.setStyleSheet("border : 0px;");
 		VarnameEdit.setText("MyBuzzer" + convertToQString(std::to_string(Counters::BUZZERCount)));
-		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
+		this->VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&PinLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
@@ -1408,6 +1539,9 @@ LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, s
 	StateLabel("Pin State : ", this)
 	{
 		this->id = LEDCTRL_ID;
+		this->backgroundcolor = convertToQString(Config::LEDCtrlColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::LEDCtrlColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::LEDCtrlColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1415,6 +1549,8 @@ LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, s
 		this->GPIOName = name;
 		DisplayLabel.setFixedSize(180, 20);
 		LEDLabel.setStyleSheet("border : 0px;");
+		LEDSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		StateSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		StateSelect.addItem("on");
 		StateSelect.addItem("off");
 		StateLabel.setStyleSheet("border : 0px;");
@@ -1459,6 +1595,9 @@ BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	StateLabel("Pin State : ", this)
 	{
 		this->id = BUZCTRL_ID;
+		this->backgroundcolor = convertToQString(Config::BuzzerCtrlColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::BuzzerCtrlColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::BuzzerCtrlColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1466,6 +1605,8 @@ BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 		this->GPIOName = name;
 		DisplayLabel.setFixedSize(180, 20);
 		BuzzerLabel.setStyleSheet("border : 0px;");
+		BuzzerSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		StateSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		StateSelect.addItem("on");
 		StateSelect.addItem("off");
 		StateLabel.setStyleSheet("border : 0px;");
@@ -1507,6 +1648,9 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 	DisplayLabel(convertToQString(name), this),
 	DurationLabel("Duration : ", this){
 		this->id = SLEEP_ID;
+		this->backgroundcolor = convertToQString(Config::SleepColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::SleepColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::SleepColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1514,7 +1658,7 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 		this->GPIOName = name;
 		DisplayLabel.setFixedSize(180, 20);
 		DurationLabel.setStyleSheet("border : 0px;");
-		this->DurationEdit.setStyleSheet("background-color : #FFFFE0;");
+		this->DurationEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		this->DurationEdit.setText(convertToQString(std::to_string(Config::defaultSleepTime)));
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&DurationLabel, 1, 1);
@@ -1554,6 +1698,9 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	PinLabel("Pin : ", this),
 	NameLabel("Name : ", this){
 		this->id = BTN_ID;
+		this->backgroundcolor = convertToQString(Config::ButtonColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::ButtonColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::ButtonColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1574,10 +1721,10 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		}
 		DisplayLabel.setFixedSize(180, 20);
 		PinLabel.setStyleSheet("border : 0px;");
-		this->PinSelect.setStyleSheet("background-color : #cceecc;");
+		this->PinSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		NameLabel.setStyleSheet("border : 0px;");
 		VarnameEdit.setText("MyButton" + convertToQString(std::to_string(Counters::BUTTONCount)));
-		this->VarnameEdit.setStyleSheet("background-color : #cceecc;");
+		this->VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&PinLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
@@ -1623,6 +1770,9 @@ DistanceSensor::DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, i
 	NameLabel("Name : ", this),
 	VarnameEdit(this){
 		this->id = DISTS_ID;
+		this->backgroundcolor = convertToQString(Config::DistanceSensorColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::DistanceSensorColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::DistanceSensorColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent; 
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
@@ -1648,9 +1798,9 @@ DistanceSensor::DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, i
 		TrigPinLabel.setStyleSheet("border : 0px;");
 		EchoPinLabel.setStyleSheet("border : 0px;");
 		NameLabel.setStyleSheet("border : 0px;");
-		TrigPinSelect.setStyleSheet("background-color : #cceecc;");
-		EchoPinSelect.setStyleSheet("background-color : #cceecc;");
-		VarnameEdit.setStyleSheet("background-color : #cceecc;");
+		TrigPinSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		EchoPinSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		VarnameEdit.setText("MyDistanceSensor" + convertToQString(std::to_string(Counters::DISTSCount)));
 		this->SelfLayout.addWidget(&DisplayLabel, 1, 1, 1, 2);
 		this->SelfLayout.addWidget(&EchoPinLabel, 2, 1);
@@ -1665,7 +1815,6 @@ DistanceSensor::DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, i
 
 void DistanceSensor::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
-	Counters::DISTSCount--;
 	delete this;
 }
 
@@ -1708,10 +1857,12 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 	BodyLabel("Body : ", this),
 	BodyButton("Edit Function Body", this){
 		this->id = FUNC_ID;
+		this->backgroundcolor = convertToQString(Config::FunctionColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::FunctionColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::FunctionColor.at("text").get<std::string>());
 		QWidget* BodyWindow = new QWidget;
 		QTextEdit* FunctionBodyEdit = new QTextEdit(BodyWindow);
 		QPushButton* CBody = new QPushButton("Close Window", BodyWindow);
-		BodyWindow->setWindowFlags(Qt::WindowMaximizeButtonHint);
 		BodyWindow->setFixedSize(640, 480);
 		FunctionBodyEdit->setGeometry(50, 20, 540, 380);
 		CBody->setGeometry(270, 425, 100, 25);
@@ -1730,9 +1881,9 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 		BodyLabel.setStyleSheet("border : 0px;");
 		BodyLabel.setFixedHeight(20);
 		BodyButton.setFixedHeight(20);
-		NameEdit.setStyleSheet("background-color : #CCFFD3;");
+		NameEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		NameEdit.setText(convertToQString("MyFunction" + std::to_string(Counters::FUNCTIONCount)));
-		BodyButton.setStyleSheet("background-color : #CCFFD3;");
+		BodyButton.setStyleSheet("background-color : " + this->foreground + ";");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&NameLabel, 1, 1);
 		this->SelfLayout.addWidget(&NameEdit, 1, 2);
@@ -1790,6 +1941,9 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 	ExecuteLabel("Select Function to execute : ", this)
 	{
 		this->id = FCTRL_ID;
+		this->backgroundcolor = convertToQString(Config::FunctionCtrlColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::FunctionCtrlColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::FunctionCtrlColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1797,6 +1951,7 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 		this->GPIOName = name;
 		DisplayLabel.setFixedSize(180, 20);
 		ExecuteLabel.setStyleSheet("border : 0px;");
+		FunctionSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&ExecuteLabel, 1, 1, 1, 2);
 		this->SelfLayout.addWidget(&FunctionSelect, 2, 1, 1, 2);
@@ -1838,6 +1993,9 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 	ExecuteLabel("Select Function to execute : ", this)
 	{
 		this->id = BTNCTRL_ID;
+		this->backgroundcolor = convertToQString(Config::ButtonCtrlColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::ButtonCtrlColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::ButtonCtrlColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1847,6 +2005,9 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 		StateSelect.addItem("when_pressed");
 		StateSelect.addItem("when_released");
 		DisplayLabel.setFixedSize(180, 20);
+		StateSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		ButtonSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		FunctionSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		ButtonLabel.setStyleSheet("border : 0px;");
 		StateLabel.setStyleSheet("border : 0px;");
 		ExecuteLabel.setStyleSheet("border : 0px;");
@@ -1900,6 +2061,9 @@ RGBLED::RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 	BPinLabel("Blue : ", this),
 	NameLabel("Name : ", this){
 		this->id = RGBLED_ID;
+		this->backgroundcolor = convertToQString(Config::RGBLEDColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::RGBLEDColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::RGBLEDColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -1928,14 +2092,14 @@ RGBLED::RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		
 		DisplayLabel.setFixedSize(180, 20);
 		RPinLabel.setStyleSheet("border : 0px;");
-		this->RPinSelect.setStyleSheet("background-color : #F7D479;");
+		this->RPinSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		GPinLabel.setStyleSheet("border : 0px;");
-		this->GPinSelect.setStyleSheet("background-color : #F7D479;");
+		this->GPinSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		BPinLabel.setStyleSheet("border : 0px;");
-		this->BPinSelect.setStyleSheet("background-color : #F7D479;");
+		this->BPinSelect.setStyleSheet("background-color : " + this->foreground + ";");
 		NameLabel.setStyleSheet("border : 0px;");
 		VarnameEdit.setText("MyRGBLED" + convertToQString(std::to_string(Counters::RGBLEDCount)));
-		this->VarnameEdit.setStyleSheet("background-color : #F7D479;");
+		this->VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&RPinLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->RPinSelect, 1, 2);
@@ -2001,6 +2165,9 @@ RGBLEDCtrl::RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	GValueEdit(this),
 	BValueEdit(this){
 		this->id = RGBLEDCTRL_ID;
+		this->backgroundcolor = convertToQString(Config::RGBLEDCtrlColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::RGBLEDCtrlColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::RGBLEDCtrlColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
@@ -2014,9 +2181,9 @@ RGBLEDCtrl::RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 		RPinSlider.setStyleSheet("border : 0px; color : ");
 		GPinSlider.setStyleSheet("border : 0px;");
 		BPinSlider.setStyleSheet("border : 0px;");
-		RValueEdit.setStyleSheet("background-color : #cceecc;");
-		GValueEdit.setStyleSheet("background-color : #cceecc;");
-		BValueEdit.setStyleSheet("background-color : #cceecc;");
+		RValueEdit.setStyleSheet("background-color : " + this->foreground + ";");
+		GValueEdit.setStyleSheet("background-color : " + this->foreground + ";");
+		BValueEdit.setStyleSheet("background-color : " + this->foreground + ";");
 		RPinSlider.setFixedWidth(100);
 		RPinSlider.setMaximum(255);
 		RPinSlider.setMinimum(0);
