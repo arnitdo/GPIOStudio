@@ -110,6 +110,7 @@ namespace Config{
 	// 	"foreground" : "foregroundcolor",
 	// "text" : "textcolor"
 	// })
+	bool overrideVersionWarnings = false;
 	json LEDColor,
 		PWMLEDColor,
 		BuzzerColor,
@@ -239,6 +240,7 @@ namespace Config{
 				defaultSleepTime = JsonConfigData.at("defaultSleepTime").get<int64_t>();
 				keepaliveSleepTime = JsonConfigData.at("keepaliveSleepTime").get<int64_t>();
 				legacyMode = JsonConfigData.at("legacyMode").get<int64_t>();
+				overrideVersionWarnings = JsonConfigData.at("overrideVersionWarnings").get<bool>();
 				LEDColor = JsonConfigData.at("colors").at("LED");
 				PWMLEDColor = JsonConfigData.at("colors").at("PWMLED");
 				BuzzerColor = JsonConfigData.at("colors").at("Buzzer");
@@ -261,6 +263,7 @@ namespace Config{
 					resetConfig();
 				}
 			}
+			if (overrideVersionWarnings) MainWin->warn("Overriding version warnings. This may cause undefined behaviour!");
 			MainWin->RaspiIPEdit.setText(convertToQString(defaultPiIP));
 			configFile.close();
 		}
@@ -613,13 +616,14 @@ void DrawArea::loadJson(){
 	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.json)");
 	if (!fname.isEmpty()){
 		this->ParentMainWindow->log("Opening file " + convertToStdString(fname));
-		this->ParentMainWindow->MainWindowClearButton.click();
 		// Emulate button click, clears the entire board
 		std::ifstream JSONFileIn (convertToStdString(fname));
 		json JSON;
 		JSONFileIn >> JSON;
-		if (JSON["version"].get<std::string>() == convertToStdString(getVersionInfo())){
+		bool versionMatch = JSON["version"].get<std::string>() == convertToStdString(getVersionInfo());
+		if (versionMatch || Config::overrideVersionWarnings){
 			// Version Matches, Proceed!
+			this->ParentMainWindow->MainWindowClearButton.click();
 			for (auto GPIOJSON : JSON["json"]){
 				int id, x, y;
 				try {
