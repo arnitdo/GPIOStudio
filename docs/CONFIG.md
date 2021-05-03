@@ -4,7 +4,7 @@ It is highly recommended to not change any value, unless you know what you are d
 
 Do note, that the program will not function correctly if a `config.json` file is not provided
 
-There are currently 4 properties that can be set in the file 
+There are currently 5 properties that can be set in the file 
 
 - `defaultPiIP` - `string` - The default Raspberry Pi IP to target when running the script remotely
 
@@ -16,3 +16,11 @@ There are currently 4 properties that can be set in the file
 	* `0` - Raspberry Pi 1 Model A, Model B (Rev 1.0) `(26 Pin Header)`
 	* `1` - Raspberry Pi 1 Model A, Model B (Rev 2.0) `(26 Pin Header + 8 Pin Extra Header)`
 	* `2` - Raspberry Pi 2 + (All Models) `(40 Pin Header)`
+
+- `colors` - `json` - The colors setting is a collection of hexadecimal color codes for code blocks. Each type of block has 3 settings -
+	- `background` - The background color of the code block
+	- `foreground` - The background color of dropdowns, input fields, etc.
+	- `text` - The color of the text for the entire code block
+	
+	Feel free to change any colors, if you have difficulty reading text.
+ 
