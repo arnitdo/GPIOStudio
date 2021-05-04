@@ -1784,7 +1784,7 @@ void DistanceSensor::deleteSelf(){
 
 std::string DistanceSensor::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	std::string VNamePrint = "print(\"Distance of " + convertToStdString(this->VarnameEdit.text()) + " in meters : \" + " + convertToStdString(this->VarnameEdit.text()) + ".distance)\n";
+	std::string VNamePrint = "print(\"Distance recorded by " + convertToStdString(this->VarnameEdit.text()) + " in centimeters : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".distance * 100)))\n";
 	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);	
 	return convertToStdString(this->VarnameEdit.text()) +
 	" = gpiozero.DistanceSensor(" + convertToStdString(this->EchoPinSelect.currentText()) +
@@ -1793,7 +1793,7 @@ std::string DistanceSensor::remoteBuild(){
 
 std::string DistanceSensor::simpleBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	std::string VNamePrint = "print(\"Distance of " + convertToStdString(this->VarnameEdit.text()) + " in meters : \" + " + convertToStdString(this->VarnameEdit.text()) + ".distance)\n";
+	std::string VNamePrint = "print(\"Distance of " + convertToStdString(this->VarnameEdit.text()) + " in meters : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".distance * 100)))\n";
 	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);
 	return convertToStdString(this->VarnameEdit.text()) +
 	" = gpiozero.DistanceSensor(" + convertToStdString(this->EchoPinSelect.currentText()) +
