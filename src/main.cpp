@@ -3,46 +3,6 @@
 
 using json = nlohmann::json;
 
-//begin Qt imports
-
-#include <QWidget>
-#include <QString>
-#include <QImage>
-#include <QMenuBar>
-#include <QMenu>
-#include <QIcon>
-#include <QMouseEvent>
-#include <QApplication>
-#include <QMap>
-#include <QEvent>
-#include <QAction>
-#include <QObject>
-#include <QGridLayout>
-#include <QTextEdit>
-#include <QPainter>
-#include <QStyle>
-#include <QStyleOption>
-#include <QScrollArea>
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QFileDialog>
-#include <QTextBrowser>
-
-//end Qt imports
-//begin system imports
-
-#include <vector>
-#include <cstdlib>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <thread>
-#include <chrono>
-
-//end system imports
-
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
 #define REVISION 6
