@@ -24,6 +24,7 @@
 #include <QFileDialog>
 #include <QTextBrowser>
 #include <QSlider>
+#include <QCheckBox>
 
 #include <vector>
 #include <cstdlib>
@@ -424,6 +425,8 @@ class FunctionControl : public GPIODevice{
 		QComboBox FunctionSelect;
 		QLabel DisplayLabel;
 		QLabel ExecuteLabel;
+		QLabel LoopLabel;
+		QCheckBox LoopCheckBox;
 	public slots:
 		virtual void deleteSelf();
 };

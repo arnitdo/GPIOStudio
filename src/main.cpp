@@ -494,12 +494,14 @@ void MainWindow::runRemote(){
 			} else {
 				this->err("An error occured when running remote script!");
 			}
+			int _ = system("del .\\script.py");
 		#elif defined(__linux__)
 			if (!system("python3 script.py")){
 				this->log("Remote Success!");
 			} else {
 				this->err("An error occured when running remote script!");
 			}
+			int _ = system("rm ./script.py");
 		#else
 			// Fallback attempts.
 			this->log("Non Windows or Non Linux System Detected. Attempting to run python3");
@@ -516,6 +518,7 @@ void MainWindow::runRemote(){
 			} else {
 				this->log("python3 succeeded!");
 			}
+			int _ = system("del script.py || rm script.py");
 		#endif
 	} else {
 		this->err("No valid IP Address Provided for Remote Raspberry Pi!");
@@ -1906,7 +1909,9 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 	SelfLayout(this),
 	FunctionSelect(this),
 	DisplayLabel(convertToQString(name), this),
-	ExecuteLabel("Select Function to execute : ", this)
+	ExecuteLabel("Execute : ", this),
+	LoopLabel("Run in loop : ", this),
+	LoopCheckBox(this)
 	{
 		this->id = FCTRL_ID;
 		this->backgroundcolor = convertToQString(Config::FunctionCtrlColor.at("background").get<std::string>());
@@ -1919,10 +1924,14 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 		this->GPIOName = name;
 		DisplayLabel.setFixedSize(180, 20);
 		ExecuteLabel.setStyleSheet("border : 0px;");
+		LoopLabel.setStyleSheet("border : 0px;");
 		FunctionSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		LoopCheckBox.setStyleSheet("background-color : " + this->foreground + "; border : 0px;");
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
-		this->SelfLayout.addWidget(&ExecuteLabel, 1, 1, 1, 2);
-		this->SelfLayout.addWidget(&FunctionSelect, 2, 1, 1, 2);
+		this->SelfLayout.addWidget(&ExecuteLabel, 1, 1);
+		this->SelfLayout.addWidget(&FunctionSelect, 1, 2);
+		this->SelfLayout.addWidget(&LoopLabel, 2, 1);
+		this->SelfLayout.addWidget(&LoopCheckBox, 2, 2);
 		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
 		Counters::FUNCTRLCount++;
 	}
@@ -1934,7 +1943,11 @@ void FunctionControl::deleteSelf(){
 
 std::string FunctionControl::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	return convertToStdString(this->FunctionSelect.currentText()) + "()\n";
+	std::string TempBuild = convertToStdString(this->FunctionSelect.currentText()) + "()\n";
+	if (this->LoopCheckBox.isChecked()){
+		this->ParentDrawArea->LoopCodeVector.push_back(TempBuild);
+	}
+	return TempBuild;
 }
 
 std::string FunctionControl::simpleBuild(){
