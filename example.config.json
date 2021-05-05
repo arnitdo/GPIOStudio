@@ -3,7 +3,7 @@
 	"defaultSleepTime" : 5,
 	"keepaliveSleepTime" : 1,
 	"legacyMode" : 2,
-	"overrideVersionWarnings" : true,
+	"overrideVersionWarnings" : false,
 	"colors" : {
 		"LED" : {
 			"background" : "#00ffff",
