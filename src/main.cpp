@@ -285,6 +285,7 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowQuitButton(this),
 	MainWindowLayout(this)
 {
+	this->setWindowIcon(QIcon("static/icon.png"));
 	this->ParentApp = parentApplication;
 	// Base layout for MainWindow
 	MainWindowLayout.setSpacing(0);

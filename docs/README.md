@@ -43,6 +43,7 @@ static -
 
 * blank.png - [Wikimedia Uploads](https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Blank_button.svg/1124px-Blank_button.svg.png)
 * grid.png - [Mathpolate](https://mathpolate.com/grid-maker-tools/graph-paper-maker)
+* icon.png - [Fontspace](https://www.fontspace.com/zilap-geometrik-font-f22732)
 
 src/thirdparty - 
 * nlohmann/json - [GitHub - nlohmann/json](https://github.com/nlohmann/json/)
