@@ -286,6 +286,8 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowLayout(this)
 {
 	this->setWindowIcon(QIcon("static/icon.png"));
+	this->RemoteWindow.setWindowIcon(QIcon("static/icon.png"));
+	this->AboutWindow.setWindowIcon(QIcon("static/icon.png"));
 	this->ParentApp = parentApplication;
 	// Base layout for MainWindow
 	MainWindowLayout.setSpacing(0);
@@ -1826,6 +1828,7 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 		this->foreground = convertToQString(Config::FunctionColor.at("foreground").get<std::string>());
 		this->textcolor = convertToQString(Config::FunctionColor.at("text").get<std::string>());
 		QWidget* BodyWindow = new QWidget;
+		BodyWindow->setWindowIcon(QIcon("static/icon.png"));
 		QTextEdit* FunctionBodyEdit = new QTextEdit(BodyWindow);
 		QPushButton* CBody = new QPushButton("Close Window", BodyWindow);
 		BodyWindow->setFixedSize(640, 480);
