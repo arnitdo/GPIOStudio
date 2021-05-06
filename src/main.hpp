@@ -410,6 +410,25 @@ class DistanceSensor : public GPIODevice{
 		virtual void deleteSelf();
 };
 
+class LightSensor : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		LightSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		// Members
+		QString backgroundcolor = "#0073db";
+		QGridLayout SelfLayout;
+		QLabel DisplayLabel;
+		QLabel PinLabel;
+		QComboBox PinSelect;
+		QLabel NameLabel;
+		QLineEdit VarnameEdit;
+	public slots:
+		virtual void deleteSelf();
+};
 
 class FunctionControl : public GPIODevice{
 	Q_OBJECT;

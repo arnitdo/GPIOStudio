@@ -14,14 +14,17 @@ using json = nlohmann::json;
 #define BUZ_ID 5
 #define FUNC_ID 6
 #define BTN_ID 7
-#define DISTS_ID 8
-#define SLEEP_ID 9
-#define LEDCTRL_ID 10
-#define PWMLEDCTRL_ID 11
-#define RGBLEDCTRL_ID 12
-#define BUZCTRL_ID 13
-#define FCTRL_ID 14
-#define BTNCTRL_ID 15
+#define LINE_ID 8
+#define MOTION_ID 9
+#define LIGHTS_ID 10
+#define DISTS_ID 11
+#define SLEEP_ID 12
+#define LEDCTRL_ID 13
+#define PWMLEDCTRL_ID 14
+#define RGBLEDCTRL_ID 15
+#define BUZCTRL_ID 16
+#define FCTRL_ID 17
+#define BTNCTRL_ID 18
 
 // Function Prototypes
 QString getVersionInfo();
@@ -36,6 +39,7 @@ namespace Counters{
 	int SLEEPCount = 1;
 	int BUTTONCount = 1;
 	int DISTSCount = 1;
+	int LIGHTSCount = 1;
 	int FUNCTIONCount = 1;
 	int FUNCTRLCount = 1;
 	int BTNCTRLCount = 1;
@@ -51,6 +55,7 @@ namespace Counters{
 		SLEEPCount = 1;
 		BUTTONCount = 1;
 		DISTSCount = 1;
+		LIGHTSCount = 1;
 		FUNCTIONCount = 1;
 		FUNCTRLCount = 1;
 		BTNCTRLCount = 1;
@@ -81,6 +86,7 @@ namespace Config{
 		ButtonColor,
 		FunctionColor,
 		DistanceSensorColor,
+		LightSensorColor,
 		FunctionCtrlColor,
 		ButtonCtrlColor,
 		RGBLEDColor,
@@ -105,77 +111,82 @@ namespace Config{
 		defaultPiIP = ""; 
 		LEDColor = {
 			{"background", "#00ffff"},
-			{"foreground", ""},
+			{"foreground", "#cceecc"},
 			{"text", "#000000"}
 		},
 		PWMLEDColor = {
 			{"background", "#69b5e2"},
-			{"foreground", ""},
+			{"foreground", "#4ae4f4"},
 			{"text", "#000000"}
 		},
 		BuzzerColor = {
 			{"background", "#98fb98"},
-			{"foreground", ""},
+			{"foreground", "#cceecc"},
 			{"text", "#000000"}
 		},
 		LEDCtrlColor = {
 			{"background", "#ffb473"},
-			{"foreground", ""},
+			{"foreground", "#fffa73"},
 			{"text", "#000000"}
 		},
 		PWMLEDCtrlColor = {
 			{"background", "#abe587"},
-			{"foreground", ""},
+			{"foreground", "#cceecc"},
 			{"text", "#000000"}
 		},
 		BuzzerCtrlColor = {
 			{"background", "#cacdff"},
-			{"foreground", ""},
+			{"foreground", "#cae8ff"},
 			{"text", "#000000"}
 		},
 		SleepColor = {
 			{"background", "#fedf00"},
-			{"foreground", ""},
+			{"foreground", "#defe00"},
 			{"text", "#000000"}
 		},
 		ButtonColor = {
 			{"background", "#aadf0a"},
-			{"foreground", ""},
+			{"foreground", "#cceecc"},
 			{"text", "#000000"}
 		} ,
 		FunctionColor = {
 			{"background", "#00cc99"},
-			{"foreground", ""},
+			{"foreground", "#ccffd3"},
 			{"text", "#000000"}
 		},
 		DistanceSensorColor = {
 			{"background", "#bccc38"},
-			{"foreground", ""},
+			{"foreground", "#cceecc"},
+			{"text", "#000000"}
+		},
+		LightSensorColor = {
+			{"background", "#00cc99"},
+			{"foreground", "#00CC33"},
 			{"text", "#000000"}
 		},
 		FunctionCtrlColor =  {
 			{"background", "#fedbf8"},
-			{"foreground", ""},
+			{"foreground", "#fedbe7"},
 			{"text", "#000000"}
 		},
 		ButtonCtrlColor = {
 			{"background", "#8da3f3"},
-			{"foreground", ""},
+			{"foreground", "#8dd6f3"},
 			{"text", "#000000"}
 		},
 		RGBLEDColor = {
 			{"background", "#f7957a"},
-			{"foreground", ""},
+			{"foreground", "#dbf779"},
 			{"text", "#000000"}
 		},
 		RGBLEDCtrlColor = {
 			{"background", "#9acd32"},
-			{"foreground", ""},
+			{"foreground", "#dbf779"},
 			{"text", "#000000"}
 		},
 		ProgramStartColor = {
 			{"background", "#aaaaaa"},
-			{"foreground", ""},
+			{"foreground", "#aaaaaa"},
 			{"text", "#000000"}
 		};
 	// End Colors
@@ -486,7 +497,7 @@ void MainWindow::hideRemoteWindow(){
 }
 
 void MainWindow::runRemote(){
-	if (this->RaspiIPEdit.text() != ""){
+	if (!this->RaspiIPEdit.text().isEmpty()){
 		this->RemoteIP = convertToStdString(this->RaspiIPEdit.text());
 		#if defined(_WIN32)
 			if (!system("python.exe script.py")){
@@ -494,14 +505,12 @@ void MainWindow::runRemote(){
 			} else {
 				this->err("An error occured when running remote script!");
 			}
-			int _ = system("del .\\script.py");
 		#elif defined(__linux__)
 			if (!system("python3 script.py")){
 				this->log("Remote Success!");
 			} else {
 				this->err("An error occured when running remote script!");
 			}
-			int _ = system("rm ./script.py");
 		#else
 			// Fallback attempts.
 			this->log("Non Windows or Non Linux System Detected. Attempting to run python3");
@@ -518,7 +527,6 @@ void MainWindow::runRemote(){
 			} else {
 				this->log("python3 succeeded!");
 			}
-			int _ = system("del script.py || rm script.py");
 		#endif
 	} else {
 		this->err("No valid IP Address Provided for Remote Raspberry Pi!");
@@ -569,6 +577,9 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({FUNC_ID, "Custom Function"});
 	ButtonLabelMap.insert({BTN_ID, "Simple Button"});
 	ButtonLabelMap.insert({DISTS_ID, "Distance Sensor"});
+	ButtonLabelMap.insert({LIGHTS_ID, "Light Sensor"});
+	ButtonLabelMap.insert({MOTION_ID, "Motion Sensor"});
+	ButtonLabelMap.insert({LINE_ID, "Line Sensor"});
 	ButtonLabelMap.insert({SLEEP_ID, "Sleep Timer"});
 	ButtonLabelMap.insert({LEDCTRL_ID, "LED Controls"});
 	ButtonLabelMap.insert({PWMLEDCTRL_ID, "PWM LED Controls"});
@@ -676,6 +687,10 @@ void DrawArea::deleteLast(){
 				}
 				case DISTS_ID:{
 					Counters::DISTSCount--;
+					break;
+				}
+				case LIGHTS_ID:{
+					Counters::LIGHTSCount--;
 					break;
 				}
 				case SLEEP_ID:{
@@ -884,6 +899,23 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
 				DistanceSensor* GPIOD = new DistanceSensor(this, ParentMainWindow, X, Y, ("Distance Sensor " + std::to_string(Counters::DISTSCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
+				GPIOD->show();
+				this->CurrentPoint = QPoint(X, Y + 50);
+				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->GPIOCodeVector.push_back(GPIOD);
+				break;
+			} else {
+				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
+				break;		
+			}
+		}
+		case LIGHTS_ID:{
+			if (this->checkForPStart()){
+				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
+				LightSensor* GPIOD = new LightSensor(this, ParentMainWindow, X, Y, ("Light Sensor " + std::to_string(Counters::LIGHTSCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1744,7 +1776,6 @@ DistanceSensor::DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, i
 		this->foreground = convertToQString(Config::DistanceSensorColor.at("foreground").get<std::string>());
 		this->textcolor = convertToQString(Config::DistanceSensorColor.at("text").get<std::string>());
 		this->ParentDrawArea = parent; 
-		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
 		this->XCoord = X;
 		this->YCoord = Y;
@@ -1813,6 +1844,80 @@ bool DistanceSensor::validateInput(){
 	}
 	if (this->EchoPinSelect.currentText() == this->TrigPinSelect.currentText()){
 		this->ParentMainWindow->err("Duplicate Pins provided for " + this->GPIOName);
+		return false;
+	}
+	return true;
+}
+
+LightSensor::LightSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	DisplayLabel(convertToQString(name), this),
+	PinLabel("Pin : ", this),
+	PinSelect(this),
+	NameLabel("Name : ", this),
+	VarnameEdit(this){
+		this->id = LIGHTS_ID;
+		this->backgroundcolor = convertToQString(Config::LightSensorColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::LightSensorColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::LightSensorColor.at("text").get<std::string>());
+		this->ParentDrawArea = parent; 
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		if (Config::legacyMode == 0){
+			for (int i : {4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 1){
+			for (int i : {4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 2){
+			for (int i : {4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		}
+		PinLabel.setStyleSheet("border : 0px;");
+		NameLabel.setStyleSheet("border : 0px;");
+		DisplayLabel.setFixedHeight(20);
+		PinSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
+		VarnameEdit.setText("MyLightSensor" + convertToQString(std::to_string(Counters::LIGHTSCount)));
+		this->SelfLayout.addWidget(&DisplayLabel, 1, 1, 1, 2);
+		this->SelfLayout.addWidget(&PinLabel, 2, 1);
+		this->SelfLayout.addWidget(&PinSelect, 2, 2);
+		this->SelfLayout.addWidget(&NameLabel, 3, 1);
+		this->SelfLayout.addWidget(&VarnameEdit, 3, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::LIGHTSCount++;
+	}
+
+void LightSensor::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string LightSensor::remoteBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string VNamePrint = "print(\"Light Value recorded by " + convertToStdString(this->VarnameEdit.text()) + " : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".value * 100)) + \"%\")\n";
+	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);	
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.LightSensor(" + convertToStdString(this->PinSelect.currentText()) + ", pin_factory=__remote_pin_factory)\n";
+}
+
+std::string LightSensor::simpleBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string VNamePrint = "print(\"Light Value recorded by " + convertToStdString(this->VarnameEdit.text()) + " : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".value * 100)) + \"%\")\n";
+	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.LightSensor(" + convertToStdString(this->PinSelect.currentText()) + ")\n";
+}
+
+bool LightSensor::validateInput(){
+	if (this->VarnameEdit.text().isEmpty()){
+		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
 		return false;
 	}
 	return true;
