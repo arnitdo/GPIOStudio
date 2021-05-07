@@ -46,6 +46,9 @@ class RGBLED;
 class Buzzer;
 class Button;
 class DistanceSensor;
+class MotionSensor;
+class LineSensor;
+class LightSensor;
 class Sleep;
 class Function;
 class LEDCtrl;
@@ -420,6 +423,46 @@ class LightSensor : public GPIODevice{
 		virtual bool validateInput();
 		// Members
 		QString backgroundcolor = "#0073db";
+		QGridLayout SelfLayout;
+		QLabel DisplayLabel;
+		QLabel PinLabel;
+		QComboBox PinSelect;
+		QLabel NameLabel;
+		QLineEdit VarnameEdit;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class MotionSensor : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		MotionSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		// Members
+		QString backgroundcolor = "#a2d0d7";
+		QGridLayout SelfLayout;
+		QLabel DisplayLabel;
+		QLabel PinLabel;
+		QComboBox PinSelect;
+		QLabel NameLabel;
+		QLineEdit VarnameEdit;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class LineSensor : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		LineSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		// Members
+		QString backgroundcolor = "#98a20b";
 		QGridLayout SelfLayout;
 		QLabel DisplayLabel;
 		QLabel PinLabel;

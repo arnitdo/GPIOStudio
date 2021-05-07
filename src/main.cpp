@@ -14,7 +14,7 @@ using json = nlohmann::json;
 #define BUZ_ID 5
 #define FUNC_ID 6
 #define BTN_ID 7
-#define LINE_ID 8
+#define LINES_ID 8
 #define MOTION_ID 9
 #define LIGHTS_ID 10
 #define DISTS_ID 11
@@ -40,6 +40,8 @@ namespace Counters{
 	int BUTTONCount = 1;
 	int DISTSCount = 1;
 	int LIGHTSCount = 1;
+	int MOTIONCount = 1;
+	int LINESCount = 1;
 	int FUNCTIONCount = 1;
 	int FUNCTRLCount = 1;
 	int BTNCTRLCount = 1;
@@ -56,6 +58,8 @@ namespace Counters{
 		BUTTONCount = 1;
 		DISTSCount = 1;
 		LIGHTSCount = 1;
+		MOTIONCount = 1;
+		LINESCount = 1;
 		FUNCTIONCount = 1;
 		FUNCTRLCount = 1;
 		BTNCTRLCount = 1;
@@ -87,6 +91,8 @@ namespace Config{
 		FunctionColor,
 		DistanceSensorColor,
 		LightSensorColor,
+		MotionSensorColor,
+		LineSensorColor,
 		FunctionCtrlColor,
 		ButtonCtrlColor,
 		RGBLEDColor,
@@ -164,6 +170,16 @@ namespace Config{
 			{"foreground", "#00CC33"},
 			{"text", "#000000"}
 		},
+		MotionSensorColor = {
+			{"background" , "#a2d0d7"},
+			{"foreground" , "#a1d6c3"},
+			{"text", "#000000"}
+		},
+		LineSensorColor = {
+			{"background", "#98a20b"},
+			{"foreground", "#4da30b"},
+			{"text", "#000000"}
+		},
 		FunctionCtrlColor =  {
 			{"background", "#fedbf8"},
 			{"foreground", "#fedbe7"},
@@ -222,6 +238,9 @@ namespace Config{
 				ButtonColor = JsonConfigData.at("colors").at("Button");
 				FunctionColor = JsonConfigData.at("colors").at("Function");
 				DistanceSensorColor = JsonConfigData.at("colors").at("DistanceSensor");
+				LineSensorColor = JsonConfigData.at("colors").at("LineSensor");
+				MotionSensorColor = JsonConfigData.at("colors").at("MotionSensor");
+				LightSensorColor = JsonConfigData.at("colors").at("LightSensor");
 				FunctionCtrlColor = JsonConfigData.at("colors").at("FunctionControl");
 				ButtonCtrlColor = JsonConfigData.at("colors").at("ButtonControl");
 				RGBLEDColor = JsonConfigData.at("colors").at("RGBLED");
@@ -231,6 +250,7 @@ namespace Config{
 				if (JSONExcept.id == 403){
 					MainWin->err("Unable to set configuration. config.json file is invalid");
 					MainWin->err("Falling back to default configuration");
+					MainWin->debug(JSONExcept.what());
 					resetConfig();
 				}
 			}
@@ -579,7 +599,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({DISTS_ID, "Distance Sensor"});
 	ButtonLabelMap.insert({LIGHTS_ID, "Light Sensor"});
 	ButtonLabelMap.insert({MOTION_ID, "Motion Sensor"});
-	ButtonLabelMap.insert({LINE_ID, "Line Sensor"});
+	ButtonLabelMap.insert({LINES_ID, "Line Sensor"});
 	ButtonLabelMap.insert({SLEEP_ID, "Sleep Timer"});
 	ButtonLabelMap.insert({LEDCTRL_ID, "LED Controls"});
 	ButtonLabelMap.insert({PWMLEDCTRL_ID, "PWM LED Controls"});
@@ -691,6 +711,14 @@ void DrawArea::deleteLast(){
 				}
 				case LIGHTS_ID:{
 					Counters::LIGHTSCount--;
+					break;
+				}
+				case MOTION_ID:{
+					Counters::MOTIONCount--;
+					break;
+				}
+				case LINES_ID:{
+					Counters::LINESCount--;
 					break;
 				}
 				case SLEEP_ID:{
@@ -916,6 +944,40 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
 				LightSensor* GPIOD = new LightSensor(this, ParentMainWindow, X, Y, ("Light Sensor " + std::to_string(Counters::LIGHTSCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
+				GPIOD->show();
+				this->CurrentPoint = QPoint(X, Y + 50);
+				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->GPIOCodeVector.push_back(GPIOD);
+				break;
+			} else {
+				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
+				break;		
+			}
+		}
+		case MOTION_ID:{
+			if (this->checkForPStart()){
+				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
+				MotionSensor* GPIOD = new MotionSensor(this, ParentMainWindow, X, Y, ("Motion Sensor " + std::to_string(Counters::MOTIONCount)));
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
+				GPIOD->show();
+				this->CurrentPoint = QPoint(X, Y + 50);
+				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->GPIOCodeVector.push_back(GPIOD);
+				break;
+			} else {
+				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
+				break;		
+			}
+		}
+		case LINES_ID:{
+			if (this->checkForPStart()){
+				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
+				LineSensor* GPIOD = new LineSensor(this, ParentMainWindow, X, Y, ("Line Sensor " + std::to_string(Counters::LINESCount)));
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1830,7 +1892,7 @@ std::string DistanceSensor::remoteBuild(){
 
 std::string DistanceSensor::simpleBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
-	std::string VNamePrint = "print(\"Distance of " + convertToStdString(this->VarnameEdit.text()) + " in meters : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".distance * 100)))\n";
+	std::string VNamePrint = "print(\"Distance recorded by " + convertToStdString(this->VarnameEdit.text()) + " in centimeters : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".distance * 100)))\n";
 	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);
 	return convertToStdString(this->VarnameEdit.text()) +
 	" = gpiozero.DistanceSensor(" + convertToStdString(this->EchoPinSelect.currentText()) +
@@ -1916,6 +1978,154 @@ std::string LightSensor::simpleBuild(){
 }
 
 bool LightSensor::validateInput(){
+	if (this->VarnameEdit.text().isEmpty()){
+		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
+		return false;
+	}
+	return true;
+}
+
+MotionSensor::MotionSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	DisplayLabel(convertToQString(name), this),
+	PinLabel("Pin : ", this),
+	PinSelect(this),
+	NameLabel("Name : ", this),
+	VarnameEdit(this){
+		this->id = MOTION_ID;
+		this->backgroundcolor = convertToQString(Config::MotionSensorColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::MotionSensorColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::MotionSensorColor.at("text").get<std::string>());
+		this->ParentDrawArea = parent; 
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		if (Config::legacyMode == 0){
+			for (int i : {4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 1){
+			for (int i : {4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 2){
+			for (int i : {4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		}
+		PinLabel.setStyleSheet("border : 0px;");
+		NameLabel.setStyleSheet("border : 0px;");
+		DisplayLabel.setFixedHeight(20);
+		PinSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
+		VarnameEdit.setText("MyMotionSensor" + convertToQString(std::to_string(Counters::MOTIONCount)));
+		this->SelfLayout.addWidget(&DisplayLabel, 1, 1, 1, 2);
+		this->SelfLayout.addWidget(&PinLabel, 2, 1);
+		this->SelfLayout.addWidget(&PinSelect, 2, 2);
+		this->SelfLayout.addWidget(&NameLabel, 3, 1);
+		this->SelfLayout.addWidget(&VarnameEdit, 3, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::MOTIONCount++;
+	}
+
+void MotionSensor::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string MotionSensor::remoteBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string VNamePrint = "print(\"Motion Value recorded by " + convertToStdString(this->VarnameEdit.text()) + " : \" + str(" + convertToStdString(this->VarnameEdit.text()) + ".value))\n";
+	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);	
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.MotionSensor(" + convertToStdString(this->PinSelect.currentText()) + ", pin_factory=__remote_pin_factory)\n";
+}
+
+std::string MotionSensor::simpleBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string VNamePrint = "print(\"Motion Value recorded by " + convertToStdString(this->VarnameEdit.text()) + " : \" + str(" + convertToStdString(this->VarnameEdit.text()) + ".value))\n";
+	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.MotionSensor(" + convertToStdString(this->PinSelect.currentText()) + ")\n";
+}
+
+bool MotionSensor::validateInput(){
+	if (this->VarnameEdit.text().isEmpty()){
+		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
+		return false;
+	}
+	return true;
+}
+
+LineSensor::LineSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
+	GPIODevice(parent, parentMainWindow, X, Y, name),
+	SelfLayout(this),
+	DisplayLabel(convertToQString(name), this),
+	PinLabel("Pin : ", this),
+	PinSelect(this),
+	NameLabel("Name : ", this),
+	VarnameEdit(this){
+		this->id = LINES_ID;
+		this->backgroundcolor = convertToQString(Config::LineSensorColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::LineSensorColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::LineSensorColor.at("text").get<std::string>());
+		this->ParentDrawArea = parent; 
+		this->ParentMainWindow = parentMainWindow;
+		this->XCoord = X;
+		this->YCoord = Y;
+		this->GPIOName = name;
+		if (Config::legacyMode == 0){
+			for (int i : {4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 1){
+			for (int i : {4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 21, 22, 23, 24, 25, 28 ,29, 30, 31}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		} else if (Config::legacyMode == 2){
+			for (int i : {4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 , 21, 22, 23, 24, 25, 26, 27}){
+				PinSelect.addItem(convertToQString(std::to_string(i)));
+			}
+		}
+		PinLabel.setStyleSheet("border : 0px;");
+		NameLabel.setStyleSheet("border : 0px;");
+		DisplayLabel.setFixedHeight(20);
+		PinSelect.setStyleSheet("background-color : " + this->foreground + ";");
+		VarnameEdit.setStyleSheet("background-color : " + this->foreground + ";");
+		VarnameEdit.setText("MyLineSensor" + convertToQString(std::to_string(Counters::LINESCount)));
+		this->SelfLayout.addWidget(&DisplayLabel, 1, 1, 1, 2);
+		this->SelfLayout.addWidget(&PinLabel, 2, 1);
+		this->SelfLayout.addWidget(&PinSelect, 2, 2);
+		this->SelfLayout.addWidget(&NameLabel, 3, 1);
+		this->SelfLayout.addWidget(&VarnameEdit, 3, 2);
+		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		Counters::LINESCount++;
+	}
+
+void LineSensor::deleteSelf(){
+	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
+	delete this;
+}
+
+std::string LineSensor::remoteBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string VNamePrint = "print(\"Line Value recorded by " + convertToStdString(this->VarnameEdit.text()) + " : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".value * 100)) + \"%\")\n";
+	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);	
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.LineSensor(" + convertToStdString(this->PinSelect.currentText()) + ", pin_factory=__remote_pin_factory)\n";
+}
+
+std::string LineSensor::simpleBuild(){
+	this->ParentMainWindow->log("Now Building " + this->GPIOName);
+	std::string VNamePrint = "print(\"Line Value recorded by " + convertToStdString(this->VarnameEdit.text()) + " : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".value * 100)) + \"%\")\n";
+	this->ParentDrawArea->LoopCodeVector.push_back(VNamePrint);
+	return convertToStdString(this->VarnameEdit.text()) +
+	" = gpiozero.LineSensor(" + convertToStdString(this->PinSelect.currentText()) + ")\n";
+}
+
+bool LineSensor::validateInput(){
 	if (this->VarnameEdit.text().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
 		return false;
@@ -2521,7 +2731,7 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X
 		DisplayText.setFixedWidth(200);
 		this->ParentDrawArea = parent;
 		this->ParentDrawArea = parent;
-this->ParentMainWindow = parentMainWindow;
+		this->ParentMainWindow = parentMainWindow;
 		QObject::connect(&(this->ParentMainWindow->RemoteRunButton), SIGNAL (clicked()), this, SLOT (TriggerRemoteBuild()));
 		QObject::connect(this, SIGNAL (buildCompleted()), this->ParentMainWindow, SLOT (runRemote()));
 		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT (TriggerSimpleBuild()));

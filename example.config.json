@@ -55,6 +55,21 @@
 			"foreground" : "#cceecc",
 			"text" : "#000000"
 		},
+		"LightSensor" : {
+			"background" : "#00cc99",
+			"foreground" : "#00CC33",
+			"text" : "#000000"
+		},
+		"MotionSensor" : {
+			"background" : "#a2d0d7",
+			"foreground" : "#a1d6c3",
+			"text" : "#000000"
+		},
+		"LineSensor" : {
+			"background" : "#98a20b",
+			"foreground" : "#4da30b",
+			"text" : "#000000"
+		},
 		"FunctionControl" : {
 			"background" : "#fedbf8",
 			"foreground" : "#fedbe7",
