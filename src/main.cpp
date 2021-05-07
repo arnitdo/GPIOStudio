@@ -250,7 +250,6 @@ namespace Config{
 				if (JSONExcept.id == 403){
 					MainWin->err("Unable to set configuration. config.json file is invalid");
 					MainWin->err("Falling back to default configuration");
-					MainWin->debug(JSONExcept.what());
 					resetConfig();
 				}
 			}
