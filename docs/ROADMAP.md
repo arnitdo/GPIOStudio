@@ -22,7 +22,7 @@ v0.0.5
 
 v0.0.6
 
-- [ ] Advanced Input Devices (Line, Motion, )
+- [x] Advanced Input Devices (Line, Motion, )
 
 v0.0.7
 
