@@ -14,7 +14,7 @@ Developed in Qt 5.15.2 , C++11
 
 ----
 
-Distributed under the GNU GPLv3 License. See [LICENSE](https://github.com/arnitdo/GPIOStudio/blob/main/LICENSE)
+Distributed under the GNU GPLv3 License. See [LICENSE](https://github.com/arnitdo/GPIOStudio/blob/main/docs/LICENSE)
 
 ![GPLv3](https://user-images.githubusercontent.com/68515826/113308045-6609f880-9323-11eb-8167-0b76622031db.png)
 
