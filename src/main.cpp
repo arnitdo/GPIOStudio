@@ -504,7 +504,13 @@ void MainWindow::DeleteLast(){
 
 void MainWindow::resetDrawArea(){
 	// Clean Slate Draw Area
-	this->MainWindowDrawArea.resetSelf();
+	QMessageBox ResetMessageBox (this);
+	ResetMessageBox.setText("Clearing entire workbench!\nDo you want to proceed?");
+	ResetMessageBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+	ResetMessageBox.setIcon(QMessageBox::Question);
+	if (ResetMessageBox.exec() == QMessageBox::Yes){
+		this->MainWindowDrawArea.resetSelf();
+	}	
 }
 
 void MainWindow::showRemoteWindow(){
