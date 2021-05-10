@@ -758,9 +758,15 @@ void DrawArea::deleteLast(){
 			GPIOD->deleteSelf(); // Delete GPIOD
 			this->GPIOCodeVector.pop_back(); // Delete Reference to GPIOD
 			this->Lines.pop_back(); // Delete last line
+			int YOffset = 75; // Default Y offset for 200 * 100 blocks
+			// Increases for 200 * 200 blocks by 75 (Y = 150)
+			GPIODevice* LastGPIO = this->GPIOCodeVector.back();
+			if (LastGPIO->id == RGBLED_ID || LastGPIO->id == RGBLEDCTRL_ID || LastGPIO->id == BTNCTRL_ID){
+				YOffset += 75;
+			}
 			this->LastPoint = QPoint(
-				this->GPIOCodeVector.back()->x() + 200, /*Get last GPIODevice, get X coord, add 200 to X*/
-				this->GPIOCodeVector.back()->y() + 25 /*Get last GPIODevice, get Y coord, add 50 to Y*/
+				LastGPIO->x() + 200, /*Get last GPIODevice, get X coord, add 200 to X*/
+				LastGPIO->y() + YOffset /*Get last GPIODevice, get Y coord, add Offset to Y*/
 			); 
 				// Line will be redrawn on next paintEvent.
 			this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
@@ -801,16 +807,27 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 	this->activeGPIO = active;
 	switch(this->activeGPIO){
 		case PSTART_ID:{
-			this->ParentMainWindow->log("New Program Start block created! Project will be reset.");
-			this->ParentMainWindow->MainWindowClearButton.click(); // Reset self, so that any programstart created will be at top of code
-			QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
-			ProgramStart* GPIOD = new ProgramStart(this, ParentMainWindow, X, Y, ("Program Start"));
-			GPIOD->setGeometry(GPIOBoundBox);
-			GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
-			GPIOD->show();
-			this->LastPoint = QPoint(X + 200, Y + 25);
-			this->Lines.push_back(std::make_pair(this->LastPoint, this->LastPoint));
-			this->GPIOCodeVector.push_back(GPIOD);
+			QMessageBox NewPStartDialog (this->ParentMainWindow);
+			NewPStartDialog.setIcon(QMessageBox::Warning);
+			NewPStartDialog.setText("You are creating a new Program Start Block.\nAll previous blocks will be removed.\nDo you want to continue?");
+			NewPStartDialog.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+			switch(NewPStartDialog.exec()){
+				case QMessageBox::Yes:{
+					this->ParentMainWindow->MainWindowClearButton.click(); // Reset self, so that any programstart created will be at top of code
+					QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+					ProgramStart* GPIOD = new ProgramStart(this, ParentMainWindow, X, Y, ("Program Start"));
+					GPIOD->setGeometry(GPIOBoundBox);
+					GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
+					GPIOD->show();
+					this->LastPoint = QPoint(X + 200, Y + 25);
+					this->Lines.push_back(std::make_pair(this->LastPoint, this->LastPoint));
+					this->GPIOCodeVector.push_back(GPIOD);
+					break;
+				}
+				case QMessageBox::No:{
+					this->ParentMainWindow->log("Cancelled creation of Program Start Block");
+				}
+			}
 			break;
 		}
 		case LED_ID:{

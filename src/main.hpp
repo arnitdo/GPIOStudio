@@ -25,9 +25,9 @@
 #include <QTextBrowser>
 #include <QSlider>
 #include <QCheckBox>
+#include <QMessageBox>
 
 #include <vector>
-#include <cstdlib>
 #include <string>
 #include <iostream>
 #include <fstream>
