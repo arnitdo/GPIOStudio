@@ -760,7 +760,7 @@ void DrawArea::deleteLast(){
 			this->Lines.pop_back(); // Delete last line
 			this->LastPoint = QPoint(
 				this->GPIOCodeVector.back()->x() + 200, /*Get last GPIODevice, get X coord, add 200 to X*/
-				this->GPIOCodeVector.back()->y() + 50 /*Get last GPIODevice, get Y coord, add 50 to Y*/
+				this->GPIOCodeVector.back()->y() + 25 /*Get last GPIODevice, get Y coord, add 50 to Y*/
 			); 
 				// Line will be redrawn on next paintEvent.
 			this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
@@ -808,7 +808,7 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			GPIOD->setGeometry(GPIOBoundBox);
 			GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 			GPIOD->show();
-			this->LastPoint = QPoint(X + 200, Y + 50);
+			this->LastPoint = QPoint(X + 200, Y + 25);
 			this->Lines.push_back(std::make_pair(this->LastPoint, this->LastPoint));
 			this->GPIOCodeVector.push_back(GPIOD);
 			break;
@@ -820,9 +820,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->LEDVec.push_back(GPIOD);
 				break;
@@ -838,9 +838,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->PWMLEDVec.push_back(GPIOD);
 				break;
@@ -856,9 +856,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 100);
+				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 100);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->RGBLEDVec.push_back(GPIOD);
 				this->RefreshSelects();
@@ -875,9 +875,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->BUZVec.push_back(GPIOD);
 				break;
@@ -893,9 +893,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->FUNCVec.push_back(GPIOD);
 				this->GPIOCodeVector.push_back(GPIOD);
 				break;
@@ -911,9 +911,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->BTNVec.push_back(GPIOD);
 				this->GPIOCodeVector.push_back(GPIOD);
 				break;
@@ -929,9 +929,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				break;
 			} else {
@@ -946,9 +946,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				break;
 			} else {
@@ -963,9 +963,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				break;
 			} else {
@@ -980,9 +980,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				break;
 			} else {
@@ -997,9 +997,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				break;
 			} else {
@@ -1014,9 +1014,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->LEDCTRLVec.push_back(GPIOD);
 				this->RefreshSelects();
@@ -1033,9 +1033,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->PWMLEDCTRLVec.push_back(GPIOD);
 				this->RefreshSelects();
@@ -1052,9 +1052,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 100);
+				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->RGBLEDCTRLVec.push_back(GPIOD);
 				this->RefreshSelects();
@@ -1071,9 +1071,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->BUZCTRLVec.push_back(GPIOD);
 				this->RefreshSelects();
@@ -1091,9 +1091,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 50);
+				this->CurrentPoint = QPoint(X, Y + 25);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->FUNCTRLVec.push_back(GPIOD);
 				this->RefreshSelects();
@@ -1110,9 +1110,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
-				this->CurrentPoint = QPoint(X, Y + 100);
+				this->CurrentPoint = QPoint(X, Y + 50);
 				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
-				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y());
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 100);
 				this->GPIOCodeVector.push_back(GPIOD);
 				this->BTNCTRLVec.push_back(GPIOD);
 				this->RefreshSelects();
@@ -1139,7 +1139,20 @@ void DrawArea::paintEvent(QPaintEvent* event){
 	// For each std::pair of points, draw line from p1 to p2;
 	for (std::pair<QPoint, QPoint> PointPair : this->Lines){
 		p->setPen(QPen(Qt::black, 2));
-		p->drawLine(std::get<0>(PointPair), std::get<1>(PointPair));
+		QPoint Point1 = std::get<0>(PointPair),
+			   Point2 = std::get<1>(PointPair);
+		// Upper Mid Point
+		QPoint UMidPoint = QPoint(
+			(Point1.x() + ((Point2.x() - Point1.x()) / 2)),
+			Point1.y()
+		);
+		QPoint LMidPoint = QPoint(
+			(Point1.x() + ((Point2.x() - Point1.x()) / 2)),
+			Point2.y()
+		);
+		p->drawLine(Point1, UMidPoint);
+		p->drawLine(UMidPoint, LMidPoint);
+		p->drawLine(LMidPoint, Point2);
 	};
 	p->end();
 	event = event;
