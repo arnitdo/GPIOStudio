@@ -177,6 +177,8 @@ class MainWindow : public QWidget{
 		void ShowHelpWindow();
 		void ShowAboutWindow();
 		void QuitApp();
+	signals:
+		void deleteGPIO();
 };
 
 /* 

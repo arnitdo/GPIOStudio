@@ -510,6 +510,7 @@ void MainWindow::resetDrawArea(){
 	ResetMessageBox.setIcon(QMessageBox::Question);
 	if (ResetMessageBox.exec() == QMessageBox::Yes){
 		this->MainWindowDrawArea.resetSelf();
+		emit deleteGPIO();
 	}	
 }
 
@@ -819,7 +820,9 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			NewPStartDialog.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 			switch(NewPStartDialog.exec()){
 				case QMessageBox::Yes:{
-					this->ParentMainWindow->MainWindowClearButton.click(); // Reset self, so that any programstart created will be at top of code
+					emit this->ParentMainWindow->deleteGPIO();
+					this->resetSelf();
+					// Reset self, so that any programstart created will be at top of code
 					QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 					ProgramStart* GPIOD = new ProgramStart(this, ParentMainWindow, X, Y, ("Program Start"));
 					GPIOD->setGeometry(GPIOBoundBox);
@@ -1337,7 +1340,7 @@ GPIODevice::GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	this->XCoord = X;
 	this->YCoord = Y;
 	this->GPIOName = name;
-	QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+	QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 }
 
 void GPIODevice::deleteSelf(){
@@ -1391,7 +1394,7 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
 		this->SelfLayout.addWidget(&NameLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::LEDCount++;
 }
 
@@ -1463,7 +1466,7 @@ PWMLED::PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
 		this->SelfLayout.addWidget(&NameLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::PWMLEDCount++;
 }
 
@@ -1523,7 +1526,7 @@ PWMLEDCtrl::PWMLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 		this->SelfLayout.addWidget(&this->PWMLEDSelect, 1, 2);
 		this->SelfLayout.addWidget(&ValueLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->ValueEdit, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::PWMLEDCTRLCount++;
 	}
 
@@ -1658,7 +1661,7 @@ LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, s
 		this->SelfLayout.addWidget(&this->LEDSelect, 1, 2);
 		this->SelfLayout.addWidget(&StateLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->StateSelect, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::LEDCTRLCount++;
 	}
 
@@ -1714,7 +1717,7 @@ BuzzerCtrl::BuzzerCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 		this->SelfLayout.addWidget(&this->BuzzerSelect, 1, 2);
 		this->SelfLayout.addWidget(&StateLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->StateSelect, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::BUZZERCTRLCount++;
 	}
 
@@ -1762,7 +1765,7 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 		this->SelfLayout.addWidget(&DisplayLabel, 0, 1, 1, 2);
 		this->SelfLayout.addWidget(&DurationLabel, 1, 1);
 		this->SelfLayout.addWidget(&this->DurationEdit, 1, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::SLEEPCount++;
 }
 
@@ -1829,7 +1832,7 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		this->SelfLayout.addWidget(&this->PinSelect, 1, 2);
 		this->SelfLayout.addWidget(&NameLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::BUTTONCount++;
 }
 
@@ -1907,7 +1910,7 @@ DistanceSensor::DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, i
 		this->SelfLayout.addWidget(&TrigPinSelect, 3, 2);
 		this->SelfLayout.addWidget(&NameLabel, 4, 1);
 		this->SelfLayout.addWidget(&VarnameEdit, 4, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::DISTSCount++;
 	}
 
@@ -1987,7 +1990,7 @@ LightSensor::LightSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, 
 		this->SelfLayout.addWidget(&PinSelect, 2, 2);
 		this->SelfLayout.addWidget(&NameLabel, 3, 1);
 		this->SelfLayout.addWidget(&VarnameEdit, 3, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::LIGHTSCount++;
 	}
 
@@ -2061,7 +2064,7 @@ MotionSensor::MotionSensor(DrawArea* parent, MainWindow* parentMainWindow, int X
 		this->SelfLayout.addWidget(&PinSelect, 2, 2);
 		this->SelfLayout.addWidget(&NameLabel, 3, 1);
 		this->SelfLayout.addWidget(&VarnameEdit, 3, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::MOTIONCount++;
 	}
 
@@ -2135,7 +2138,7 @@ LineSensor::LineSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 		this->SelfLayout.addWidget(&PinSelect, 2, 2);
 		this->SelfLayout.addWidget(&NameLabel, 3, 1);
 		this->SelfLayout.addWidget(&VarnameEdit, 3, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::LINESCount++;
 	}
 
@@ -2210,7 +2213,7 @@ Function::Function(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 		this->SelfLayout.addWidget(&NameEdit, 1, 2);
 		this->SelfLayout.addWidget(&BodyLabel, 2, 1);
 		this->SelfLayout.addWidget(&BodyButton, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT(deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT(deleteSelf()));
 		QObject::connect(&BodyButton, SIGNAL (clicked()), this, SLOT (showBodyWindow()));
 		QObject::connect(CBody, SIGNAL (clicked()), this, SLOT (hideBodyWindow()));
 		Counters::FUNCTIONCount++;
@@ -2282,7 +2285,7 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 		this->SelfLayout.addWidget(&FunctionSelect, 1, 2);
 		this->SelfLayout.addWidget(&LoopLabel, 2, 1);
 		this->SelfLayout.addWidget(&LoopCheckBox, 2, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::FUNCTRLCount++;
 	}
 
@@ -2349,7 +2352,7 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 		this->SelfLayout.addWidget(&StateSelect, 4, 1, 1, 2);
 		this->SelfLayout.addWidget(&ExecuteLabel, 5, 1, 1, 2);
 		this->SelfLayout.addWidget(&FunctionSelect, 6, 1, 1, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::BTNCTRLCount++;
 	}
 
@@ -2440,7 +2443,7 @@ RGBLED::RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		this->SelfLayout.addWidget(&this->BPinSelect, 3, 2);
 		this->SelfLayout.addWidget(&NameLabel, 4, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 4, 2);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		Counters::RGBLEDCount++;
 }
 
@@ -2545,7 +2548,7 @@ RGBLEDCtrl::RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 		this->SelfLayout.addWidget(&BLabel, 9, 1, 1, 1);
 		this->SelfLayout.addWidget(&BPinSlider, 10, 1, 1, 1);
 		this->SelfLayout.addWidget(&BValueEdit, 10, 2, 1, 1);
-		QObject::connect(&ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT( deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 		QObject::connect(&this->RPinSlider, SIGNAL (valueChanged(int)), this, SLOT (RSliderValueUpdated(int)));
 		QObject::connect(&this->GPinSlider, SIGNAL (valueChanged(int)), this, SLOT (GSliderValueUpdated(int)));
 		QObject::connect(&this->BPinSlider, SIGNAL (valueChanged(int)), this, SLOT (BSliderValueUpdated(int)));
