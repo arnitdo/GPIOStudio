@@ -34,6 +34,9 @@
 #include <map>
 #include <sstream>
 
+#include "thirdparty/nlohmann/json.hpp"
+using json = nlohmann::json;
+
 class MainWindow;
 class DrawArea;
 class GPIOButton;
@@ -87,7 +90,7 @@ class DrawArea: public QWidget{
 		DrawArea(MainWindow* parent = nullptr);
 		virtual void mousePressEvent(QMouseEvent *event);
 		virtual void paintEvent(QPaintEvent* event);
-		void createGPIODevice(int active, int X, int Y);
+		void createGPIODevice(json& GPIOData);
 		void RefreshSelects();
 		void resetSelf();
 		void loadJson();
@@ -195,6 +198,7 @@ class GPIODevice : public QWidget{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		virtual void paintEvent(QPaintEvent* event);
 		GPIODevice(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
@@ -215,6 +219,7 @@ class LED : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QString backgroundcolor = "#00ffff";
@@ -235,6 +240,7 @@ class PWMLED : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QString backgroundcolor = "#69b5e2";
@@ -255,6 +261,7 @@ class Buzzer : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QString backgroundcolor = "#98fb98";
@@ -276,6 +283,7 @@ class LEDCtrl : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#FFB473";
 		QGridLayout SelfLayout;
@@ -296,6 +304,7 @@ class PWMLEDCtrl : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#abe587";
 		QGridLayout SelfLayout;
@@ -316,6 +325,7 @@ class BuzzerCtrl : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#CACDFF";
 		QGridLayout SelfLayout;
@@ -336,6 +346,7 @@ class Sleep : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#FEDF00";
 		QGridLayout SelfLayout;
@@ -354,6 +365,7 @@ class Button : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#AADF0A";
 		QGridLayout SelfLayout;
@@ -374,6 +386,7 @@ class Function : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#00cc99";
 		QWidget* FunctionBodyWindow;
@@ -401,6 +414,7 @@ class DistanceSensor : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#bccc38";
 		QGridLayout SelfLayout;
@@ -423,6 +437,7 @@ class LightSensor : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#0073db";
 		QGridLayout SelfLayout;
@@ -443,6 +458,7 @@ class MotionSensor : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#a2d0d7";
 		QGridLayout SelfLayout;
@@ -463,6 +479,7 @@ class LineSensor : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#98a20b";
 		QGridLayout SelfLayout;
@@ -483,6 +500,7 @@ class FunctionControl : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#FEDBF8";
 		QGridLayout SelfLayout;
@@ -503,6 +521,7 @@ class ButtonControl : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		// Members
 		QString backgroundcolor = "#8DA3F3";
 		QGridLayout SelfLayout;
@@ -524,6 +543,7 @@ class RGBLED : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QString backgroundcolor = "#f7957a";
@@ -548,6 +568,7 @@ class RGBLEDCtrl : public GPIODevice{
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
 		virtual bool validateInput();
+		virtual json toJson();
 		RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
 		QString backgroundcolor = "#9acd32";
@@ -588,7 +609,8 @@ class ProgramStart : public GPIODevice{
 		// Functions
 		virtual std::string simpleBuild();
 		virtual std::string remoteBuild();
-		virtual bool validateInput(); // Self validation, will always return true
+		virtual bool validateInput();
+		virtual json toJson(); // Self validation, will always return true
 		bool validateCode(); // Full code validation
 		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members

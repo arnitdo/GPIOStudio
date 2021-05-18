@@ -6,7 +6,8 @@
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/arnitdo/GPIOStudio?label=Latest%20Version&include_prerelease&sort=semver&style=for-the-badge)
 ![Uses Qt 5.15.2](https://img.shields.io/static/v1?label=USES&message=QT%205.15.2&color=brightgreen&style=for-the-badge)
 ![Uses C++11](https://img.shields.io/static/v1?label=USES&message=C%2B%2B11&color=brightgreen&style=for-the-badge)
-
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/arnitdo/GPIOStudio.svg?logo=lgtm&logoWidth=18&style=for-the-badge)](https://lgtm.com/projects/g/arnitdo/GPIOStudio/alerts/)
+[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/arnitdo/GPIOStudio.svg?logo=lgtm&logoWidth=18&style=for-the-badge)](https://lgtm.com/projects/g/arnitdo/GPIOStudio/context:cpp)
 # GPIO Studio
 A simple Flow-Based GUI Tool for creating GPIO Scripts on Raspberry Pi
 

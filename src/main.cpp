@@ -1,12 +1,10 @@
 #include "main.hpp"
-#include "thirdparty/nlohmann/json.hpp"
-
-using json = nlohmann::json;
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
 #define REVISION 6
 
+#define GPIOD_ID 0
 #define PSTART_ID 1
 #define LED_ID 2
 #define PWMLED_ID 3
@@ -617,33 +615,37 @@ DrawArea::DrawArea(MainWindow *parent) :
 
 void DrawArea::loadJson(){
 	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.json)");
-	if (!fname.isEmpty()){
+	if (!fname.isEmpty() && !fname.endsWith("config.json", Qt::CaseSensitive)){
 		this->ParentMainWindow->log("Opening file " + convertToStdString(fname));
-		// Emulate button click, clears the entire board
 		std::ifstream JSONFileIn (convertToStdString(fname));
 		json JSON;
 		JSONFileIn >> JSON;
 		bool versionMatch = JSON["version"].get<std::string>() == convertToStdString(getVersionInfo());
 		if (versionMatch || Config::overrideVersionWarnings){
 			// Version Matches, Proceed!
-			this->ParentMainWindow->MainWindowClearButton.click();
-			for (auto GPIOJSON : JSON["json"]){
-				int id, x, y;
+			// Emulate button click, clears the entire board
+			emit this->ParentMainWindow->deleteGPIO();
+			this->resetSelf();
+			for (json GPIOJSON : JSON["json"]){
 				try {
-					id = GPIOJSON.at("id").get<int64_t>();
-					x = GPIOJSON.at("x").get<int64_t>(); 
-					y = GPIOJSON.at("y").get<int64_t>();
-					this->createGPIODevice(id, x, y);
+					this->createGPIODevice(GPIOJSON);
 				} catch (json::out_of_range& JSONExcept){
 					if (JSONExcept.id == 403){
 						this->ParentMainWindow->log("Invalid file provided!Project will be reset!");
-						this->ParentMainWindow->MainWindowClearButton.click();
+						emit this->ParentMainWindow->deleteGPIO();
+						this->resetSelf();
 					}
 				}
 			}
 		} else {
 			this->ParentMainWindow->err("Version Mismatch!");
 			this->ParentMainWindow->err("The version of the file you have provided does not match the current version of GPIO Studio!");
+		}
+	} else {
+		if (fname.isEmpty()){
+			this->ParentMainWindow->log("No file selected for opening!");
+		} else if (fname.endsWith("config.json", Qt::CaseSensitive)){
+			this->ParentMainWindow->err("Config files cannot be opened!");
 		}
 	}
 };
@@ -658,11 +660,7 @@ void DrawArea::saveToJson(){
 		JsonWrite["version"] = convertToStdString(getVersionInfo());
 		json GPIOArray = json::array();
 		for (GPIODevice* GPIOD : this->GPIOCodeVector){
-			json GPIOJSON;
-			GPIOJSON["id"] = GPIOD->id;
-			GPIOJSON["x"] = GPIOD->XCoord;
-			GPIOJSON["y"] = GPIOD->YCoord;
-			GPIOArray.push_back(GPIOJSON);
+			GPIOArray.push_back(GPIOD->toJson());
 		}
 		JsonWrite["json"] = GPIOArray;
 		std::ofstream WriteFile;
@@ -677,7 +675,8 @@ void DrawArea::deleteLast(){
 		GPIODevice* GPIOD = this->GPIOCodeVector.back();
 		if (GPIOD->id == PSTART_ID){
 			this->ParentMainWindow->warn("Deleting Program Start Block! Entire Project will be reset!");
-			this->ParentMainWindow->MainWindowClearButton.click();
+			emit this->ParentMainWindow->deleteGPIO();
+			this->resetSelf();
 			this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
 		} else {
 			switch(GPIOD->id){
@@ -794,24 +793,32 @@ bool DrawArea::checkForPStart(){
 
 void DrawArea::mousePressEvent(QMouseEvent *event){
 	// Set of actions to do on mouse press
-	if (this->NWMode){
+	if (this->NWMode && event->button() == Qt::LeftButton){
 		// Check if New Widget Mode is active
 		// I.e if NWMode == false
 		// No click action
 		// Prevents unnecessary clicks and GPIO Constructions
-		this->createGPIODevice(this->activeGPIO, event->x(), event->y());
+		json ClickJSON;
+		ClickJSON["id"] = this->activeGPIO;
+		ClickJSON["x"] = event->x();
+		ClickJSON["y"] = event->y();
+		// Pack mouse event into JSON, and pass as reference, not copy
+		this->createGPIODevice(ClickJSON);
 		this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
 		this->NWMode = false;
 	}
 }
 
-void DrawArea::createGPIODevice(int active, int X, int Y){
+void DrawArea::createGPIODevice(json& GPIOData){
 	// Constructs a GPIO Device at the given coordinates
 	// This function has been specifically created to allow loading of GPIO Devices from a JSON File
 	// CSS Doc - Qt likes to inherit background images on its own, despite having 'background-image : none;' in css.
 	// Solution - GPIODevice gets a completely blank PNG file
 	// Horrible fix, no other option. :-(
-	this->activeGPIO = active;
+	int id = GPIOData.at("id").get<int64_t>();
+	int X = GPIOData.at("x").get<int64_t>();
+	int Y = GPIOData.at("y").get<int64_t>();
+	this->activeGPIO = id;
 	switch(this->activeGPIO){
 		case PSTART_ID:{
 			QMessageBox NewPStartDialog (this->ParentMainWindow);
@@ -843,6 +850,17 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				LED* GPIOD = new LED(this, ParentMainWindow, X, Y, ("LED " + std::to_string(Counters::LEDCount)));
+				if (GPIOData.contains("LEDPin")){
+					GPIOD->PinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("LEDPin").get<int64_t>()))
+					);
+				}
+				// Get LED Pin and LED Name property, if exists, and set text
+				if (GPIOData.contains("LEDName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("LEDName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -861,6 +879,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				PWMLED* GPIOD = new PWMLED(this, ParentMainWindow, X, Y, ("PWM LED " + std::to_string(Counters::PWMLEDCount)));
+				if (GPIOData.contains("PWMLEDPin")){
+					GPIOD->PinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("PWMLEDPin").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("PWMLEDName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("PWMLEDName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -878,7 +906,27 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 		case RGBLED_ID:{
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
-				RGBLED* GPIOD = new RGBLED(this, ParentMainWindow, X, Y, ("RGB LED " + std::to_string(Counters::BTNCTRLCount)));
+				RGBLED* GPIOD = new RGBLED(this, ParentMainWindow, X, Y, ("RGB LED " + std::to_string(Counters::RGBLEDCount)));
+				if (GPIOData.contains("RGBLEDPinR")){
+					GPIOD->RPinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("RGBLEDPinR").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("RGBLEDPinG")){
+					GPIOD->GPinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("RGBLEDPinG").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("RGBLEDPinB")){
+					GPIOD->BPinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("RGBLEDPinB").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("RGBLEDName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("RGBLEDName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -898,6 +946,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Buzzer* GPIOD = new Buzzer(this, ParentMainWindow, X, Y, ("Buzzer " + std::to_string(Counters::BUZZERCount)));
+				if (GPIOData.contains("buzzerPin")){
+					GPIOD->PinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("buzzerPin").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("buzzerName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("buzzerName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -916,6 +974,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Function* GPIOD = new Function(this, ParentMainWindow, X, Y, ("Function " + std::to_string(Counters::FUNCTIONCount)));
+				if (GPIOData.contains("functionName")){
+					GPIOD->NameEdit.setText(
+						convertToQString(GPIOData.at("functionName").get<std::string>())
+					);
+				}
+				if (GPIOData.contains("functionBody")){
+					GPIOD->FunctionBody->setText(
+						convertToQString(GPIOData.at("functionBody").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -934,6 +1002,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Button* GPIOD = new Button(this, ParentMainWindow, X, Y, ("Button " + std::to_string(Counters::BUTTONCount)));
+				if (GPIOData.contains("buttonPin")){
+					GPIOD->PinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("buttonPin").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("buttonName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("buttonName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -952,6 +1030,21 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
 				DistanceSensor* GPIOD = new DistanceSensor(this, ParentMainWindow, X, Y, ("Distance Sensor " + std::to_string(Counters::DISTSCount)));
+				if (GPIOData.contains("distanceEchoPin")){
+					GPIOD->EchoPinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("distanceEchoPin").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("distanceTrigPin")){
+					GPIOD->TrigPinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("distanceTrigPin").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("distanceName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("distanceName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -969,6 +1062,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
 				LightSensor* GPIOD = new LightSensor(this, ParentMainWindow, X, Y, ("Light Sensor " + std::to_string(Counters::LIGHTSCount)));
+				if (GPIOData.contains("lightPin")){
+					GPIOD->PinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("lightPin").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("lightName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("lightName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -986,6 +1089,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
 				MotionSensor* GPIOD = new MotionSensor(this, ParentMainWindow, X, Y, ("Motion Sensor " + std::to_string(Counters::MOTIONCount)));
+				if (GPIOData.contains("motionPin")){
+					GPIOD->PinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("motionPin").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("motionName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("motionName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1003,6 +1116,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 110));
 				LineSensor* GPIOD = new LineSensor(this, ParentMainWindow, X, Y, ("Line Sensor " + std::to_string(Counters::LINESCount)));
+				if (GPIOData.contains("linePin")){
+					GPIOD->PinSelect.setCurrentText(
+						convertToQString(std::to_string(GPIOData.at("linePin").get<int64_t>()))
+					);
+				}
+				if (GPIOData.contains("lineName")){
+					GPIOD->VarnameEdit.setText(
+						convertToQString(GPIOData.at("lineName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1020,6 +1143,11 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				Sleep* GPIOD = new Sleep(this, ParentMainWindow, X, Y, ("Sleep Timer " + std::to_string(Counters::SLEEPCount)));
+				if (GPIOData.contains("sleepTime")){
+					GPIOD->DurationEdit.setText(
+						convertToQString(std::to_string(GPIOData.at("sleepTime").get<int64_t>()))
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1037,6 +1165,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				LEDCtrl* GPIOD = new LEDCtrl(this, ParentMainWindow, X, Y, ("LED Controls " + std::to_string(Counters::LEDCTRLCount)));
+				if (GPIOData.contains("targetLEDName")){
+					GPIOD->LEDSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetLEDName").get<std::string>())
+					);
+				}
+				if (GPIOData.contains("targetLEDState")){
+					GPIOD->StateSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetLEDState").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1056,6 +1194,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				PWMLEDCtrl* GPIOD = new PWMLEDCtrl(this, ParentMainWindow, X, Y, ("PWM LED Controls " + std::to_string(Counters::PWMLEDCTRLCount)));
+				if (GPIOData.contains("targetPWMLEDName")){
+					GPIOD->PWMLEDSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetPWMLEDName").get<std::string>())
+					);
+				}
+				if (GPIOData.contains("targetPWMLEDvalue")){
+					GPIOD->ValueEdit.setText(
+						convertToQString(std::to_string(GPIOData.at("targetPWMLEDvalue").get<int64_t>()))
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1075,6 +1223,26 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 				RGBLEDCtrl* GPIOD = new RGBLEDCtrl(this, ParentMainWindow, X, Y, ("RGB LED Controls " + std::to_string(Counters::RGBLEDCTRLCount)));
+				if (GPIOData.contains("targetRGBLEDName")){
+					GPIOD->RGBLEDSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetRGBLEDName").get<std::string>())
+					);
+				}
+				if (GPIOData.contains("targetRGBLEDRed")){
+					GPIOD->RPinSlider.setValue(
+						GPIOData.at("targetRGBLEDRed").get<int64_t>()
+					);
+				}
+				if (GPIOData.contains("targetRGBLEDGreen")){
+					GPIOD->GPinSlider.setValue(
+						GPIOData.at("targetRGBLEDGreen").get<int64_t>()
+					);
+				}
+				if (GPIOData.contains("targetRGBLEDBlue")){
+					GPIOD->BPinSlider.setValue(
+						GPIOData.at("targetRGBLEDBlue").get<int64_t>()
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1094,6 +1262,16 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				BuzzerCtrl* GPIOD = new BuzzerCtrl(this, ParentMainWindow, X, Y, ("Buzzer Controls " + std::to_string(Counters::BUZZERCTRLCount)));
+				if (GPIOData.contains("targetBuzzerName")){
+					GPIOD->BuzzerSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetBuzzerName").get<std::string>())
+					);
+				}
+				if (GPIOData.contains("targetBuzzerState")){
+					GPIOD->StateSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetBuzzerState").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1114,6 +1292,17 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				FunctionControl* GPIOD = new FunctionControl(this, ParentMainWindow, X, Y, ("Function Controls " + std::to_string(Counters::FUNCTRLCount)));
+				if (GPIOData.contains("targetFunctionName")){
+					GPIOD->FunctionSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetFunctionName").get<std::string>())
+					);
+				}
+				if (GPIOData.contains("targetFunctionLoopState")){
+					GPIOD->LoopCheckBox.setCheckState(
+						GPIOData.at("targetFunctionLoopState").get<bool>() ? Qt::Checked : Qt::Unchecked
+						// Quick ternary operator
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1133,6 +1322,21 @@ void DrawArea::createGPIODevice(int active, int X, int Y){
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 				ButtonControl* GPIOD = new ButtonControl(this, ParentMainWindow, X, Y, ("Button Controls " + std::to_string(Counters::BTNCTRLCount)));
+				if (GPIOData.contains("targetButtonName")){
+					GPIOD->ButtonSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetButtonName").get<std::string>())
+					);
+				}
+				if (GPIOData.contains("targetButtonState")){
+					GPIOD->StateSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetButtonState").get<std::string>())
+					);
+				}
+				if (GPIOData.contains("targetFunctionName")){
+					GPIOD->FunctionSelect.setCurrentText(
+						convertToQString(GPIOData.at("targetFunctionName").get<std::string>())
+					);
+				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 				GPIOD->show();
@@ -1181,7 +1385,7 @@ void DrawArea::paintEvent(QPaintEvent* event){
 		p->drawLine(LMidPoint, Point2);
 	};
 	p->end();
-	event = event;
+	event->ignore();
 	delete p;
 	delete opt;
 }
@@ -1203,8 +1407,10 @@ void DrawArea::resetSelf(){
 	this->LEDCTRLVec.clear();
 	this->BUZCTRLVec.clear();
 	this->FUNCVec.clear();
+	this->FUNCTRLVec.clear();
 	this->BTNCTRLVec.clear();
 	this->RGBLEDVec.clear();
+	this->RGBLEDCTRLVec.clear();
 	this->PWMLEDVec.clear();
 	this->PWMLEDCTRLVec.clear();
 	Counters::reset();
@@ -1348,6 +1554,15 @@ void GPIODevice::deleteSelf(){
 	delete this;
 }
 
+json GPIODevice::toJson(){
+	json DataJSON;
+	DataJSON["id"] = GPIOD_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	return DataJSON;
+	// Default JSON return
+}
+
 std::string GPIODevice::remoteBuild(){return "";}
 std::string GPIODevice::simpleBuild(){return "";}
 bool GPIODevice::validateInput(){return false;}
@@ -1401,6 +1616,18 @@ LED::LED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::stri
 void LED::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json LED::toJson(){
+	json DataJSON;
+	DataJSON["id"] = LED_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["LEDPin"] = std::stoi(
+		convertToStdString(this->PinSelect.currentText())
+	);
+	DataJSON["LEDName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
 }
 
 std::string LED::remoteBuild(){
@@ -1475,6 +1702,18 @@ void PWMLED::deleteSelf(){
 	delete this;
 }
 
+json PWMLED::toJson(){
+	json DataJSON;
+	DataJSON["id"] = PWMLED_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["PWMLEDPin"] = std::stoi(
+		convertToStdString(this->PinSelect.currentText())
+	);
+	DataJSON["PWMLEDName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
+}
+
 std::string PWMLED::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	return convertToStdString(this->VarnameEdit.text()) +
@@ -1533,6 +1772,16 @@ PWMLEDCtrl::PWMLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 void PWMLEDCtrl::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json PWMLEDCtrl::toJson(){
+	json DataJSON;
+	DataJSON["id"] = PWMLEDCTRL_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["targetPWMLEDName"] = convertToStdString(this->PWMLEDSelect.currentText());
+	DataJSON["targetPWMLEDvalue"] = std::stoi(convertToStdString(this->ValueEdit.text()));
+	return DataJSON;
 }
 
 std::string PWMLEDCtrl::remoteBuild(){
@@ -1610,6 +1859,16 @@ void Buzzer::deleteSelf(){
 	delete this;
 }
 
+json Buzzer::toJson(){
+	json DataJSON;
+	DataJSON["id"] = BUZ_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["buzzerPin"] = std::stoi(convertToStdString(this->PinSelect.currentText()));
+	DataJSON["buzzerName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
+}
+
 std::string Buzzer::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	return convertToStdString(this->VarnameEdit.text()) +
@@ -1670,6 +1929,16 @@ void LEDCtrl::deleteSelf(){
 	delete this;
 }
 
+json LEDCtrl::toJson(){
+	json DataJSON;
+	DataJSON["id"] = LEDCTRL_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["targetLEDName"] = convertToStdString(this->LEDSelect.currentText());
+	DataJSON["targetLEDState"] = convertToStdString(this->StateSelect.currentText());
+	return DataJSON;
+}
+
 std::string LEDCtrl::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	return convertToStdString(this->LEDSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
@@ -1726,6 +1995,16 @@ void BuzzerCtrl::deleteSelf(){
 	delete this;
 }
 
+json BuzzerCtrl::toJson(){
+	json DataJSON;
+	DataJSON["id"] = BUZCTRL_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["targetBuzzerName"] = convertToStdString(this->BuzzerSelect.currentText());
+	DataJSON["targetBuzzerState"] = convertToStdString(this->StateSelect.currentText());
+	return DataJSON;
+}
+
 std::string BuzzerCtrl::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	return convertToStdString(this->BuzzerSelect.currentText()) + "." + convertToStdString(this->StateSelect.currentText()) + "()\n";
@@ -1772,6 +2051,15 @@ Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::
 void Sleep::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json Sleep::toJson(){
+	json DataJSON;
+	DataJSON["id"] = SLEEP_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["sleepTime"] = std::stoi(convertToStdString(this->DurationEdit.text()));
+	return DataJSON;
 }
 
 std::string Sleep::remoteBuild(){
@@ -1839,6 +2127,16 @@ Button::Button(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 void Button::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json Button::toJson(){
+	json DataJSON;
+	DataJSON["id"] = BTN_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["buttonPin"] = std::stoi(convertToStdString(this->PinSelect.currentText()));
+	DataJSON["buttonName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
 }
 
 std::string Button::remoteBuild(){
@@ -1917,6 +2215,17 @@ DistanceSensor::DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, i
 void DistanceSensor::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json DistanceSensor::toJson(){
+	json DataJSON;
+	DataJSON["id"] = DISTS_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["distanceEchoPin"] = std::stoi(convertToStdString(this->EchoPinSelect.currentText()));
+	DataJSON["distanceTrigPin"] = std::stoi(convertToStdString(this->TrigPinSelect.currentText()));
+	DataJSON["distanceName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
 }
 
 std::string DistanceSensor::remoteBuild(){
@@ -1999,6 +2308,16 @@ void LightSensor::deleteSelf(){
 	delete this;
 }
 
+json LightSensor::toJson(){
+	json DataJSON;
+	DataJSON["id"] = LIGHTS_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["lightPin"] = std::stoi(convertToStdString(this->PinSelect.currentText()));
+	DataJSON["lightName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
+}
+
 std::string LightSensor::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	std::string VNamePrint = "print(\"Light Value recorded by " + convertToStdString(this->VarnameEdit.text()) + " : \" + str(int(" + convertToStdString(this->VarnameEdit.text()) + ".value * 100)) + \"%\")\n";
@@ -2073,6 +2392,16 @@ void MotionSensor::deleteSelf(){
 	delete this;
 }
 
+json MotionSensor::toJson(){
+	json DataJSON;
+	DataJSON["id"] = MOTION_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["motionPin"] = std::stoi(convertToStdString(this->PinSelect.currentText()));
+	DataJSON["motionName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
+}
+
 std::string MotionSensor::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	std::string VNamePrint = "print(\"Motion Value recorded by " + convertToStdString(this->VarnameEdit.text()) + " : \" + str(" + convertToStdString(this->VarnameEdit.text()) + ".value))\n";
@@ -2145,6 +2474,16 @@ LineSensor::LineSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 void LineSensor::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json LineSensor::toJson(){
+	json DataJSON;
+	DataJSON["id"] = LINES_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["linePin"] = std::stoi(convertToStdString(this->PinSelect.currentText()));
+	DataJSON["lineName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
 }
 
 std::string LineSensor::remoteBuild(){
@@ -2233,6 +2572,16 @@ void Function::deleteSelf(){
 	delete this;
 }
 
+json Function::toJson(){
+	json DataJSON;
+	DataJSON["id"] = FUNC_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["functionName"] = convertToStdString(this->NameEdit.text());
+	DataJSON["functionBody"] = convertToStdString(this->FunctionBody->toPlainText());
+	return DataJSON;
+}
+
 std::string Function::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	std::string out, templine;
@@ -2263,7 +2612,7 @@ FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow,
 	FunctionSelect(this),
 	DisplayLabel(convertToQString(name), this),
 	ExecuteLabel("Execute : ", this),
-	LoopLabel("Run in loop : ", this),
+	LoopLabel("Run only in loop : ", this),
 	LoopCheckBox(this)
 	{
 		this->id = FCTRL_ID;
@@ -2294,13 +2643,27 @@ void FunctionControl::deleteSelf(){
 	delete this;
 }
 
+json FunctionControl::toJson(){
+	json DataJSON;
+	DataJSON["id"] = FCTRL_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["targetFunctionName"] = convertToStdString(this->FunctionSelect.currentText());
+	DataJSON["targetFunctionLoopState"] = this->LoopCheckBox.isChecked();
+	return DataJSON;
+}
+
 std::string FunctionControl::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	std::string TempBuild = convertToStdString(this->FunctionSelect.currentText()) + "()\n";
 	if (this->LoopCheckBox.isChecked()){
 		this->ParentDrawArea->LoopCodeVector.push_back(TempBuild);
+		return "";
+		// Return blank string
+	} else {
+		return TempBuild;
 	}
-	return TempBuild;
+	
 }
 
 std::string FunctionControl::simpleBuild(){
@@ -2359,6 +2722,17 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 void ButtonControl::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json ButtonControl::toJson(){
+	json DataJSON;
+	DataJSON["id"] = BTNCTRL_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["targetButtonName"] = convertToStdString(this->ButtonSelect.currentText());
+	DataJSON["targetButtonState"] = convertToStdString(this->StateSelect.currentText());
+	DataJSON["targetFunctionName"] = convertToStdString(this->FunctionSelect.currentText());
+	return DataJSON;
 }
 
 std::string ButtonControl::remoteBuild(){
@@ -2452,6 +2826,18 @@ void RGBLED::deleteSelf(){
 	delete this;
 }
 
+json RGBLED::toJson(){
+	json DataJSON;
+	DataJSON["id"] = RGBLED_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["RGBLEDPinR"] = std::stoi(convertToStdString(this->RPinSelect.currentText()));
+	DataJSON["RGBLEDPinG"] = std::stoi(convertToStdString(this->GPinSelect.currentText()));
+	DataJSON["RGBLEDPinB"] = std::stoi(convertToStdString(this->BPinSelect.currentText()));
+	DataJSON["RGBLEDName"] = convertToStdString(this->VarnameEdit.text());
+	return DataJSON;
+}
+
 std::string RGBLED::remoteBuild(){
 	this->ParentMainWindow->log("Now Building " + this->GPIOName);
 	return convertToStdString(this->VarnameEdit.text()) +
@@ -2512,30 +2898,18 @@ RGBLEDCtrl::RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 		RLabel.setStyleSheet("border : 0px;");
 		GLabel.setStyleSheet("border : 0px;");
 		BLabel.setStyleSheet("border : 0px;");
-		RPinSlider.setStyleSheet("border : 0px; color : ");
-		GPinSlider.setStyleSheet("border : 0px;");
-		BPinSlider.setStyleSheet("border : 0px;");
-		RValueEdit.setStyleSheet("background-color : " + this->foreground + ";");
-		GValueEdit.setStyleSheet("background-color : " + this->foreground + ";");
-		BValueEdit.setStyleSheet("background-color : " + this->foreground + ";");
-		RPinSlider.setFixedWidth(100);
-		RPinSlider.setMaximum(255);
-		RPinSlider.setMinimum(0);
-		RPinSlider.setValue(0);
-		GPinSlider.setFixedWidth(100);
-		GPinSlider.setMaximum(255);
-		GPinSlider.setMinimum(0);
-		GPinSlider.setValue(0);
-		BPinSlider.setFixedWidth(100);
-		BPinSlider.setMaximum(255);
-		BPinSlider.setMinimum(0);
-		BPinSlider.setValue(0);
-		RValueEdit.setFixedWidth(60);
-		GValueEdit.setFixedWidth(60);
-		BValueEdit.setFixedWidth(60);
-		RValueEdit.setText("0");
-		GValueEdit.setText("0");
-		BValueEdit.setText("0");
+		for (QLineEdit* ValueEdit : {&RValueEdit, &GValueEdit, &BValueEdit}){
+			ValueEdit->setFixedWidth(60);
+			ValueEdit->setText("0");
+			ValueEdit->setStyleSheet("background-color : " + this->foreground + ";");
+		}
+		for (QSlider* PinSlider : {&RPinSlider, &GPinSlider, &BPinSlider}){
+			PinSlider->setFixedWidth(200);
+			PinSlider->setMaximum(255);
+			PinSlider->setMinimum(0);
+			PinSlider->setValue(0);
+			PinSlider->setStyleSheet("border : 0px;");
+		}
 		this->SelfLayout.addWidget(&DisplayLabel, 1, 1, 1, 2);
 		this->SelfLayout.addWidget(&NameLabel, 3, 1, 1, 1);
 		this->SelfLayout.addWidget(&RGBLEDSelect, 4, 1, 1, 2);
@@ -2561,6 +2935,18 @@ RGBLEDCtrl::RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 void RGBLEDCtrl::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json RGBLEDCtrl::toJson(){
+	json DataJSON;
+	DataJSON["id"] = RGBLEDCTRL_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	DataJSON["targetRGBLEDName"] = convertToStdString(this->RGBLEDSelect.currentText());
+	DataJSON["targetRGBLEDRed"] = this->RPinSlider.value();
+	DataJSON["targetRGBLEDGreen"] = this->GPinSlider.value();
+	DataJSON["targetRGBLEDBlue"] = this->GPinSlider.value();
+	return DataJSON;
 }
 
 std::string RGBLEDCtrl::remoteBuild(){
@@ -2596,7 +2982,7 @@ void RGBLEDCtrl::BSliderValueUpdated(int value){
 }
 void RGBLEDCtrl::RTextValueUpdated(QString text){
 	int val = std::stoi(convertToStdString(text));
-	if (val >= 0 && val <= 256){
+	if (val >= 0 && val <= 255){
 		this->RPinSlider.setValue(val);
 	} else {
 		this->ParentMainWindow->err("Invalid Red value provided for " + this->GPIOName);
@@ -2604,7 +2990,7 @@ void RGBLEDCtrl::RTextValueUpdated(QString text){
 }
 void RGBLEDCtrl::GTextValueUpdated(QString text){
 	int val = std::stoi(convertToStdString(text));
-	if (val >= 0 && val <= 256){
+	if (val >= 0 && val <= 255){
 		this->GPinSlider.setValue(val);
 	} else {
 		this->ParentMainWindow->err("Invalid Green value provided for " + this->GPIOName);
@@ -2612,7 +2998,7 @@ void RGBLEDCtrl::GTextValueUpdated(QString text){
 }
 void RGBLEDCtrl::BTextValueUpdated(QString text){
 	int val = std::stoi(convertToStdString(text));
-	if (val >= 0 && val <= 256){
+	if (val >= 0 && val <= 255){
 		this->BPinSlider.setValue(val);
 	} else {
 		this->ParentMainWindow->err("Invalid Blue value provided for " + this->GPIOName);
@@ -2689,7 +3075,9 @@ void ProgramStart::TriggerRemoteBuild(){
 		outfile << "\n";
 		// Main Code End
 		// Keepalive code start
-		outfile << "print(\"The program will now run in 'keepalive' mode.\\nI.e, you can stop it at any time by pressing CTRL + C\\nAll actions such as Button Actions, Distance Measurements, etc will work.\")\n";
+		outfile << "print(\"The program will now run in 'keepalive' mode.\")\n";
+		outfile << "print(\"I.e, you can stop it at any time by pressing CTRL + C\")\n";
+		outfile << "print(\"All actions such as Button Actions, Distance Measurements, etc will work.\")\n";
 		outfile << "while True:\n";
 		outfile << "\ttry:\n";
 		for (std::string lcstring : this->ParentDrawArea->LoopCodeVector){
@@ -2705,7 +3093,7 @@ void ProgramStart::TriggerRemoteBuild(){
 		this->ParentMainWindow->log("Finished Building!");
 		// Emit buildcompleted signal
 		// MainWindow will run program only after build is completed
-		// Could have caused errors with large program files
+		// Could have caused errors with large project files
 		emit buildCompleted();
 	} else {
 		this->ParentMainWindow->warn("Invalid inputs found! Check console!");
@@ -2778,6 +3166,14 @@ ProgramStart::ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X
 void ProgramStart::deleteSelf(){
 	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
+}
+
+json ProgramStart::toJson(){
+	json DataJSON;
+	DataJSON["id"] = PSTART_ID;
+	DataJSON["x"] = this->XCoord;
+	DataJSON["y"] = this->YCoord;
+	return DataJSON;
 }
 
 std::string ProgramStart::remoteBuild(){
