@@ -73,7 +73,7 @@ class GPIOToolBar : public QWidget{
 		GPIOToolBar(QWidget* parent, MainWindow* parentMainWindow);
 		MainWindow *ParentMainWindow;
 		DrawArea* MainWindowDrawArea;
-		QVBoxLayout GPIOToolBarLayout;
+		QGridLayout GPIOToolBarLayout;
 };
 
 /* 

@@ -375,70 +375,70 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	// Delete Last Button
 	MainWindowDeleteLastButton.setFixedHeight(36);
 	MainWindowDeleteLastButton.setText(" Delete Last");
-	MainWindowDeleteLastButton.setIcon(QIcon("static/undo.svg"));
+	MainWindowDeleteLastButton.setIcon(QIcon("static/menubar/undo.svg"));
 	MainWindowDeleteLastButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Z));
 	MainWindowLayout.addWidget(&MainWindowDeleteLastButton, 0, 0);
 	
 	// Clear All Button
 	MainWindowClearButton.setFixedHeight(36);
 	MainWindowClearButton.setText(" Clear All");
-	MainWindowClearButton.setIcon(QIcon("static/clear.svg"));
+	MainWindowClearButton.setIcon(QIcon("static/menubar/clear.svg"));
 	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
 	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 1);
 
 	// Refresh Button
 	MainWindowRefreshButton.setFixedHeight(36);
 	MainWindowRefreshButton.setText(" Refresh");
-	MainWindowRefreshButton.setIcon(QIcon("static/refresh.svg"));
+	MainWindowRefreshButton.setIcon(QIcon("static/menubar/refresh.svg"));
 	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
 	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 2);
 
 	// Build Button
 	MainWindowBuildButton.setFixedHeight(36);
 	MainWindowBuildButton.setText(" Build");
-	MainWindowBuildButton.setIcon(QIcon("static/hammer.svg"));
+	MainWindowBuildButton.setIcon(QIcon("static/menubar/hammer.svg"));
 	MainWindowBuildButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
 	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 3);
 
 	// Remote Run Button
 	MainWindowRemoteButton.setFixedHeight(36);
 	MainWindowRemoteButton.setText(" Run Remote");
-	MainWindowRemoteButton.setIcon(QIcon("static/remote.svg"));
+	MainWindowRemoteButton.setIcon(QIcon("static/menubar/remote.svg"));
 	MainWindowRemoteButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
 	MainWindowLayout.addWidget(&MainWindowRemoteButton, 0, 4);
 
 	// Load Button
 	MainWindowLoadButton.setFixedHeight(36);
 	MainWindowLoadButton.setText(" Load File");
-	MainWindowLoadButton.setIcon(QIcon("static/package.svg"));
+	MainWindowLoadButton.setIcon(QIcon("static/menubar/package.svg"));
 	MainWindowLoadButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
 	MainWindowLayout.addWidget(&MainWindowLoadButton, 0, 5);
 
 	// Save Button
 	MainWindowSaveButton.setFixedHeight(36);
 	MainWindowSaveButton.setText(" Save File");
-	MainWindowSaveButton.setIcon(QIcon("static/save.svg"));
+	MainWindowSaveButton.setIcon(QIcon("static/menubar/save.svg"));
 	MainWindowSaveButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
 	MainWindowLayout.addWidget(&MainWindowSaveButton, 0, 6);
 
 	// Help Button
 	MainWindowHelpButton.setFixedHeight(36);
 	MainWindowHelpButton.setText(" Help");
-	MainWindowHelpButton.setIcon(QIcon("static/help.svg"));
+	MainWindowHelpButton.setIcon(QIcon("static/menubar/help.svg"));
 	MainWindowHelpButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
 	MainWindowLayout.addWidget(&MainWindowHelpButton, 0, 7);
 
 	// About Button
 	MainWindowAboutButton.setFixedHeight(36);
 	MainWindowAboutButton.setText(" About");
-	MainWindowAboutButton.setIcon(QIcon("static/info.svg"));
+	MainWindowAboutButton.setIcon(QIcon("static/menubar/info.svg"));
 	MainWindowAboutButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_A));
 	MainWindowLayout.addWidget(&MainWindowAboutButton, 0, 8);
 
 	// Quit Button
 	MainWindowQuitButton.setFixedHeight(36);
 	MainWindowQuitButton.setText(" Quit Application!");
-	MainWindowQuitButton.setIcon(QIcon("static/logout.svg"));
+	MainWindowQuitButton.setIcon(QIcon("static/menubar/logout.svg"));
 	MainWindowQuitButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
 	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 9);
 
@@ -3019,10 +3019,24 @@ void RGBLEDCtrl::BTextValueUpdated(QString text){
 	this->MainWindowDrawArea = &this->ParentMainWindow->MainWindowDrawArea;
 	GPIOToolBarLayout.setSpacing(0);
 	GPIOToolBarLayout.setMargin(0);
+	std::map<int, std::string> ButtonIconMap;
+	ButtonIconMap.insert({1, "debug-start.svg"});
+	ButtonIconMap.insert({2, "led-variant-on.svg"});
+	ButtonIconMap.insert({3, "wave-square-solid.svg"});
+	ButtonIconMap.insert({4, "rgbled.png"});
+	ButtonIconMap.insert({5, "buzzer.png"});
+	ButtonIconMap.insert({6, "function.svg"});
+	ButtonIconMap.insert({7, "button.png"});
 	for (int i = 1; i < (int)this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.size() + 1; i++){
-		GPIOButton* GPIOSelectButton = new GPIOButton(convertToQString(this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.at(i)), i,  this, this->ParentMainWindow);
-		GPIOSelectButton->setFixedSize(233, 36);
-		GPIOToolBarLayout.addWidget(GPIOSelectButton);
+		int buttonNum = i - 1;
+		int columnNum = buttonNum % 2;
+		int rowNum = buttonNum - columnNum;
+		GPIOButton* GPIOSelectButton = new GPIOButton(convertToQString("  " + this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.at(i)), i,  this, this->ParentMainWindow);
+		GPIOSelectButton->setFixedSize(116, 48);
+		GPIOSelectButton->setIcon(QIcon(
+			convertToQString("static/toolbar/" + ButtonIconMap[i])
+		));
+		GPIOToolBarLayout.addWidget(GPIOSelectButton, rowNum, columnNum);
 		QObject::connect(GPIOSelectButton, SIGNAL (GPIOButtonPressed(int)), &this->ParentMainWindow->MainWindowDrawArea, SLOT(OnGPIODeviceSignal(int)));
 	}
 	GPIOToolBarLayout.setAlignment((Qt::AlignTop | Qt::AlignHCenter));
@@ -3036,7 +3050,8 @@ void RGBLEDCtrl::BTextValueUpdated(QString text){
  \____|_|  |___\___/|____/ \___/  |_|   |_| \___/|_| \_|
  */
 
-GPIOButton::GPIOButton(QString label, int GPIOID, GPIOToolBar* mainWindowGPIOToolBar, MainWindow* parentMainWindow) : QPushButton(label, mainWindowGPIOToolBar){
+GPIOButton::GPIOButton(QString label, int GPIOID, GPIOToolBar* mainWindowGPIOToolBar, MainWindow* parentMainWindow)
+	: QPushButton(label, mainWindowGPIOToolBar){
 	this->ParentGPIOToolBar = mainWindowGPIOToolBar;
 	this->ParentMainWindow = parentMainWindow;
 	this->GPIOID = GPIOID;
