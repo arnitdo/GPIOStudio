@@ -521,7 +521,7 @@ void MainWindow::hideRemoteWindow(){
 }
 
 void MainWindow::runRemote(){
-	if (!this->RaspiIPEdit.text().isEmpty()){
+	if (!this->RaspiIPEdit.text().simplified().isEmpty()){
 		this->RemoteIP = convertToStdString(this->RaspiIPEdit.text());
 		#if defined(_WIN32)
 			if (!system("python.exe script.py")){
@@ -615,7 +615,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 
 void DrawArea::loadJson(){
 	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.json)");
-	if (!fname.isEmpty() && !fname.endsWith("config.json", Qt::CaseSensitive)){
+	if (!fname.simplified().isEmpty() && !fname.endsWith("config.json", Qt::CaseSensitive)){
 		this->ParentMainWindow->log("Opening file " + convertToStdString(fname));
 		std::ifstream JSONFileIn (convertToStdString(fname));
 		json JSON;
@@ -642,7 +642,7 @@ void DrawArea::loadJson(){
 			this->ParentMainWindow->err("The version of the file you have provided does not match the current version of GPIO Studio!");
 		}
 	} else {
-		if (fname.isEmpty()){
+		if (fname.simplified().isEmpty()){
 			this->ParentMainWindow->log("No file selected for opening!");
 		} else if (fname.endsWith("config.json", Qt::CaseSensitive)){
 			this->ParentMainWindow->err("Config files cannot be opened!");
@@ -654,7 +654,7 @@ void DrawArea::saveToJson(){
 	QFileDialog OpenFileDialog;
 	OpenFileDialog.setDefaultSuffix("json");
 	QString fname = OpenFileDialog.getSaveFileName(this, "Save GPIO Project", "", "JSON Files (*.json)");
-	if (!fname.isEmpty()){
+	if (!fname.simplified().isEmpty()){
 		this->ParentMainWindow->log("Saving to File " + convertToStdString(fname));
 		json JsonWrite;
 		JsonWrite["version"] = convertToStdString(getVersionInfo());
@@ -1644,7 +1644,7 @@ std::string LED::simpleBuild(){
 }
 
 bool LED::validateInput(){
-	if (this->PinSelect.currentText().isEmpty() || this->VarnameEdit.text().isEmpty()){
+	if (this->PinSelect.currentText().simplified().isEmpty() || this->VarnameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return false;
 	}
@@ -1728,7 +1728,7 @@ std::string PWMLED::simpleBuild(){
 }
 
 bool PWMLED::validateInput(){
-	if (this->PinSelect.currentText().isEmpty() || this->VarnameEdit.text().isEmpty()){
+	if (this->PinSelect.currentText().simplified().isEmpty() || this->VarnameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return false;
 	}
@@ -1797,7 +1797,7 @@ std::string PWMLEDCtrl::simpleBuild(){
 bool PWMLEDCtrl::validateInput(){
 	int value = std::stoi(convertToStdString(this->ValueEdit.text()));
 	bool valueInLimits = (0 <= value && value <= 100) ? true : false; 
-	if (this->PWMLEDSelect.currentText().isEmpty()){
+	if (this->PWMLEDSelect.currentText().simplified().isEmpty()){
 		this->ParentMainWindow->err("No PWM LED Selected for " + this->GPIOName);
 		return false;
 	}
@@ -1949,7 +1949,7 @@ std::string LEDCtrl::simpleBuild(){
 }
 
 bool LEDCtrl::validateInput(){
-	if (this->LEDSelect.currentText().isEmpty()){
+	if (this->LEDSelect.currentText().simplified().isEmpty()){
 		this->ParentMainWindow->err("No LED Selected for " + this->GPIOName);
 		return false;
 	}
@@ -2152,7 +2152,7 @@ std::string Button::simpleBuild(){
 }
 
 bool Button::validateInput(){
-	if (this->PinSelect.currentText().isEmpty() || this->VarnameEdit.text().isEmpty()){
+	if (this->PinSelect.currentText().simplified().isEmpty() || this->VarnameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return false;
 	}
@@ -2247,7 +2247,7 @@ std::string DistanceSensor::simpleBuild(){
 }
 
 bool DistanceSensor::validateInput(){
-	if (this->VarnameEdit.text().isEmpty()){
+	if (this->VarnameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
 		return false;
 	}
@@ -2335,7 +2335,7 @@ std::string LightSensor::simpleBuild(){
 }
 
 bool LightSensor::validateInput(){
-	if (this->VarnameEdit.text().isEmpty()){
+	if (this->VarnameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
 		return false;
 	}
@@ -2419,7 +2419,7 @@ std::string MotionSensor::simpleBuild(){
 }
 
 bool MotionSensor::validateInput(){
-	if (this->VarnameEdit.text().isEmpty()){
+	if (this->VarnameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
 		return false;
 	}
@@ -2503,7 +2503,7 @@ std::string LineSensor::simpleBuild(){
 }
 
 bool LineSensor::validateInput(){
-	if (this->VarnameEdit.text().isEmpty()){
+	if (this->VarnameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name provided for " + this->GPIOName);
 		return false;
 	}
@@ -2599,7 +2599,7 @@ std::string Function::simpleBuild(){
 }
 
 bool Function::validateInput(){
-	if (this->NameEdit.text().isEmpty()){
+	if (this->NameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No function name provided for " + this->GPIOName);
 		return false;
 	}
@@ -2856,7 +2856,7 @@ std::string RGBLED::simpleBuild(){
 }
 
 bool RGBLED::validateInput(){
-	if (this->VarnameEdit.text().isEmpty()){
+	if (this->VarnameEdit.text().simplified().isEmpty()){
 		this->ParentMainWindow->err("No suitable variable name or pin number provided for " + this->GPIOName);
 		return false;
 	}
@@ -2964,7 +2964,7 @@ std::string RGBLEDCtrl::simpleBuild(){
 }
 
 bool RGBLEDCtrl::validateInput(){
-	if (this->RGBLEDSelect.currentText().isEmpty()){
+	if (this->RGBLEDSelect.currentText().simplified().isEmpty()){
 		this->ParentMainWindow->err("No RGB LED selected for " + this->GPIOName);
 		return false;
 	}
