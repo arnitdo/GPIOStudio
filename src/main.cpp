@@ -624,8 +624,6 @@ void DrawArea::loadJson(){
 		if (versionMatch || Config::overrideVersionWarnings){
 			// Version Matches, Proceed!
 			// Emulate button click, clears the entire board
-			emit this->ParentMainWindow->deleteGPIO();
-			this->resetSelf();
 			for (json GPIOJSON : JSON["json"]){
 				try {
 					this->createGPIODevice(GPIOJSON);
@@ -3028,15 +3026,12 @@ void RGBLEDCtrl::BTextValueUpdated(QString text){
 	ButtonIconMap.insert({6, "function.svg"});
 	ButtonIconMap.insert({7, "button.png"});
 	for (int i = 1; i < (int)this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.size() + 1; i++){
-		int buttonNum = i - 1;
-		int columnNum = buttonNum % 2;
-		int rowNum = buttonNum - columnNum;
 		GPIOButton* GPIOSelectButton = new GPIOButton(convertToQString("  " + this->ParentMainWindow->MainWindowDrawArea.ButtonLabelMap.at(i)), i,  this, this->ParentMainWindow);
-		GPIOSelectButton->setFixedSize(116, 48);
+		GPIOSelectButton->setFixedSize(232, 36);
 		GPIOSelectButton->setIcon(QIcon(
 			convertToQString("static/toolbar/" + ButtonIconMap[i])
 		));
-		GPIOToolBarLayout.addWidget(GPIOSelectButton, rowNum, columnNum);
+		GPIOToolBarLayout.addWidget(GPIOSelectButton);
 		QObject::connect(GPIOSelectButton, SIGNAL (GPIOButtonPressed(int)), &this->ParentMainWindow->MainWindowDrawArea, SLOT(OnGPIODeviceSignal(int)));
 	}
 	GPIOToolBarLayout.setAlignment((Qt::AlignTop | Qt::AlignHCenter));
