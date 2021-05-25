@@ -2902,7 +2902,7 @@ RGBLEDCtrl::RGBLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 			ValueEdit->setStyleSheet("background-color : " + this->foreground + ";");
 		}
 		for (QSlider* PinSlider : {&RPinSlider, &GPinSlider, &BPinSlider}){
-			PinSlider->setFixedWidth(200);
+			PinSlider->setFixedWidth(100);
 			PinSlider->setMaximum(255);
 			PinSlider->setMinimum(0);
 			PinSlider->setValue(0);
