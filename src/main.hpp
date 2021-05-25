@@ -93,15 +93,17 @@ class DrawArea: public QWidget{
 		void createGPIODevice(json& GPIOData);
 		void RefreshSelects();
 		void resetSelf();
-		void loadJson();
+		void loadJson(QString fname);
 		void saveToJson();
-		void deleteLast();
+		void Undo();
+		void Redo();
 		bool checkForPStart();
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;
 		QPoint CurrentPoint;
 		MainWindow* ParentMainWindow;
+		std::vector<json> ActionJSONBuffer;
 		std::vector<std::pair<QPoint, QPoint>> Lines;
 		std::vector<GPIODevice*> GPIOCodeVector;
 		std::vector<std::string> LoopCodeVector;
@@ -156,20 +158,21 @@ class MainWindow : public QWidget{
 		QScrollArea MainWindowScrollArea;
 		QScrollArea MainWindowGPIOScrollArea;
 		GPIOToolBar MainWindowGPIOToolBar;
+		QPushButton MainWindowUndoButton;
+		QPushButton MainWindowRedoButton;
 		QPushButton MainWindowClearButton;
 		QPushButton MainWindowRefreshButton;
 		QPushButton MainWindowBuildButton;
 		QPushButton MainWindowRemoteButton;
 		QPushButton MainWindowLoadButton;
 		QPushButton MainWindowSaveButton;
-		QPushButton MainWindowHelpButton;
 		QPushButton MainWindowAboutButton;
-		QPushButton MainWindowDeleteLastButton;
 		QPushButton MainWindowQuitButton;
 		QGridLayout MainWindowLayout;
 	public slots:
 		// Most of these slots are nothing but invocations of the respective DrawArea function
-		void DeleteLast();
+		void DrawAreaUndo();
+		void DrawAreaRedo();
 		void resetDrawArea();
 		void RefreshDrawSelects();
 		void showRemoteWindow();

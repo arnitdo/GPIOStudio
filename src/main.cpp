@@ -302,13 +302,14 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowScrollArea(this),
 	MainWindowGPIOScrollArea(this),
 	MainWindowGPIOToolBar(&MainWindowGPIOScrollArea, this),
+	MainWindowUndoButton(this),
+	MainWindowRedoButton(this),
 	MainWindowClearButton(this),
 	MainWindowRefreshButton(this),
 	MainWindowBuildButton(this),
 	MainWindowRemoteButton(this),
 	MainWindowLoadButton(this),
 	MainWindowSaveButton(this),
-	MainWindowHelpButton(this),
 	MainWindowAboutButton(this),
 	MainWindowQuitButton(this),
 	MainWindowLayout(this)
@@ -372,61 +373,61 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	this->setWindowTitle("GPIO Studio v" + getVersionInfo());
 	this->setFixedSize(1280, 720);
 
-	// Delete Last Button
-	MainWindowDeleteLastButton.setFixedHeight(36);
-	MainWindowDeleteLastButton.setText(" Delete Last");
-	MainWindowDeleteLastButton.setIcon(QIcon("static/menubar/undo.svg"));
-	MainWindowDeleteLastButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Z));
-	MainWindowLayout.addWidget(&MainWindowDeleteLastButton, 0, 0);
+	// Undo Button
+	MainWindowUndoButton.setFixedHeight(36);
+	MainWindowUndoButton.setText(" Undo");
+	MainWindowUndoButton.setIcon(QIcon("static/menubar/undo.svg"));
+	MainWindowUndoButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Z));
+	MainWindowLayout.addWidget(&MainWindowUndoButton, 0, 0);
 	
+	// Redo Button
+	MainWindowRedoButton.setFixedHeight(36);
+	MainWindowRedoButton.setText(" Redo");
+	MainWindowRedoButton.setIcon(QIcon("static/menubar/redo.svg"));
+	MainWindowRedoButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Y));
+	MainWindowLayout.addWidget(&MainWindowRedoButton, 0, 1);
+
 	// Clear All Button
 	MainWindowClearButton.setFixedHeight(36);
 	MainWindowClearButton.setText(" Clear All");
 	MainWindowClearButton.setIcon(QIcon("static/menubar/clear.svg"));
 	MainWindowClearButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_C));
-	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 1);
+	MainWindowLayout.addWidget(&MainWindowClearButton, 0, 2);
 
 	// Refresh Button
 	MainWindowRefreshButton.setFixedHeight(36);
 	MainWindowRefreshButton.setText(" Refresh");
 	MainWindowRefreshButton.setIcon(QIcon("static/menubar/refresh.svg"));
 	MainWindowRefreshButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
-	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 2);
+	MainWindowLayout.addWidget(&MainWindowRefreshButton, 0, 3);
 
 	// Build Button
 	MainWindowBuildButton.setFixedHeight(36);
 	MainWindowBuildButton.setText(" Build");
 	MainWindowBuildButton.setIcon(QIcon("static/menubar/hammer.svg"));
 	MainWindowBuildButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
-	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 3);
+	MainWindowLayout.addWidget(&MainWindowBuildButton, 0, 4);
 
 	// Remote Run Button
 	MainWindowRemoteButton.setFixedHeight(36);
 	MainWindowRemoteButton.setText(" Run Remote");
 	MainWindowRemoteButton.setIcon(QIcon("static/menubar/remote.svg"));
 	MainWindowRemoteButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
-	MainWindowLayout.addWidget(&MainWindowRemoteButton, 0, 4);
+	MainWindowLayout.addWidget(&MainWindowRemoteButton, 0, 5);
 
 	// Load Button
 	MainWindowLoadButton.setFixedHeight(36);
 	MainWindowLoadButton.setText(" Load File");
 	MainWindowLoadButton.setIcon(QIcon("static/menubar/package.svg"));
 	MainWindowLoadButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
-	MainWindowLayout.addWidget(&MainWindowLoadButton, 0, 5);
+	MainWindowLayout.addWidget(&MainWindowLoadButton, 0, 6);
 
 	// Save Button
 	MainWindowSaveButton.setFixedHeight(36);
 	MainWindowSaveButton.setText(" Save File");
 	MainWindowSaveButton.setIcon(QIcon("static/menubar/save.svg"));
 	MainWindowSaveButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
-	MainWindowLayout.addWidget(&MainWindowSaveButton, 0, 6);
-
-	// Help Button
-	MainWindowHelpButton.setFixedHeight(36);
-	MainWindowHelpButton.setText(" Help");
-	MainWindowHelpButton.setIcon(QIcon("static/menubar/help.svg"));
-	MainWindowHelpButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_H));
-	MainWindowLayout.addWidget(&MainWindowHelpButton, 0, 7);
+	MainWindowLayout.addWidget(&MainWindowSaveButton, 0, 7);
 
 	// About Button
 	MainWindowAboutButton.setFixedHeight(36);
@@ -442,15 +443,19 @@ MainWindow::MainWindow(QApplication* parentApplication) :
 	MainWindowQuitButton.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
 	MainWindowLayout.addWidget(&MainWindowQuitButton, 0, 9);
 
+	this->setAcceptDrops(true);
+	this->MainWindowGPIOScrollArea.setAcceptDrops(true);
+	this->MainWindowDrawArea.setAcceptDrops(true);
+
 	// Connecting SIGNALS and SLOTS
-	QObject::connect(&MainWindowDeleteLastButton, SIGNAL (clicked()), this, SLOT (DeleteLast()));
+	QObject::connect(&MainWindowUndoButton, SIGNAL (clicked()), this, SLOT (DrawAreaUndo()));
+	QObject::connect(&MainWindowRedoButton, SIGNAL (clicked()), this, SLOT (DrawAreaRedo()));
 	QObject::connect(&MainWindowClearButton, SIGNAL (clicked()), this, SLOT (resetDrawArea()));
 	QObject::connect(&MainWindowRefreshButton, SIGNAL (clicked()), this, SLOT (RefreshDrawSelects()));
 	QObject::connect(&MainWindowRemoteButton, SIGNAL (clicked()), this, SLOT (showRemoteWindow()));
 	QObject::connect(&RWHideButton, SIGNAL (clicked()), this, SLOT (hideRemoteWindow()));
 	QObject::connect(&MainWindowLoadButton, SIGNAL (clicked()), this, SLOT (OpenJSON()));
 	QObject::connect(&MainWindowSaveButton, SIGNAL (clicked()), this, SLOT (SaveToJSON()));
-	QObject::connect(&MainWindowHelpButton, SIGNAL (clicked()), this, SLOT (ShowHelpWindow()));
 	QObject::connect(&MainWindowAboutButton, SIGNAL (clicked()), this, SLOT (ShowAboutWindow()));
 	QObject::connect(&MainWindowQuitButton, SIGNAL (clicked()), this, SLOT (QuitApp()));
 }
@@ -494,10 +499,12 @@ void MainWindow::RefreshDrawSelects(){
 	this->MainWindowDrawArea.RefreshSelects();
 }
 
-void MainWindow::DeleteLast(){
-	// Calls MainWindowDrawArea.deleteLast();
-	// Deletes The last created object
-	this->MainWindowDrawArea.deleteLast();
+void MainWindow::DrawAreaUndo(){
+	this->MainWindowDrawArea.Undo();
+}
+
+void MainWindow::DrawAreaRedo(){
+	this->MainWindowDrawArea.Redo();
 }
 
 void MainWindow::resetDrawArea(){
@@ -559,7 +566,14 @@ void MainWindow::runRemote(){
 }
 
 void MainWindow::OpenJSON(){
-	this->MainWindowDrawArea.loadJson();
+	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.json)");
+	if (!fname.simplified().isEmpty() && !fname.endsWith("config.json", Qt::CaseSensitive)){
+		this->MainWindowDrawArea.loadJson(fname);
+	} else {
+		if (fname.endsWith("config.json")){
+			this->warn("Config files cannot be loaded!");
+		}
+	}
 }
 
 void MainWindow::SaveToJSON(){
@@ -613,40 +627,31 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({BTNCTRL_ID, "Button Controls"});
 }
 
-void DrawArea::loadJson(){
-	QString fname = QFileDialog::getOpenFileName(this, "Open GPIO JSON File", "", "JSON (*.json)");
-	if (!fname.simplified().isEmpty() && !fname.endsWith("config.json", Qt::CaseSensitive)){
-		this->ParentMainWindow->log("Opening file " + convertToStdString(fname));
-		std::ifstream JSONFileIn (convertToStdString(fname));
-		json JSON;
-		JSONFileIn >> JSON;
-		bool versionMatch = JSON["version"].get<std::string>() == convertToStdString(getVersionInfo());
-		if (versionMatch || Config::overrideVersionWarnings){
-			// Version Matches, Proceed!
-			// Emulate button click, clears the entire board
-			for (json GPIOJSON : JSON["json"]){
-				try {
-					this->createGPIODevice(GPIOJSON);
-				} catch (json::out_of_range& JSONExcept){
-					if (JSONExcept.id == 403){
-						this->ParentMainWindow->log("Invalid file provided!Project will be reset!");
-						emit this->ParentMainWindow->deleteGPIO();
-						this->resetSelf();
-					}
+void DrawArea::loadJson(QString fname){
+	this->ParentMainWindow->log("Opening file " + convertToStdString(fname));
+	std::ifstream JSONFileIn (convertToStdString(fname));
+	json JSON;
+	JSONFileIn >> JSON;
+	bool versionMatch = JSON["version"].get<std::string>() == convertToStdString(getVersionInfo());
+	if (versionMatch || Config::overrideVersionWarnings){
+		// Version Matches, Proceed!
+		// Emulate button click, clears the entire board
+		for (json GPIOJSON : JSON["json"]){
+			try {
+				this->createGPIODevice(GPIOJSON);
+			} catch (json::out_of_range& JSONExcept){
+				if (JSONExcept.id == 403){
+					this->ParentMainWindow->log("Invalid file provided!Project will be reset!");
+					emit this->ParentMainWindow->deleteGPIO();
+					this->resetSelf();
 				}
 			}
-		} else {
-			this->ParentMainWindow->err("Version Mismatch!");
-			this->ParentMainWindow->err("The version of the file you have provided does not match the current version of GPIO Studio!");
 		}
 	} else {
-		if (fname.simplified().isEmpty()){
-			this->ParentMainWindow->log("No file selected for opening!");
-		} else if (fname.endsWith("config.json", Qt::CaseSensitive)){
-			this->ParentMainWindow->err("Config files cannot be opened!");
-		}
+		this->ParentMainWindow->err("Version Mismatch!");
+		this->ParentMainWindow->err("The version of the file you have provided does not match the current version of GPIO Studio!");
 	}
-};
+}
 
 void DrawArea::saveToJson(){
 	QFileDialog OpenFileDialog;
@@ -668,13 +673,13 @@ void DrawArea::saveToJson(){
 	}
 }
 
-void DrawArea::deleteLast(){
+void DrawArea::Undo(){
 	if (this->GPIOCodeVector.size() > 0){
 		GPIODevice* GPIOD = this->GPIOCodeVector.back();
 		if (GPIOD->id == PSTART_ID){
 			this->ParentMainWindow->warn("Deleting Program Start Block! Entire Project will be reset!");
-			emit this->ParentMainWindow->deleteGPIO();
-			this->resetSelf();
+			this->ActionJSONBuffer.push_back(GPIOD->toJson());
+			GPIOD->deleteSelf();
 			this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
 		} else {
 			switch(GPIOD->id){
@@ -759,6 +764,7 @@ void DrawArea::deleteLast(){
 					break;
 				}
 			}
+			this->ActionJSONBuffer.push_back(GPIOD->toJson());
 			GPIOD->deleteSelf(); // Delete GPIOD
 			this->GPIOCodeVector.pop_back(); // Delete Reference to GPIOD
 			this->Lines.pop_back(); // Delete last line
@@ -772,11 +778,24 @@ void DrawArea::deleteLast(){
 				LastGPIO->x() + 200, /*Get last GPIODevice, get X coord, add 200 to X*/
 				LastGPIO->y() + YOffset /*Get last GPIODevice, get Y coord, add Offset to Y*/
 			); 
-				// Line will be redrawn on next paintEvent.
+			// Line will be redrawn on next paintEvent.
 			this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
+			// Save JSON
 		}
 	} else {
-		this->resetSelf();
+		this->ParentMainWindow->log("Nothing to undo!");
+	}
+}
+
+void DrawArea::Redo(){
+	if (this->ActionJSONBuffer.size() > 0){
+		createGPIODevice(this->ActionJSONBuffer.back());
+		this->ActionJSONBuffer.pop_back();
+		this->ActionJSONBuffer.shrink_to_fit();
+		this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
+		// Use vector as stack
+	} else {
+		this->ParentMainWindow->log("Nothing to redo!");
 	}
 }
 
@@ -801,6 +820,7 @@ void DrawArea::mousePressEvent(QMouseEvent *event){
 		ClickJSON["x"] = event->x();
 		ClickJSON["y"] = event->y();
 		// Pack mouse event into JSON, and pass as reference, not copy
+		this->ActionJSONBuffer.clear();
 		this->createGPIODevice(ClickJSON);
 		this->setStyleSheet("background-color : #ffffff; background-image : url('static/grid.png');");
 		this->NWMode = false;
@@ -813,10 +833,20 @@ void DrawArea::createGPIODevice(json& GPIOData){
 	// CSS Doc - Qt likes to inherit background images on its own, despite having 'background-image : none;' in css.
 	// Solution - GPIODevice gets a completely blank PNG file
 	// Horrible fix, no other option. :-(
-	int id = GPIOData.at("id").get<int64_t>();
-	int X = GPIOData.at("x").get<int64_t>();
-	int Y = GPIOData.at("y").get<int64_t>();
-	this->activeGPIO = id;
+	int id = GPIOD_ID;
+	int X = 0;
+	int Y = 0;
+	try {
+		id = GPIOData.at("id").get<int64_t>();
+		X = GPIOData.at("x").get<int64_t>();
+		Y = GPIOData.at("y").get<int64_t>();
+		this->activeGPIO = id;
+	} catch (json::out_of_range& JSONExcept){
+		if (JSONExcept.id == 403){
+			this->ParentMainWindow->err("Invalid JSON Data Provided!");
+		}
+		return;
+	}	
 	switch(this->activeGPIO){
 		case PSTART_ID:{
 			QMessageBox NewPStartDialog (this->ParentMainWindow);
@@ -1352,8 +1382,8 @@ void DrawArea::createGPIODevice(json& GPIOData){
 		default:{
 			this->ParentMainWindow->err("Invalid parameter passed!");
 			this->ParentMainWindow->warn("The file you have loaded has been incorrectly modified");
+			}
 		}
-	}
 	}
 }
 
@@ -3208,8 +3238,14 @@ std::string ProgramStart::simpleBuild(){
 
 int main(int argc, char** argv){
 	QApplication app (argc, argv);
-	MainWindow w (&app);
-	w.show();
-	Config::LoadConfig(&w);
+	MainWindow AppWindow (&app);
+	AppWindow.show();
+	Config::LoadConfig(&AppWindow);
+	if (argc == 2){
+		QString ArgFileName = argv[1];
+		if (ArgFileName.endsWith(".json") && !ArgFileName.endsWith("config.json")){
+			AppWindow.MainWindowDrawArea.loadJson(ArgFileName);
+		}	
+	}
 	return app.exec();
 }
