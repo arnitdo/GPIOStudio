@@ -1,8 +1,8 @@
 QT += gui core widgets
 
-SOURCES += src/main.cpp
+SOURCES += src/*.cpp
 
-HEADERS += src/main.hpp src/thirdparty/**
+HEADERS += src/*.hpp src/thirdparty/**
 
 CONFIG += release
 
