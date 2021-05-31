@@ -765,7 +765,7 @@ void DrawArea::Undo(){
 				}
 			}
 			this->ActionJSONBuffer.push_back(GPIOD->toJson());
-			GPIOD->deleteSelf(); // Delete GPIOD
+			delete GPIOD; // Delete GPIOD
 			this->GPIOCodeVector.pop_back(); // Delete Reference to GPIOD
 			this->Lines.pop_back(); // Delete last line
 			int YOffset = 75; // Default Y offset for 200 * 100 blocks
@@ -1879,7 +1879,7 @@ Buzzer::Buzzer(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 		this->SelfLayout.addWidget(&NameLabel, 2, 1);
 		this->SelfLayout.addWidget(&this->VarnameEdit, 2, 2);
 		Counters::BUZZERCount++;
-		QObject::connect(&this->ParentMainWindow->MainWindowClearButton, SIGNAL (clicked()), this, SLOT(deleteSelf()));
+		QObject::connect(ParentMainWindow, SIGNAL (deleteGPIO()), this, SLOT( deleteSelf()));
 }
 
 void Buzzer::deleteSelf(){

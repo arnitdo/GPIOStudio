@@ -33,6 +33,7 @@ The following content in this repository or program has been sourced from the re
 static - 
 * clear.svg - [Iconduck](https://iconduck.com/icons/31176/clear)
 * undo.svg - [Iconduck](https://iconduck.com/icons/9959/undo)
+* redo.svg - [Iconduck](https://iconduck.com/icons/9687/redo)
 * hammer.svg - [Iconduck](https://iconduck.com/icons/98126/hammer)
 * help.svg - [Iconduck](https://iconduck.com/icons/9318/help)
 * info.svg - [Iconduck](https://iconduck.com/icons/4013/info)
