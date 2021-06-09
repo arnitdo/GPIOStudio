@@ -24,6 +24,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({BUZCTRL_ID, "Buzzer Controls"});
 	ButtonLabelMap.insert({FCTRL_ID, "Function Controls"});
 	ButtonLabelMap.insert({BTNCTRL_ID, "Button Controls"});
+	ButtonLabelMap.insert({SENSE_ID, "Sense Hat"});
 }
 
 void DrawArea::loadJson(QString fname){
@@ -162,10 +163,24 @@ void DrawArea::Undo(){
 					this->BTNCTRLVec.pop_back();
 					break;
 				}
+				case SENSE_ID:{
+					break;
+				}
 			}
 			this->ActionJSONBuffer.push_back(GPIOD->toJson());
 			delete GPIOD; // Delete GPIOD
 			this->GPIOCodeVector.pop_back(); // Delete Reference to GPIOD
+
+			// Sense Hat Check
+			for (GPIODevice* GPIODev : this->GPIOCodeVector){
+				if (GPIODev->id == SENSE_ID){
+					this->ParentMainWindow->MainWindowRemoteButton.setDisabled(true);
+					break;
+				} else {
+					this->ParentMainWindow->MainWindowRemoteButton.setDisabled(false);
+				}
+			}
+
 			this->Lines.pop_back(); // Delete last line
 			int YOffset = 75; // Default Y offset for 200 * 100 blocks
 			// Increases for 200 * 200 blocks by 75 (Y = 150)
@@ -201,6 +216,15 @@ void DrawArea::Redo(){
 bool DrawArea::checkForPStart(){
 	for (GPIODevice* GPIOD : this->GPIOCodeVector){
 		if (GPIOD->id == PSTART_ID){
+			return true; // ProgramStart exists, somewhere in the area
+		}
+	}
+	return false;
+}
+
+bool DrawArea::checkForSenseHat(){
+	for (GPIODevice* GPIOD : this->GPIOCodeVector){
+		if (GPIOD->id == SENSE_ID){
 			return true; // ProgramStart exists, somewhere in the area
 		}
 	}
@@ -262,7 +286,7 @@ void DrawArea::createGPIODevice(json& GPIOData){
 					GPIOD->setGeometry(GPIOBoundBox);
 					GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
 					GPIOD->show();
-					this->LastPoint = QPoint(X + 200, Y + 25);
+					this->LastPoint = QPoint(X + 200, Y + 75);
 					this->Lines.push_back(std::make_pair(this->LastPoint, this->LastPoint));
 					this->GPIOCodeVector.push_back(GPIOD);
 					break;
@@ -745,7 +769,7 @@ void DrawArea::createGPIODevice(json& GPIOData){
 				break;		
 			}
 		}
-		case BTNCTRL_ID:{
+		case BTNCTRL_ID: {
 			if (this->checkForPStart()){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 200));
 				ButtonControl* GPIOD = new ButtonControl(this, ParentMainWindow, X, Y, ("Button Controls " + std::to_string(Counters::BTNCTRLCount)));
@@ -778,11 +802,32 @@ void DrawArea::createGPIODevice(json& GPIOData){
 				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
 				break;		
 			}
+		}
+		case SENSE_ID:{
+			if (this->checkForPStart() && !this->checkForSenseHat()){
+				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+				SenseHat* GPIOD = new SenseHat(this, ParentMainWindow, X, Y, "Sense Hat");
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
+				GPIOD->show();
+				this->CurrentPoint = QPoint(X, Y + 25);
+				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
+				this->GPIOCodeVector.push_back(GPIOD);
+				break;
+			} else if (!this->checkForPStart()){
+				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
+				break;
+			} else {
+				this->ParentMainWindow->err("A Sense HAT Device already exists!");
+				this->ParentMainWindow->err("Multiple Instances of Sense HATs are not supported!");
+				break;
+			}
+		}		
 		default:{
 			this->ParentMainWindow->err("Invalid parameter passed!");
 			this->ParentMainWindow->warn("The file you have loaded has been incorrectly modified");
 			}
-		}
 	}
 }
 

@@ -62,6 +62,7 @@ class RGBLEDCtrl;
 class BuzzerCtrl;
 class FunctionControl;
 class ButtonControl;
+class SenseHat;
 
 /*  
   ____ ____ ___ ___ _____ ___   ___  _     ____    _    ____
@@ -100,6 +101,7 @@ class DrawArea: public QWidget{
 		void Undo();
 		void Redo();
 		bool checkForPStart();
+		bool checkForSenseHat();
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;
@@ -600,6 +602,23 @@ class RGBLEDCtrl : public GPIODevice{
 		virtual void deleteSelf();	
 };
 
+
+class SenseHat : public GPIODevice{
+	Q_OBJECT;
+	public:
+		// Functions
+		SenseHat(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		virtual json toJson();
+		// Members
+		QString backgroundcolor = "#8DA3F3";
+		QGridLayout SelfLayout;
+		QLabel DisplayLabel;
+	public slots:
+		virtual void deleteSelf();
+};
 /* 
  ____  ____   ___   ____ ____     _    __  __ ____ _____  _    ____ _____
 |  _ \|  _ \ / _ \ / ___|  _ \   / \  |  \/  / ___|_   _|/ \  |  _ |_   _|
@@ -619,7 +638,7 @@ class ProgramStart : public GPIODevice{
 		bool validateCode(); // Full code validation
 		ProgramStart(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
 		// Members
-		QLabel DisplayText;
+		QLabel DisplayLabel;
 		QGridLayout SelfLayout;
 		MainWindow* ParentMainWindow;
 		DrawArea* ParentDrawArea;
