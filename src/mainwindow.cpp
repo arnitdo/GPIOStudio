@@ -1,3 +1,4 @@
+#include "main.hpp"
 #include "config.cpp"
 
 MainWindow::MainWindow(QApplication* parentApplication) : 

@@ -1,4 +1,5 @@
-#include "function.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
 FunctionControl::FunctionControl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),

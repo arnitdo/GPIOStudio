@@ -1,4 +1,5 @@
-#include "gpiodevice.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
 /* DOC
 After program has finished executing, it will go into a keepalive state

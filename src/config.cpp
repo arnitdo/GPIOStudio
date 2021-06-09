@@ -1,5 +1,8 @@
 #include "main.hpp"
 
+#ifndef GPIOSTUDIO_CONFIG_CPP
+#define GPIOSTUDIO_CONFIG_CPP
+
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
 #define REVISION 7
@@ -273,3 +276,5 @@ std::string convertToStdString(QString in){
 	// Vice Versa, converts QString to std::string
 	return in.toUtf8().constData();
 }
+
+#endif

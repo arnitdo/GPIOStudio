@@ -1,3 +1,5 @@
+#ifndef GPIOSTUDIO_MAIN_HPP
+#define GPIOSTUDIO_MAIN_HPP
 #include <QWidget>
 #include <QString>
 #include <QImage>
@@ -649,3 +651,5 @@ class GPIOButton : public QPushButton{
 	public slots:
 		void SelfPressed();
 };
+
+#endif

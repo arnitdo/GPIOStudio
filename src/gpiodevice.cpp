@@ -1,4 +1,5 @@
-#include "drawarea.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
 void GPIODevice::paintEvent(QPaintEvent *)
 {

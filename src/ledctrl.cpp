@@ -1,4 +1,5 @@
-#include "buzzer.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
 LEDCtrl::LEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),

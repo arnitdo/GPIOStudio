@@ -1,4 +1,5 @@
-#include "buzzerctrl.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
 Sleep::Sleep(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),

@@ -1,4 +1,5 @@
-#include "mainwindow.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
  GPIOToolBar::GPIOToolBar(QWidget* parent, MainWindow* parentMainWindow) : 
  	QWidget(parent),

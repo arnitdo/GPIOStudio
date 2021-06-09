@@ -1,4 +1,5 @@
-#include "buttonctrl.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
 RGBLED::RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),

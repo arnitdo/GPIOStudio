@@ -1,4 +1,5 @@
-#include "toolbar.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
 DrawArea::DrawArea(MainWindow *parent) : 
 	QWidget(parent){

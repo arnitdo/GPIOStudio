@@ -1,4 +1,5 @@
-#include "led.cpp"
+#include "main.hpp"
+#include "config.cpp"
 
 PWMLED::PWMLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name) :
 	GPIODevice(parent, parentMainWindow, X, Y, name),
