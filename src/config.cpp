@@ -27,6 +27,7 @@
 #define FCTRL_ID 17
 #define BTNCTRL_ID 18
 #define SENSE_ID 19
+#define SENSE_TEXT_ID 20
 
 // Function Prototypes
 QString getVersionInfo();

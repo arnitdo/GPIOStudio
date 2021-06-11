@@ -67,7 +67,6 @@ RGBLED::RGBLED(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std
 }
 
 void RGBLED::deleteSelf(){
-	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
 }
 

@@ -36,7 +36,6 @@ PWMLEDCtrl::PWMLEDCtrl(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	}
 
 void PWMLEDCtrl::deleteSelf(){
-	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
 }
 

@@ -43,7 +43,6 @@ ButtonControl::ButtonControl(DrawArea* parent, MainWindow* parentMainWindow, int
 	}
 
 void ButtonControl::deleteSelf(){
-	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
 }
 

@@ -615,7 +615,27 @@ class SenseHat : public GPIODevice{
 		// Members
 		QString backgroundcolor = "#8DA3F3";
 		QGridLayout SelfLayout;
+		QLabel DisplayLabel, ReportLabel;
+		QCheckBox HumidityBox, TemperatureHBox, TemperaturePBox, PressureBox;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class SenseText : public GPIODevice {
+	Q_OBJECT;
+	public:
+		// Functions
+		SenseText(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		virtual json toJson();
+		// Members
+		QString backgroundcolor = "#8DA3F3";
+		QGridLayout SelfLayout;
 		QLabel DisplayLabel;
+		QLabel TextLabel;
+		QTextEdit TextEdit;
 	public slots:
 		virtual void deleteSelf();
 };

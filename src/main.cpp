@@ -22,6 +22,7 @@
 #include "sleep.cpp"
 #include "toolbar.cpp"
 #include "sensehat.cpp"
+#include "sensetext.cpp"
 
 int main(int argc, char** argv){
 	QApplication app (argc, argv);

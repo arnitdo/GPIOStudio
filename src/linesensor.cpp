@@ -47,7 +47,6 @@ LineSensor::LineSensor(DrawArea* parent, MainWindow* parentMainWindow, int X, in
 	}
 
 void LineSensor::deleteSelf(){
-	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
 }
 

@@ -55,7 +55,6 @@ DistanceSensor::DistanceSensor(DrawArea* parent, MainWindow* parentMainWindow, i
 	}
 
 void DistanceSensor::deleteSelf(){
-	this->ParentMainWindow->log("Deleting " + this->GPIOName + " at - " + std::to_string(this->XCoord) + "," + std::to_string(this->YCoord));
 	delete this;
 }
 
