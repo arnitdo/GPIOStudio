@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 0
-#define REVISION 7
+#define REVISION 8
 
 #define GPIOD_ID 0
 #define PSTART_ID 1

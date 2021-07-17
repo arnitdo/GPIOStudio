@@ -26,7 +26,7 @@ v0.0.6
 
 v0.0.7
 
-- [ ] SenseHAT / PiCamera Integration
+- [x] SenseHAT / PiCamera Integration
 
 v0.0.8
 
