@@ -70,7 +70,7 @@ std::string SenseHat::remoteBuild(){
 	}
 	return  "__sense_hat = sense_hat.SenseHat()\n"
 			"def __sense_stick_handler(sense_stick_event):\n"
-			"\tprint(f\"Direction : {sense_stick_event.direction}, Action : {sense_stick_event.action}\")\n"
+			"\tprint(\"Direction : \" + sense_stick_event.direction + \"Action : \" + sense_stick_event.action)\n"
 			"__sense_hat.stick.direction_any = __sense_stick_handler\n";
 }
 
