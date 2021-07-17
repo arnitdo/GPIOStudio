@@ -14,3 +14,8 @@ Program Versions -
 
 	QMake - Version 3.1 or better
 ```	
+
+- Make pull requests to the `dev` branch, and not the `main` branch
+- Please test your code before you make a pull requests. Try to keep compiler warnings minimal. 
+- You MUST use all warning flags when compiling (i.e `-Wall`, `-Wextra`, et cetera). If possible, attach the compilation output in a text file for verification.
+- Code with serious flaws will be rejected.
