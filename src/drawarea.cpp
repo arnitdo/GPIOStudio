@@ -33,7 +33,16 @@ void DrawArea::loadJson(QString fname){
 	std::ifstream JSONFileIn (convertToStdString(fname));
 	json JSON;
 	JSONFileIn >> JSON;
-	bool versionMatch = JSON["version"].get<std::string>() == convertToStdString(getVersionInfo());
+	bool versionMatch = false;
+	try {
+		versionMatch = JSON.at("version").get<std::string>() == convertToStdString(getVersionInfo());
+	} catch (json::out_of_range& JSONExcept){
+		if (JSONExcept.id == 403){
+			this->ParentMainWindow->log("Invalid file provided! Project will be reset!");
+			emit this->ParentMainWindow->deleteGPIO();
+			this->resetSelf();
+		}	
+	}
 	if (versionMatch || Config::overrideVersionWarnings){
 		// Version Matches, Proceed!
 		// Emulate button click, clears the entire board
@@ -42,7 +51,7 @@ void DrawArea::loadJson(QString fname){
 				this->createGPIODevice(GPIOJSON);
 			} catch (json::out_of_range& JSONExcept){
 				if (JSONExcept.id == 403){
-					this->ParentMainWindow->log("Invalid file provided!Project will be reset!");
+					this->ParentMainWindow->log("Invalid file provided! Project will be reset!");
 					emit this->ParentMainWindow->deleteGPIO();
 					this->resetSelf();
 				}
