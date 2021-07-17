@@ -20,8 +20,6 @@ SenseHat::SenseHat(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 		ReportLabel.setFixedHeight(30);
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
-		QObject::connect(&(this->ParentMainWindow->RemoteRunButton), SIGNAL (clicked()), this, SLOT (TriggerRemoteBuild()));
-		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT (TriggerSimpleBuild()));
 		this->ParentMainWindow->MainWindowRemoteButton.setDisabled(true);
 		// Sense HATs are not supported over remote GPIO.
 		this->ParentMainWindow->warn("Sense HATs are not supported over Remote GPIO!");
