@@ -3,9 +3,9 @@
 #ifndef GPIOSTUDIO_CONFIG_CPP
 #define GPIOSTUDIO_CONFIG_CPP
 
-#define MAJOR_VERSION 0
+#define MAJOR_VERSION 1
 #define MINOR_VERSION 0
-#define REVISION 9
+#define REVISION 0
 
 #define GPIOD_ID 0
 #define PSTART_ID 1
