@@ -26,6 +26,7 @@ DrawArea::DrawArea(MainWindow *parent) :
 	ButtonLabelMap.insert({BTNCTRL_ID, "Button Controls"});
 	ButtonLabelMap.insert({SENSE_ID, "Sense HAT"});
 	ButtonLabelMap.insert({SENSE_TEXT_ID, "Sense HAT Text"});
+	ButtonLabelMap.insert({PICAMERA_ID, "Pi Camera Capture"});
 }
 
 void DrawArea::loadJson(QString fname){
@@ -181,8 +182,8 @@ void DrawArea::Undo(){
 			GPIOD->deleteSelf(); // Delete GPIOD
 			this->GPIOCodeVector.pop_back(); // Delete Reference to GPIOD
 
-			// Sense Hat Check
-			this->ParentMainWindow->MainWindowRemoteButton.setDisabled(this->checkForSenseHat());
+			// Sense Hat and Pi Camera Check
+			this->ParentMainWindow->MainWindowRemoteButton.setDisabled(this->checkForSenseHat() || this->checkForPiCamera());
 
 			this->Lines.pop_back(); // Delete last line
 			int YOffset = 75; // Default Y offset for 200 * 100 blocks
@@ -228,7 +229,16 @@ bool DrawArea::checkForPStart(){
 bool DrawArea::checkForSenseHat(){
 	for (GPIODevice* GPIOD : this->GPIOCodeVector){
 		if (GPIOD->id == SENSE_ID){
-			return true; // ProgramStart exists, somewhere in the area
+			return true; // Sense HAT exists, somewhere in the area
+		}
+	}
+	return false;
+}
+
+bool DrawArea::checkForPiCamera(){
+	for (GPIODevice* GPIOD : this->GPIOCodeVector){
+		if (GPIOD->id == PICAMERA_ID){
+			return true; // Pi Camera exists, somewhere in the area
 		}
 	}
 	return false;
@@ -844,7 +854,7 @@ void DrawArea::createGPIODevice(json& GPIOData){
 				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
 				SenseText* GPIOD = new SenseText(this, ParentMainWindow, X, Y, "Sense HAT Text");
 				if (GPIOData.contains("displayText")){
-					GPIOD->TextEdit.setPlainText(convertToQString(GPIOData.at("displayText").get<std::string>()));
+					GPIOD->TextEdit.setText(convertToQString(GPIOData.at("displayText").get<std::string>()));
 				}
 				GPIOD->setGeometry(GPIOBoundBox);
 				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
@@ -860,7 +870,27 @@ void DrawArea::createGPIODevice(json& GPIOData){
 			} else {
 				this->ParentMainWindow->err("No Sense HAT Block exists! Please create one!");
 				break;
-			}	
+			}
+		}	
+		case PICAMERA_ID:{
+			if (this->checkForPStart()){
+				QRect GPIOBoundBox = QRect(QPoint(X, Y), QPoint(X + 200, Y + 100));
+				PiCamera* GPIOD = new PiCamera(this, ParentMainWindow, X, Y, "Pi Camera Capture");
+				if (GPIOData.contains("fileName")){
+					GPIOD->FileNameEdit.setText(convertToQString(GPIOData.at("fileName").get<std::string>()));
+				}
+				GPIOD->setGeometry(GPIOBoundBox);
+				GPIOD->setStyleSheet("border : 1px solid black; color : " + GPIOD->textcolor + "; background-color : " + GPIOD->backgroundcolor + "; background-image : url('static/blank.png');");
+				GPIOD->show();
+				this->CurrentPoint = QPoint(X, Y + 25);
+				this->Lines.push_back(std::make_pair(this->LastPoint, this->CurrentPoint));
+				this->LastPoint = QPoint(this->CurrentPoint.x() + 200, this->CurrentPoint.y() + 50);
+				this->GPIOCodeVector.push_back(GPIOD);
+				break;
+			} else {
+				this->ParentMainWindow->err("No Program Start block exists! Please create one!");
+				break;
+			}
 		}
 		default:{
 			this->ParentMainWindow->err("Invalid parameter passed!");

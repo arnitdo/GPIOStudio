@@ -28,6 +28,7 @@
 #define BTNCTRL_ID 18
 #define SENSE_ID 19
 #define SENSE_TEXT_ID 20
+#define PICAMERA_ID 21
 
 // Function Prototypes
 QString getVersionInfo();
@@ -100,6 +101,9 @@ namespace Config{
 		ButtonCtrlColor,
 		RGBLEDColor,
 		RGBLEDCtrlColor,
+		SenseHatColor,
+		SenseTextColor,
+		PiCameraColor,
 		ProgramStartColor;
 	// End Colors
 	int legacyMode;
@@ -207,6 +211,21 @@ namespace Config{
 			{"background", "#aaaaaa"},
 			{"foreground", "#aaaaaa"},
 			{"text", "#000000"}
+		},
+		SenseHatColor = {
+			{"background", "#8DA3F3"},
+			{"foreground", "#8DD5F2"},
+			{"text", "#000000"}
+		},
+		SenseTextColor = {
+			{"background", "#8DA3F3"},
+			{"foreground", "#8DD5F2"},
+			{"text", "#000000"}
+		},
+		PiCameraColor = {
+			{"background", "#A1A40C"},
+			{"foreground", "#55A30B"},
+			{"text", "#000000"}
 		};
 	// End Colors
 	legacyMode = 2;		
@@ -249,6 +268,9 @@ namespace Config{
 				RGBLEDColor = JsonConfigData.at("colors").at("RGBLED");
 				RGBLEDCtrlColor = JsonConfigData.at("colors").at("RGBLEDCtrl");
 				ProgramStartColor = JsonConfigData.at("colors").at("ProgramStart");
+				SenseHatColor = JsonConfigData.at("colors").at("SenseHat");
+				SenseTextColor = JsonConfigData.at("colors").at("SenseText");
+				PiCameraColor = JsonConfigData.at("colors").at("PiCamera");
 			} catch (json::out_of_range& JSONExcept){
 				if (JSONExcept.id == 403){
 					MainWin->err("Unable to set configuration. config.json file is invalid");

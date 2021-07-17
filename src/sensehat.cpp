@@ -11,6 +11,9 @@ SenseHat::SenseHat(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 	TemperaturePBox("Temperature (P)", this),
 	PressureBox("Pressure", this){
 		this->id = SENSE_ID;
+		this->backgroundcolor = convertToQString(Config::SenseHatColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::SenseHatColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::SenseHatColor.at("text").get<std::string>());
 		DisplayLabel.setText(convertToQString(name));
 		DisplayLabel.setFixedHeight(30);
 		ReportLabel.setStyleSheet("border : 0px;");

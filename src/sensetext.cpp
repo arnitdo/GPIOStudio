@@ -8,6 +8,9 @@ SenseText::SenseText(DrawArea* parent, MainWindow* parentMainWindow, int X, int 
 	TextLabel("Enter text to display : ", this),
 	TextEdit(this){
 		this->id = SENSE_TEXT_ID;
+		this->backgroundcolor = convertToQString(Config::SenseTextColor.at("background").get<std::string>());
+		this->foreground = convertToQString(Config::SenseTextColor.at("foreground").get<std::string>());
+		this->textcolor = convertToQString(Config::SenseTextColor.at("text").get<std::string>());
 		DisplayLabel.setText(convertToQString(name));
 		this->ParentDrawArea = parent;
 		this->ParentMainWindow = parentMainWindow;
@@ -32,7 +35,7 @@ json SenseText::toJson(){
 	DataJSON["id"] = SENSE_TEXT_ID;
 	DataJSON["x"] = this->XCoord;
 	DataJSON["y"] = this->YCoord;
-	DataJSON["displayText"] = convertToStdString(this->TextEdit.toPlainText());
+	DataJSON["displayText"] = convertToStdString(this->TextEdit.text());
 	return DataJSON;
 }
 
@@ -41,7 +44,7 @@ bool SenseText::validateInput(){
 }
 
 std::string SenseText::remoteBuild(){
-	return  "__sense_hat.show_message(\"" + convertToStdString(this->TextEdit.toPlainText()) + "\")\n";
+	return  "__sense_hat.show_message(\"" + convertToStdString(this->TextEdit.text()) + "\")\n";
 }
 
 std::string SenseText::simpleBuild(){

@@ -63,6 +63,8 @@ class BuzzerCtrl;
 class FunctionControl;
 class ButtonControl;
 class SenseHat;
+class SenseText;
+class PiCamera;
 
 /*  
   ____ ____ ___ ___ _____ ___   ___  _     ____    _    ____
@@ -102,6 +104,7 @@ class DrawArea: public QWidget{
 		void Redo();
 		bool checkForPStart();
 		bool checkForSenseHat();
+		bool checkForPiCamera();
 		// Members
 		ProgramStart* ProgStart;
 		QPoint LastPoint;
@@ -635,7 +638,26 @@ class SenseText : public GPIODevice {
 		QGridLayout SelfLayout;
 		QLabel DisplayLabel;
 		QLabel TextLabel;
-		QTextEdit TextEdit;
+		QLineEdit TextEdit;
+	public slots:
+		virtual void deleteSelf();
+};
+
+class PiCamera : public GPIODevice {
+	Q_OBJECT;
+	public:
+		// Functions
+		PiCamera(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y, std::string name);
+		virtual std::string simpleBuild();
+		virtual std::string remoteBuild();
+		virtual bool validateInput();
+		virtual json toJson();
+		// Members
+		QString backgroundcolor = "#A1A40C";
+		QGridLayout SelfLayout;
+		QLabel DisplayLabel;
+		QLabel FileNameLabel;
+		QLineEdit FileNameEdit;
 	public slots:
 		virtual void deleteSelf();
 };

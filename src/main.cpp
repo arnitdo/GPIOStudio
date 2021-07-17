@@ -23,6 +23,7 @@
 #include "toolbar.cpp"
 #include "sensehat.cpp"
 #include "sensetext.cpp"
+#include "picamera.cpp"
 
 int main(int argc, char** argv){
 	QApplication app (argc, argv);
