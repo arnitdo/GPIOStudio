@@ -20,8 +20,6 @@ SenseText::SenseText(DrawArea* parent, MainWindow* parentMainWindow, int X, int 
 		SelfLayout.addWidget(&DisplayLabel, 1, 1);
 		SelfLayout.addWidget(&TextLabel, 2, 1);
 		SelfLayout.addWidget(&TextEdit, 3, 1);
-		QObject::connect(&(this->ParentMainWindow->RemoteRunButton), SIGNAL (clicked()), this, SLOT (TriggerRemoteBuild()));
-		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT (TriggerSimpleBuild()));
 		this->ParentMainWindow->MainWindowRemoteButton.setDisabled(true);
 }
 

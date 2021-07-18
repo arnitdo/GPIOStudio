@@ -20,8 +20,6 @@ PiCamera::PiCamera(DrawArea* parent, MainWindow* parentMainWindow, int X, int Y,
 		SelfLayout.addWidget(&DisplayLabel, 1, 1);
 		SelfLayout.addWidget(&FileNameLabel, 2, 1);
 		SelfLayout.addWidget(&FileNameEdit, 3, 1);
-		QObject::connect(&(this->ParentMainWindow->RemoteRunButton), SIGNAL (clicked()), this, SLOT (TriggerRemoteBuild()));
-		QObject::connect(&(this->ParentMainWindow->MainWindowBuildButton), SIGNAL (clicked()), this, SLOT (TriggerSimpleBuild()));
 		this->ParentMainWindow->warn("Pi Cameras are not supported over Remote GPIO!");
 		this->ParentMainWindow->warn("Remote Run is disabled.");
 		this->ParentMainWindow->MainWindowRemoteButton.setDisabled(true);
